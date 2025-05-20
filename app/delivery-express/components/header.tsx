@@ -3,7 +3,7 @@ import Image from "next/image"
 import { ShoppingCart } from "lucide-react"
 import { AuthStatus } from "@/components/auth/auth-status"
 
-export function DeliveryHeader() {
+export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white">
       <div className="container flex h-16 items-center justify-between">
@@ -26,3 +26,6 @@ export function DeliveryHeader() {
     </header>
   )
 }
+
+// Para manter compatibilidade com código existente
+export { Header as DeliveryHeader }
