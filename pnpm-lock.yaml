@@ -11,6 +11,9 @@ importers:
       '@auth/core':
         specifier: latest
         version: 0.39.1(nodemailer@7.0.3)
+      '@auth/supabase-adapter':
+        specifier: latest
+        version: 1.9.1(@supabase/supabase-js@2.49.5)(nodemailer@7.0.3)
       '@eslint/eslintrc':
         specifier: latest
         version: 3.3.1
@@ -218,6 +221,11 @@ packages:
         optional: true
       nodemailer:
         optional: true
+
+  '@auth/supabase-adapter@1.9.1':
+    resolution: {integrity: sha512-T/sMidPqyWo68EbzTQXaD1MpI6486NBkVYnt9/WQJ5CEpU4uTLZltq3Hzs4FlBge4tKGSJzig8PN/WSP1pU+nw==}
+    peerDependencies:
+      '@supabase/supabase-js': ^2.43.1
 
   '@babel/runtime@7.27.1':
     resolution: {integrity: sha512-1x3D2xEk2fRo3PAhwQwu5UubzgiVWSXTBfWpVd2Mx2AzRqJuDJCsgaDVZ7HB5iGzDW1Hl1sWN2mFyKjmR9uAog==}
@@ -2238,6 +2246,15 @@ snapshots:
       preact-render-to-string: 6.5.11(preact@10.24.3)
     optionalDependencies:
       nodemailer: 7.0.3
+
+  '@auth/supabase-adapter@1.9.1(@supabase/supabase-js@2.49.5)(nodemailer@7.0.3)':
+    dependencies:
+      '@auth/core': 0.39.1(nodemailer@7.0.3)
+      '@supabase/supabase-js': 2.49.5
+    transitivePeerDependencies:
+      - '@simplewebauthn/browser'
+      - '@simplewebauthn/server'
+      - nodemailer
 
   '@babel/runtime@7.27.1': {}
 
