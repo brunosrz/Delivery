@@ -1,17 +1,20 @@
 import { createClient } from "@supabase/supabase-js"
+import type { Database } from "@/types/supabase"
 
-// Você precisará adicionar estas variáveis de ambiente
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+// Singleton para evitar múltiplas instâncias no cliente
+let supabaseClient: ReturnType<typeof createBrowserSupabaseClient> | null = null
 
-// Cria um cliente Supabase para uso no lado do cliente
-export const supabaseClient = createClient(supabaseUrl, supabaseAnonKey)
+export const createBrowserSupabaseClient = () => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-// Para uso no lado do servidor com a chave de serviço (mais permissões)
-export const supabaseAdmin = process.env.SUPABASE_SERVICE_ROLE_KEY
-  ? createClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY, {
-      auth: {
-        persistSession: false,
-      },
-    })
-  : supabaseClient
+  return createClient<Database>(supabaseUrl, supabaseAnonKey)
+}
+
+// Use essa função para obter o cliente do Supabase no lado do cliente
+export const getSupabaseClient = () => {
+  if (!supabaseClient) {
+    supabaseClient = createBrowserSupabaseClient()
+  }
+  return supabaseClient
+}
