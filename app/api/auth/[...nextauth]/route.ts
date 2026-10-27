@@ -4,18 +4,24 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
 import { createClient } from "@supabase/supabase-js"
 
-// Inicializa o cliente Supabase para autenticação
-const supabaseUrl = process.env.SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
+const getSupabase = () => {
+  const supabaseUrl = process.env.SUPABASE_URL
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required for authentication")
+  }
+  return createClient(supabaseUrl, supabaseServiceKey)
+}
 
 const handler = NextAuth({
-  // Configuração do adaptador Supabase
-  adapter: SupabaseAdapter({
-    url: process.env.SUPABASE_URL!,
-    secret: process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  }),
+  ...(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
+    ? {
+        adapter: SupabaseAdapter({
+          url: process.env.SUPABASE_URL,
+          secret: process.env.SUPABASE_SERVICE_ROLE_KEY,
+        }),
+      }
+    : {}),
 
   // Configuração de provedores de autenticação
   providers: [
@@ -32,6 +38,7 @@ const handler = NextAuth({
         }
 
         try {
+          const supabase = getSupabase()
           // Autenticar usando Supabase Auth
           const { data, error } = await supabase.auth.signInWithPassword({
             email: credentials.email,

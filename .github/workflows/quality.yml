@@ -1,0 +1,35 @@
+name: Quality
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test:coverage
+      - name: Build without external services
+        env:
+          SUPABASE_URL: https://build.invalid.supabase.co
+          NEXT_PUBLIC_SUPABASE_URL: https://build.invalid.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: build-only-service-key
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: build-only-anon-key
+          NEXTAUTH_SECRET: build-only-secret
+        run: pnpm build

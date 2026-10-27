@@ -31,11 +31,11 @@ O Delivery Express é uma plataforma de delivery de alimentos que permite aos cl
 - **Autenticação**: NextAuth.js
 
 ### Infraestrutura
-- **Hospedagem**: Vercel
+- **Hospedagem**: definida por ambiente e validada no CI
 - **Banco de Dados**: Neon (PostgreSQL serverless)
 - **Cache**: Upstash Redis
-- **CDN**: Vercel Edge Network
-- **Armazenamento**: Vercel Blob Storage
+- **CDN**: camada de edge compatível com o ambiente escolhido
+- **Armazenamento**: provider configurável com retenção e backups definidos
 
 ## Estrutura Multi-Tenant
 

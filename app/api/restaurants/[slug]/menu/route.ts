@@ -22,8 +22,8 @@ export async function GET(request: Request, { params }: { params: { slug: string
     const { data: sections, error: sectionsError } = await supabase
       .from("menu_sections")
       .select(`
-        id, 
-        title, 
+        id,
+        title,
         is_recommended,
         priority
       `)

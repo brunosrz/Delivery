@@ -45,13 +45,16 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next()
 }
 
-// Configuração para quais rotas o middleware deve ser executado
+// Next.js requires this matcher to be statically analyzable at build time.
 export const config = {
   matcher: [
-    /*
-     * Corresponde a todas as rotas protegidas e rotas de autenticação
-     */
-    ...protectedRoutes,
-    ...authRoutes,
+    "/delivery-express/profile/:path*",
+    "/delivery-express/orders/:path*",
+    "/delivery-express/checkout/:path*",
+    "/administrativo/:path*",
+    "/pedidos-na-mao/:path*",
+    "/ta-na-entrega/:path*",
+    "/auth/login/:path*",
+    "/auth/register/:path*",
   ],
 }

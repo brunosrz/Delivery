@@ -37,7 +37,6 @@ export const metadata: Metadata = {
     description: "Plataforma completa para delivery e gestão de restaurantes",
     images: ["/favicon.png"],
   },
-    generator: 'v0.dev'
 }
 
 export default function RootLayout({

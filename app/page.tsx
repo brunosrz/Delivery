@@ -264,7 +264,7 @@ export default function ArchitectureDashboard() {
                         variant="outline"
                         className="bg-pink-50 dark:bg-pink-900/20 text-pink-700 dark:text-pink-400 border border-pink-200 hover:border-pink-400 dark:border-pink-800 transition-colors duration-300"
                       >
-                        v0.dev First
+                        Delivery platform
                       </Badge>
                     </div>
                   </CardFooter>

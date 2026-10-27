@@ -1,30 +1,22 @@
 # Delivery
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+Plataforma web para catálogos, pedidos e operação de restaurantes. O projeto está em desenvolvimento e serve como base demonstrável para um produto B2B de delivery.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/sorz-projects/v0-delivery)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/WPCuscjuslt)
+## Desenvolvimento local
 
-## Overview
+```bash
+pnpm install
+pnpm dev
+```
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+Validações disponíveis:
 
-## Deployment
+```bash
+pnpm format:check
+pnpm lint
+pnpm typecheck
+pnpm test:coverage
+pnpm build
+```
 
-Your project is live at:
-
-**[https://vercel.com/sorz-projects/v0-delivery](https://vercel.com/sorz-projects/v0-delivery)**
-
-## Build your app
-
-Continue building your app on:
-
-**[https://v0.dev/chat/projects/WPCuscjuslt](https://v0.dev/chat/projects/WPCuscjuslt)**
-
-## How It Works
-
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+O repositório usa Node.js e pnpm, mantendo o lockfile existente. A migração do backend para Rust será conduzida em uma issue própria, com contratos e testes antes de substituir qualquer caminho funcional.

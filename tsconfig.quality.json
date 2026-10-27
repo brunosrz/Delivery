@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "noEmit": true },
+  "include": ["lib/order-totals.ts", "tests/unit/order-totals.test.ts", "vitest.config.ts"]
+}

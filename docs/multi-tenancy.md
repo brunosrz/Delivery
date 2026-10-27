@@ -38,18 +38,18 @@ Um middleware especializado intercepta todas as requisições para:
 export async function middleware(request: NextRequest) {
   // 1. Extrair informações da URL
   const { hostname, pathname } = request.nextUrl;
-  
+
   // 2. Identificar o tenant
   let tenantId: string | null = null;
-  
+
   // Verificar domínio personalizado
   const customDomain = await db.customDomains.findUnique({
     where: { domain: hostname },
   });
-  
+
   if (customDomain) {
     tenantId = customDomain.tenantId;
-  } 
+  }
   // Verificar subdomínio
   else if (hostname.includes('.sorz.com.br')) {
     const subdomain = hostname.split('.')[0];
@@ -59,7 +59,7 @@ export async function middleware(request: NextRequest) {
       });
       if (tenant) tenantId = tenant.id;
     }
-  } 
+  }
   // Verificar path
   else if (pathname.startsWith('/r/')) {
     const slug = pathname.split('/')[2];
@@ -68,20 +68,20 @@ export async function middleware(request: NextRequest) {
     });
     if (tenant) tenantId = tenant.id;
   }
-  
+
   // 3. Configurar o contexto de tenant
   if (tenantId) {
     // Carregar configurações do tenant
     const tenantConfig = await loadTenantConfig(tenantId);
-    
+
     // Adicionar headers com informações do tenant
     const response = NextResponse.next();
     response.headers.set('x-tenant-id', tenantId);
     response.headers.set('x-tenant-config', JSON.stringify(tenantConfig));
-    
+
     return response;
   }
-  
+
   return NextResponse.next();
 }
 \`\`\`
@@ -125,12 +125,12 @@ export function getTenantPrisma(tenantId: string) {
           if (['User', 'Tenant', 'TenantUser'].includes(model)) {
             return query(args);
           }
-          
+
           // Para modelos específicos de tenant, use o schema do tenant
           const result = await prismaBase.$queryRawUnsafe(
             `SET search_path TO tenant_${tenantId}; ${query}`
           );
-          
+
           return result;
         },
       },
@@ -161,19 +161,19 @@ async function createNewTenant(tenantData: TenantCreateInput) {
   const tenant = await prisma.tenant.create({
     data: tenantData,
   });
-  
+
   // 2. Criar novo schema no banco de dados
   await prisma.$executeRawUnsafe(
     `CREATE SCHEMA IF NOT EXISTS tenant_${tenant.id}`
   );
-  
+
   // 3. Aplicar migrações no novo schema
   await applyMigrationsToSchema(`tenant_${tenant.id}`);
-  
+
   // 4. Criar dados iniciais
   const tenantPrisma = getTenantPrisma(tenant.id);
   await createInitialData(tenantPrisma);
-  
+
   return tenant;
 }
 \`\`\`
@@ -209,7 +209,7 @@ function TenantThemeProvider({ children, tenant }) {
       --font-body: ${tenant.theme.bodyFont};
     }
   `;
-  
+
   return (
     <>
       <style jsx global>{customCss}</style>
@@ -226,11 +226,11 @@ Os restaurantes podem escolher entre:
 1. **Subdomínio da plataforma**: `restaurante.sorz.com.br`
 2. **Domínio próprio**: `restaurante.com.br`
 
-Para domínios próprios, utilizamos a API de Domínios da Vercel:
+Para domínios próprios, será usado um provider de DNS/edge definido por ambiente:
 
 1. O restaurante configura os registros DNS necessários
 2. Verificamos a propriedade do domínio
-3. Configuramos o domínio na Vercel
+3. Configuramos o domínio no provider escolhido
 4. Associamos o domínio ao tenant no banco de dados
 
 ## Autenticação Multi-Tenant
@@ -259,10 +259,10 @@ Utilizamos CASL para implementar autorização baseada em habilidades:
 // Exemplo de definição de habilidades por tenant
 function defineAbilitiesForUser(user: User, tenantId: string | null) {
   const { can, cannot, build } = new AbilityBuilder(Ability);
-  
+
   // Verificar relação do usuário com o tenant
   const tenantUser = user.tenantUsers.find(tu => tu.tenantId === tenantId);
-  
+
   if (!tenantId) {
     // Habilidades globais (sem contexto de tenant)
     can('read', 'Restaurant');
@@ -288,7 +288,7 @@ function defineAbilitiesForUser(user: User, tenantId: string | null) {
         break;
     }
   }
-  
+
   return build();
 }
 \`\`\`

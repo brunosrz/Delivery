@@ -4,14 +4,14 @@ Este documento explica por que estamos utilizando a abordagem do App Router do N
 
 ## Por que não estamos usando monorepo no cenário atual
 
-### 1. Desenvolvimento Centrado no v0
+### 1. Desenvolvimento centrado no produto
 
-O v0 (Vercel's AI-powered assistant) tem limitações e particularidades que tornam o desenvolvimento em monorepo mais desafiador:
+O desenvolvimento inicial priorizou velocidade e uma aplicação única, o que cria limitações para um monorepo:
 
-- **Suporte Limitado a Estruturas Complexas**: O v0 funciona melhor com estruturas de projeto mais simples e convencionais.
-- **Dificuldade em Navegar entre Múltiplos Projetos**: O v0 pode ter dificuldade em entender o contexto quando há múltiplos projetos independentes.
-- **Foco no App Router**: O v0 é otimizado para trabalhar com o App Router do Next.js, que é a abordagem recomendada pela Vercel.
-- **Limitações com Ferramentas Específicas**: Algumas ferramentas usadas em monorepos podem não ser bem suportadas pelo v0.
+- **Suporte Limitado a Estruturas Complexas**: a aplicação inicial funciona melhor com estruturas simples e convencionais.
+- **Dificuldade em Navegar entre Múltiplos Projetos**: múltiplos projetos independentes exigem contratos explícitos.
+- **Foco no App Router**: o projeto foi iniciado com App Router e precisa manter limites claros.
+- **Limitações com Ferramentas Específicas**: ferramentas de monorepo precisam ser adotadas e validadas pelo CI.
 
 ### 2. Velocidade de Desenvolvimento Inicial
 
@@ -68,7 +68,7 @@ Estamos organizando o código de forma que a migração para um monorepo seja o 
   \`\`\`tsx
   // Em vez de
   import Button from '../../components/ui/button';
-  
+
   // Usamos
   import { Button } from '@/components/ui';
   \`\`\`
@@ -105,7 +105,7 @@ Planejamos uma migração gradual para o monorepo:
 
 ## Benefícios da Abordagem Atual
 
-1. **Desenvolvimento Rápido**: Facilita o desenvolvimento rápido com o v0.
+1. **Desenvolvimento Rápido**: Facilita ciclos curtos com validação automatizada.
 2. **Simplicidade**: Estrutura mais simples e fácil de entender.
 3. **Experiência Unificada**: Navegação fluida entre diferentes partes do sistema.
 4. **Compartilhamento Implícito**: Facilita o compartilhamento de código e componentes.
@@ -120,6 +120,6 @@ Planejamos uma migração gradual para o monorepo:
 
 ## Conclusão
 
-A abordagem atual com App Router é a mais adequada para o desenvolvimento centrado no v0, permitindo um desenvolvimento rápido e eficiente. No entanto, estamos estruturando o projeto de forma a facilitar a migração futura para um monorepo, que oferecerá benefícios significativos à medida que o projeto e a equipe crescem.
+A abordagem atual com App Router é adequada para o produto, permitindo ciclos rápidos e previsíveis. A estrutura também facilita uma migração futura para um monorepo quando os limites de domínio estiverem comprovados.
 
 Esta estratégia nos permite aproveitar o melhor dos dois mundos: a simplicidade e rapidez do App Router agora, e a escalabilidade e flexibilidade do monorepo no futuro.

@@ -42,7 +42,7 @@ Em vez de usar uma estrutura de monorepo com múltiplos apps separados, estamos 
 2. **Compartilhamento de Código**: Facilita o compartilhamento de componentes e lógica entre projetos
 3. **Navegação Fluida**: Navegação entre projetos sem recarregar a página
 4. **Desenvolvimento Unificado**: Um único servidor de desenvolvimento para todos os projetos
-5. **Compatibilidade com v0**: Funciona bem com o v0 sem necessidade de configurações complexas
+5. **Compatibilidade com o produto**: mantém as rotas e módulos independentes sem dependência de um gerador externo
 
 ## Plano para o Futuro
 

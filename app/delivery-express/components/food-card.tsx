@@ -59,7 +59,7 @@ export function FoodCard({ id, name, description, price, originalPrice, discount
           text-decoration: none;
           color: inherit;
         }
-        
+
         .food-card {
           display: flex;
           flex-direction: column;
@@ -70,35 +70,35 @@ export function FoodCard({ id, name, description, price, originalPrice, discount
           transition: box-shadow 0.2s ease;
           background-color: white;
         }
-        
+
         .food-card:hover {
           box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        
+
         .food-card-image-container {
           position: relative;
           width: 100%;
         }
-        
+
         .food-card-image {
           width: 100%;
           aspect-ratio: 1/1;
           object-fit: cover;
         }
-        
+
         .food-card-badge {
           position: absolute;
           top: 0.5rem;
           left: 0.5rem;
         }
-        
+
         .food-card-content {
           display: flex;
           flex-direction: column;
           flex: 1;
           padding: 0.75rem;
         }
-        
+
         .food-card-title {
           font-weight: 600;
           font-size: 0.875rem;
@@ -108,7 +108,7 @@ export function FoodCard({ id, name, description, price, originalPrice, discount
           -webkit-box-orient: vertical;
           overflow: hidden;
         }
-        
+
         .food-card-description {
           font-size: 0.75rem;
           color: #666;
@@ -119,37 +119,37 @@ export function FoodCard({ id, name, description, price, originalPrice, discount
           -webkit-box-orient: vertical;
           overflow: hidden;
         }
-        
+
         .food-card-footer {
           display: flex;
           justify-content: space-between;
           align-items: flex-end;
           margin-top: auto;
         }
-        
+
         .food-card-price-container {
           display: flex;
           flex-direction: column;
         }
-        
+
         .food-card-price {
           color: #f97316;
           font-weight: 600;
           font-size: 0.875rem;
         }
-        
+
         .food-card-original-price {
           display: flex;
           align-items: center;
           gap: 0.25rem;
         }
-        
+
         .food-card-old-price {
           font-size: 0.75rem;
           color: #888;
           text-decoration: line-through;
         }
-        
+
         .food-card-discount {
           font-size: 0.7rem;
           background-color: #ffedd5;
@@ -157,40 +157,40 @@ export function FoodCard({ id, name, description, price, originalPrice, discount
           padding: 0.125rem 0.25rem;
           border-radius: 0.25rem;
         }
-        
+
         .food-card-size {
           font-size: 0.7rem;
           border: 1px solid #ddd;
           color: #666;
         }
-        
+
         /* Estilos responsivos */
         @media (min-width: 640px) {
           .food-card {
             flex-direction: row;
           }
-          
+
           .food-card-image-container {
             width: 33%;
           }
-          
+
           .food-card-image {
             height: 100%;
           }
-          
+
           .food-card-content {
             width: 67%;
             padding: 1rem;
           }
-          
+
           .food-card-title {
             font-size: 1rem;
           }
-          
+
           .food-card-description {
             font-size: 0.875rem;
           }
-          
+
           .food-card-price {
             font-size: 1rem;
           }

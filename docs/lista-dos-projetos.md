@@ -85,6 +85,6 @@ Após iniciar, os projetos estarão disponíveis nos seguintes endereços:
 - **Administrativo:** http://admin.localhost:3000 ou http://localhost:3000/admin
 - **Casa das Máquinas:** http://api.localhost:3000 ou http://localhost:3000/api
 
-## Deploy na Vercel
+## Deploy por ambiente
 
-Cada aplicação pode ser deployada individualmente na Vercel, aproveitando a estrutura de monorepo. A configuração de deploy está nos arquivos `vercel.json` de cada projeto.
+Cada aplicação deve ser deployada individualmente no ambiente escolhido, aproveitando a estrutura de monorepo. A configuração precisa ser versionada no CI e não depender de arquivos gerados por plataforma.
