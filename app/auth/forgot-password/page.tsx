@@ -36,7 +36,7 @@ export default function ForgotPasswordPage() {
       }
 
       setIsSubmitted(true)
-    } catch (error: any) {
+    } catch (error) {
       console.error("Erro ao enviar email de recuperação:", error)
       setError("Ocorreu um erro ao enviar o email de recuperação. Tente novamente.")
     } finally {

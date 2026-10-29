@@ -2,8 +2,8 @@ import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import Image from "next/image"
 import { createServerSupabaseClient } from "@/lib/supabase-server"
-import { getFromCacheOrFetch } from "@/lib/redis-client"
-import { ProductCard } from "../../components/product-card"
+import { ProductCard } from "@/app/delivery-express/components/product-card"
+import type { ListedProduct } from "@/types/catalog"
 
 // Componente de carregamento
 function RestaurantSkeleton() {
@@ -29,7 +29,7 @@ function MenuSection({
   restaurantSlug,
 }: {
   title: string
-  products: any[]
+  products: ListedProduct[]
   restaurantSlug: string
 }) {
   if (!products || products.length === 0) return null
@@ -60,95 +60,93 @@ function MenuSection({
 
 // Função para buscar dados do restaurante
 async function getRestaurantData(slug: string) {
-  return getFromCacheOrFetch(
-    `restaurant:${slug}:data`,
-    async () => {
-      const supabase = createServerSupabaseClient()
+  const supabase = createServerSupabaseClient()
 
-      // Busca o restaurante pelo slug
-      const { data: restaurant, error: restaurantError } = await supabase
-        .from("restaurants")
-        .select("*")
-        .eq("restaurant_slug", slug)
-        .single()
+  // Busca o restaurante pelo slug
+  const { data: restaurant, error: restaurantError } = await supabase
+    .from("restaurants")
+    .select("*")
+    .eq("restaurant_slug", slug)
+    .single()
 
-      if (restaurantError || !restaurant) {
-        console.error("Erro ao buscar restaurante:", restaurantError)
-        return null
+  if (restaurantError || !restaurant) {
+    console.error("Erro ao buscar restaurante:", restaurantError)
+    return null
+  }
+
+  // Busca as seções do menu com seus produtos
+  const { data: sections, error: sectionsError } = await supabase
+    .from("menu_sections")
+    .select(
+      `
+      id,
+      title,
+      is_recommended,
+      priority
+    `,
+    )
+    .eq("restaurant_id", restaurant.id)
+    .order("priority", { ascending: false })
+    .order("title")
+
+  if (sectionsError) {
+    console.error("Erro ao buscar seções do menu:", sectionsError)
+    return { restaurant, menu: [] }
+  }
+
+  // Para cada seção, busca os produtos associados
+  const sectionsWithProducts = await Promise.all(
+    sections.map(async (section) => {
+      const { data: sectionProducts, error: productsError } = await supabase
+        .from("menu_section_products")
+        .select(
+          `
+          products (
+            id,
+            title,
+            description,
+            image_url,
+            price,
+            product_slug,
+            original_price,
+            discount_percentage,
+            featured,
+            preparation_time,
+            available
+          )
+        `,
+        )
+        .eq("section_id", section.id)
+
+      if (productsError) {
+        console.error("Erro ao buscar produtos da seção:", productsError)
+        return {
+          ...section,
+          products: [],
+        }
       }
 
-      // Busca as seções do menu com seus produtos
-      const { data: sections, error: sectionsError } = await supabase
-        .from("menu_sections")
-        .select(`
-          id,
-          title,
-          is_recommended,
-          priority
-        `)
-        .eq("restaurant_id", restaurant.id)
-        .order("priority", { ascending: false })
-        .order("title")
-
-      if (sectionsError) {
-        console.error("Erro ao buscar seções do menu:", sectionsError)
-        return { restaurant, menu: [] }
-      }
-
-      // Para cada seção, busca os produtos associados
-      const sectionsWithProducts = await Promise.all(
-        sections.map(async (section) => {
-          const { data: sectionProducts, error: productsError } = await supabase
-            .from("menu_section_products")
-            .select(`
-              products (
-                id,
-                title,
-                description,
-                image_url,
-                price,
-                product_slug,
-                original_price,
-                discount_percentage,
-                featured,
-                preparation_time,
-                available
-              )
-            `)
-            .eq("section_id", section.id)
-
-          if (productsError) {
-            console.error("Erro ao buscar produtos da seção:", productsError)
-            return {
-              ...section,
-              products: [],
-            }
-          }
-
-          // Formata os produtos para remover a estrutura aninhada
-          const products = sectionProducts
-            .map((item) => item.products)
-            .filter((product) => product && product.available !== false)
-
-          return {
-            ...section,
-            products,
-          }
-        }),
-      )
+      // Formata os produtos para remover a estrutura aninhada
+      const products = sectionProducts
+        .map((item) => item.products)
+        .filter((product) => product && product.available !== false)
 
       return {
-        restaurant,
-        menu: sectionsWithProducts,
+        ...section,
+        products,
       }
-    },
-    900, // Cache por 15 minutos
+    }),
   )
+
+  return {
+    restaurant,
+    menu: sectionsWithProducts,
+  }
 }
 
 // Componente principal da página
-export default async function RestaurantPage({ params }: { params: { slug: string } }) {
-  const { slug } = params
+export default async function RestaurantPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
 
   // Buscar dados do restaurante
   const restaurantData = await getRestaurantData(slug)

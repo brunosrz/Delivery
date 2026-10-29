@@ -19,6 +19,7 @@ O Delivery Express é uma plataforma de delivery de alimentos que permite aos cl
 ## Arquitetura e Tecnologias
 
 ### Frontend
+
 - **Framework**: Next.js (App Router)
 - **Estilização**: CSS Modules e Flexbox
 - **Componentes**: Biblioteca de componentes própria e shadcn/ui
@@ -207,6 +208,7 @@ O Delivery Express utiliza uma arquitetura multi-tenant com schema por restauran
 ## Roadmap de Desenvolvimento
 
 ### Fase 1: MVP (Minimum Viable Product)
+
 - [x] Estrutura básica do projeto
 - [x] Componentes principais (FoodCard, FoodGrid)
 - [x] Navegação por categorias
@@ -215,6 +217,7 @@ O Delivery Express utiliza uma arquitetura multi-tenant com schema por restauran
 - [ ] Carrinho básico
 
 ### Fase 2: Funcionalidades Essenciais
+
 - [ ] Autenticação de usuários
 - [ ] Checkout completo
 - [ ] Integração com pagamentos
@@ -222,6 +225,7 @@ O Delivery Express utiliza uma arquitetura multi-tenant com schema por restauran
 - [ ] Perfil do usuário
 
 ### Fase 3: Aprimoramentos
+
 - [ ] Busca avançada com filtros
 - [ ] Sistema de avaliações
 - [ ] Favoritos
@@ -229,6 +233,7 @@ O Delivery Express utiliza uma arquitetura multi-tenant com schema por restauran
 - [ ] Notificações em tempo real
 
 ### Fase 4: Expansão
+
 - [ ] Aplicativo móvel (PWA)
 - [ ] Programa de fidelidade
 - [ ] Cupons e promoções
@@ -238,12 +243,14 @@ O Delivery Express utiliza uma arquitetura multi-tenant com schema por restauran
 ## Considerações de Design
 
 ### Princípios
+
 - **Simplicidade**: Interface limpa e intuitiva
 - **Responsividade**: Experiência otimizada em todos os dispositivos
 - **Acessibilidade**: Seguir padrões WCAG para inclusão
 - **Performance**: Carregamento rápido e interações fluidas
 
 ### Identidade Visual
+
 - **Cores**: Laranja (#f97316) como cor principal, com tons neutros de apoio
 - **Tipografia**: Fontes sem serifa para melhor legibilidade
 - **Iconografia**: Ícones simples e reconhecíveis

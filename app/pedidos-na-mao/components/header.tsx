@@ -1,3 +1,4 @@
+import Image from "next/image"
 import Link from "next/link"
 import { AuthStatus } from "@/components/auth/auth-status"
 
@@ -7,7 +8,7 @@ export function PedidosHeader() {
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-6">
           <Link href="/pedidos-na-mao" className="flex items-center gap-2">
-            <img src="/favicon.png" alt="Logo" className="h-8 w-8" />
+            <Image src="/favicon.png" alt="" width={32} height={32} className="h-8 w-8" />
             <span className="text-lg font-bold">Pedidos na Mão</span>
           </Link>
         </div>
