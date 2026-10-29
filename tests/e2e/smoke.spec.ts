@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test"
 import { ECOSYSTEM_PRODUCTS } from "../../lib/ecosystem-status"
+import { isProtectedRoute } from "../../lib/route-access"
 
 test("a página inicial lista todos os produtos com o estado real", async ({ page }) => {
   await page.goto("/")
@@ -13,14 +14,19 @@ for (const product of ECOSYSTEM_PRODUCTS) {
   test(`${product.name} responde sem erro de servidor`, async ({ page }) => {
     const response = await page.goto(product.route)
     expect(response?.status()).toBeLessThan(500)
-    await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible()
+    if (isProtectedRoute(product.route)) {
+      await expect(page).toHaveURL(/\/auth\/login\?callbackUrl=/)
+      await expect(page.getByRole("heading", { level: 1, name: "Entrar" })).toBeVisible()
+    } else {
+      await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible()
+    }
   })
 }
 
 test("o Delivery Express informa quando o catálogo está indisponível", async ({ page }) => {
   test.skip(Boolean(process.env.E2E_SUPABASE_LIVE), "com Supabase real o catálogo deve carregar")
   await page.goto("/delivery-express")
-  await expect(page.getByRole("alert")).toContainText("Catálogo indisponível")
+  await expect(page.getByRole("alert").filter({ hasText: "Catálogo indisponível" })).toBeVisible()
 })
 
 test("rotas inexistentes respondem 404", async ({ page }) => {

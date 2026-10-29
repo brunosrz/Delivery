@@ -1,32 +1,16 @@
 import { NextResponse } from "next/server"
 import { getToken } from "next-auth/jwt"
 import type { NextRequest } from "next/server"
-
-// Rotas que requerem autenticação
-const protectedRoutes = [
-  "/delivery-express/profile",
-  "/delivery-express/orders",
-  "/delivery-express/checkout",
-  "/pedidos-na-mao",
-  "/ta-na-entrega",
-]
-
-// Rotas de autenticação
-const authRoutes = ["/auth/login", "/auth/register"]
-
-// "/pedidos-na-mao" protege "/pedidos-na-mao" e "/pedidos-na-mao/...", mas não "/pedidos-na-mao-x".
-export function matchesRoute(pathname: string, route: string): boolean {
-  return pathname === route || pathname.startsWith(`${route}/`)
-}
+import { isAuthRoute as matchesAuthRoute, isProtectedRoute as matchesProtectedRoute } from "@/lib/route-access"
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Verifica se a rota atual requer autenticação
-  const isProtectedRoute = protectedRoutes.some((route) => matchesRoute(pathname, route))
+  const isProtectedRoute = matchesProtectedRoute(pathname)
 
   // Verifica se a rota atual é uma rota de autenticação
-  const isAuthRoute = authRoutes.some((route) => matchesRoute(pathname, route))
+  const isAuthRoute = matchesAuthRoute(pathname)
 
   // Obtém o token de autenticação
   const token = await getToken({

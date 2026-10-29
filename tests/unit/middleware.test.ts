@@ -1,10 +1,11 @@
 import { describe, expect, it, vi } from "vitest"
 import { NextRequest } from "next/server"
 
-const getToken = vi.fn()
-vi.mock("next-auth/jwt", () => ({ getToken: (...args: unknown[]) => getToken(...args) }))
+import { config, middleware } from "@/middleware"
+import { matchesRoute, protectedRoutes } from "@/lib/route-access"
 
-const { config, matchesRoute, middleware } = await import("@/middleware")
+const { getToken } = vi.hoisted(() => ({ getToken: vi.fn() }))
+vi.mock("next-auth/jwt", () => ({ getToken }))
 
 function request(path: string) {
   return new NextRequest(new URL(path, "https://delivery.test"))
@@ -51,8 +52,7 @@ describe("middleware", () => {
   })
 
   it("mantém o matcher estático alinhado às rotas protegidas", () => {
-    expect(config.matcher).toEqual(
-      expect.arrayContaining(["/pedidos-na-mao/:path*", "/ta-na-entrega/:path*", "/auth/login/:path*"]),
-    )
+    expect(config.matcher).toEqual(expect.arrayContaining(protectedRoutes.map((route) => `${route}/:path*`)))
+    expect(config.matcher).toEqual(expect.arrayContaining(["/auth/login/:path*", "/auth/register/:path*"]))
   })
 })
