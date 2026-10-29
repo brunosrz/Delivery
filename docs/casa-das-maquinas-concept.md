@@ -20,23 +20,23 @@ A "Casa das Máquinas" é o coração tecnológico do ecossistema Delivery Expre
 \`\`\`
 /casa-das-maquinas
 ├── app/
-│   ├── api/                  # API Routes do Next.js
-│   │   ├── auth/             # Rotas de autenticação
-│   │   ├── webhooks/         # Webhooks (Stripe, etc.)
-│   │   ├── [tenant]/         # Rotas específicas por tenant
-│   │   └── trpc/             # Endpoint do tRPC
-│   └── route.ts              # Rotas de API REST
+│ ├── api/ # API Routes do Next.js
+│ │ ├── auth/ # Rotas de autenticação
+│ │ ├── webhooks/ # Webhooks (Stripe, etc.)
+│ │ ├── [tenant]/ # Rotas específicas por tenant
+│ │ └── trpc/ # Endpoint do tRPC
+│ └── route.ts # Rotas de API REST
 ├── server/
-│   ├── auth/                 # Lógica de autenticação
-│   ├── db/                   # Configuração e modelos de banco de dados
-│   ├── trpc/                 # Configuração e routers tRPC
-│   ├── casl/                 # Configuração de autorização CASL
-│   ├── stripe/               # Integrações com Stripe
-│   └── utils/                # Utilitários do servidor
+│ ├── auth/ # Lógica de autenticação
+│ ├── db/ # Configuração e modelos de banco de dados
+│ ├── trpc/ # Configuração e routers tRPC
+│ ├── casl/ # Configuração de autorização CASL
+│ ├── stripe/ # Integrações com Stripe
+│ └── utils/ # Utilitários do servidor
 └── lib/
-    ├── validations/          # Esquemas de validação
-    ├── constants/            # Constantes e enums
-    └── types/                # Tipos compartilhados
+├── validations/ # Esquemas de validação
+├── constants/ # Constantes e enums
+└── types/ # Tipos compartilhados
 \`\`\`
 
 ## Banco de Dados e Multi-tenancy
@@ -58,6 +58,7 @@ Implementamos uma abordagem de multi-tenancy baseada em schemas separados no Pos
 ### Middleware de Tenant
 
 Um middleware especializado identifica o tenant atual com base em:
+
 - Domínio personalizado
 - Subdomínio
 - Parâmetro de URL (slug)
@@ -96,11 +97,13 @@ A autenticação é centralizada e implementada usando:
 Sistema de papéis em dois níveis:
 
 #### Nível Global
+
 - **SuperAdmin**: Acesso completo a todos os tenants e configurações do sistema
 - **Support**: Acesso de suporte a todos os tenants (somente leitura para dados sensíveis)
 - **Billing**: Acesso a informações de faturamento e pagamentos
 
 #### Nível de Tenant
+
 - **TenantOwner**: Proprietário do restaurante com acesso completo
 - **TenantManager**: Gerente com acesso amplo, exceto configurações financeiras
 - **TenantStaff**: Funcionário com acesso limitado a pedidos e produtos
@@ -131,6 +134,7 @@ Utilizamos tRPC para criar APIs totalmente tipadas entre backend e frontend:
 ### Endpoints REST para Integrações
 
 Além do tRPC, mantemos endpoints REST para:
+
 - Webhooks de serviços externos
 - Integrações com sistemas de terceiros
 - APIs públicas para parceiros
@@ -138,6 +142,7 @@ Além do tRPC, mantemos endpoints REST para:
 ### WebSockets para Comunicação em Tempo Real
 
 Implementamos WebSockets para funcionalidades que exigem atualizações em tempo real:
+
 - Atualizações de status de pedidos
 - Localização de entregadores
 - Notificações push

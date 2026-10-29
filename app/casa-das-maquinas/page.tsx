@@ -312,7 +312,8 @@ export default function CasaDasMaquinasPage() {
                     </p>
                     <ul className="text-sm list-disc list-inside space-y-1 text-gray-600 dark:text-gray-400">
                       <li>
-                        <strong>Modelo de Plataforma</strong>: O ecossistema Delivery Express atua como plataforma intermediando pagamentos
+                        <strong>Modelo de Plataforma</strong>: O ecossistema Delivery Express atua como plataforma
+                        intermediando pagamentos
                       </li>
                       <li>
                         <strong>Contas Conectadas</strong>: Cada restaurante e entregador tem sua própria conta Stripe

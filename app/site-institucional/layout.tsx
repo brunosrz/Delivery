@@ -1,11 +1,7 @@
 import type React from "react"
 import { InstitutionalSiteHeader } from "./components/institutional-site-header"
 
-export default function InstitutionalSiteLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function InstitutionalSiteLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col min-h-screen">
       <InstitutionalSiteHeader />
