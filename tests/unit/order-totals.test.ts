@@ -34,6 +34,15 @@ describe("calculateOrderTotals", () => {
     expect(() => calculateOrderTotals(lines, delivery)).toThrow(RangeError)
   })
 
+  it("accepts the largest safe quantity when the line total stays safe", () => {
+    expect(calculateOrderTotals([{ unitPriceCents: 0, quantity: Number.MAX_SAFE_INTEGER }], 0)).toEqual({
+      subtotalCents: 0,
+      deliveryCents: 0,
+      discountCents: 0,
+      totalCents: 0,
+    })
+  })
+
   it("rejects unsafe delivery and discount values", () => {
     expect(() => calculateOrderTotals([], Number.MAX_SAFE_INTEGER + 1)).toThrow(RangeError)
     expect(() => calculateOrderTotals([], 0, Number.MAX_SAFE_INTEGER + 1)).toThrow(RangeError)
@@ -43,6 +52,7 @@ describe("calculateOrderTotals", () => {
     [{ unitPriceCents: -1, quantity: 1 }],
     [{ unitPriceCents: 100, quantity: 0 }],
     [{ unitPriceCents: 100.5, quantity: 1 }],
+    [{ unitPriceCents: 0, quantity: Number.MAX_SAFE_INTEGER + 1 }],
   ])("rejects invalid order lines: %o", (line) => {
     expect(() => calculateOrderTotals([line], 0)).toThrow(RangeError)
   })

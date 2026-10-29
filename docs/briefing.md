@@ -36,6 +36,13 @@ Arquitetura alvo (planejada na issue #17, ainda não implementada):
 - **Tempo real**: Durable Objects por restaurante com WebSocket Hibernation
 - **Autenticação**: identidade única emitida pela Casa das Máquinas
 
+A arquitetura alvo só será considerada implementada quando houver evidência no CI para cada critério abaixo (plano completo na issue #17):
+
+1. Migrações D1 versionadas aplicadas do zero e revertidas em um banco limpo.
+2. Testes negativos de isolamento: nenhuma leitura ou escrita cruza `restaurant_id` (ID forjado, tenant errado, cache cruzado).
+3. Ao menos um endpoint `/v1` do Worker respondendo o contrato publicado, com testes no runtime `workerd`.
+4. Fluxo de identidade validado: cadastro, login, papel aplicado na rota e sessão expirada rejeitada.
+
 ### Infraestrutura
 
 - **Hospedagem**: etapa futura; nenhum workflow de CI valida ou executa deploy hoje

@@ -230,7 +230,9 @@ pnpm test:watch
 
 ## Releases
 
-O workflow `Release` usa o Release Please para abrir o PR de versão a cada push na `main`. Esse PR é criado com o `GITHUB_TOKEN`, e o GitHub não dispara workflows automaticamente para PRs abertos por esse token. Antes de mergear o PR de release, aprove manualmente a execução do gate `Quality` na aba Actions (ou feche e reabra o PR). A alternativa definitiva é usar um token de GitHub App, registrada como melhoria futura.
+O workflow `Release` usa o Release Please para abrir o PR de versão a cada push na `main`. Esse PR é criado com o `GITHUB_TOKEN`, e o GitHub não dispara workflows automaticamente para PRs abertos por esse token.
+
+**Critério de merge:** o PR de release só pode ser mergeado quando o gate `Quality` tiver concluído com sucesso no commit atual do PR. Aprovar manualmente a execução na aba Actions (ou fechar e reabrir o PR) apenas inicia o gate; não substitui o resultado verde. A alternativa definitiva é usar um token de GitHub App, registrada como melhoria futura.
 
 ## Recursos Adicionais
 
