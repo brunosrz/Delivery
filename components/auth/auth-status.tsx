@@ -68,13 +68,6 @@ export function AuthStatus() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/delivery-express/profile">Meu Perfil</Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/delivery-express/orders">Meus Pedidos</Link>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
         <DropdownMenuItem className="cursor-pointer" onClick={() => signOut({ callbackUrl: "/" })}>
           Sair
         </DropdownMenuItem>

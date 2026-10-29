@@ -14,14 +14,19 @@ const protectedRoutes = [
 // Rotas de autenticação
 const authRoutes = ["/auth/login", "/auth/register"]
 
+// "/pedidos-na-mao" protege "/pedidos-na-mao" e "/pedidos-na-mao/...", mas não "/pedidos-na-mao-x".
+export function matchesRoute(pathname: string, route: string): boolean {
+  return pathname === route || pathname.startsWith(`${route}/`)
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Verifica se a rota atual requer autenticação
-  const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route))
+  const isProtectedRoute = protectedRoutes.some((route) => matchesRoute(pathname, route))
 
   // Verifica se a rota atual é uma rota de autenticação
-  const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route))
+  const isAuthRoute = authRoutes.some((route) => matchesRoute(pathname, route))
 
   // Obtém o token de autenticação
   const token = await getToken({
@@ -32,7 +37,8 @@ export async function middleware(request: NextRequest) {
   // Redireciona para login se tentar acessar rota protegida sem autenticação
   if (isProtectedRoute && !token) {
     const url = new URL("/auth/login", request.url)
-    url.searchParams.set("callbackUrl", encodeURI(request.url))
+    // Caminho relativo: evita codificação dupla e redirecionamento para outro host.
+    url.searchParams.set("callbackUrl", `${pathname}${request.nextUrl.search}`)
     return NextResponse.redirect(url)
   }
 
