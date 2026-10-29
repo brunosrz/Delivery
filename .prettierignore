@@ -1,0 +1,7 @@
+pnpm-lock.yaml
+.next/
+coverage/
+node_modules/
+public/
+.vectora/
+CHANGELOG.md

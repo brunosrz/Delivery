@@ -1,6 +1,6 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       restaurants: {
@@ -82,6 +82,7 @@ export interface Database {
           created_at?: string | null
           updated_at?: string | null
         }
+        Relationships: []
       }
       products: {
         Row: {
@@ -144,6 +145,7 @@ export interface Database {
           created_at?: string | null
           updated_at?: string | null
         }
+        Relationships: []
       }
       menu_sections: {
         Row: {
@@ -173,6 +175,7 @@ export interface Database {
           created_at?: string | null
           updated_at?: string | null
         }
+        Relationships: []
       }
       menu_section_products: {
         Row: {
@@ -190,6 +193,22 @@ export interface Database {
           section_id?: string
           product_id?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "menu_section_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_section_products_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "menu_sections"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       addon_groups: {
         Row: {
@@ -222,6 +241,7 @@ export interface Database {
           created_at?: string | null
           updated_at?: string | null
         }
+        Relationships: []
       }
       addons: {
         Row: {
@@ -248,6 +268,15 @@ export interface Database {
           created_at?: string | null
           updated_at?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "addons_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "addon_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       orders: {
         Row: {
@@ -295,6 +324,7 @@ export interface Database {
           created_at?: string | null
           updated_at?: string | null
         }
+        Relationships: []
       }
       order_items: {
         Row: {
@@ -324,12 +354,16 @@ export interface Database {
           notes?: string | null
           addons_json?: Json | null
         }
+        Relationships: []
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
       [_ in never]: never
     }
     Enums: {

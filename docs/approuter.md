@@ -40,19 +40,21 @@ Estamos organizando o código de forma que a migração para um monorepo seja o 
 
 \`\`\`
 /app
-  /site-institucional/                # Será migrado para /apps/site-institucional
-  /delivery-express/       # Será migrado para /apps/delivery-express
-  /pedidos-na-mao/         # Será migrado para /apps/pedidos-na-mao
-  /ta-na-entrega/          # Será migrado para /apps/ta-na-entrega
-  # Observabilidade: Grafana, métricas e logs ficam fora do App Router
-  /casa-das-maquinas/      # Será migrado para /apps/casa-das-maquinas
+/site-institucional/ # Será migrado para /apps/site-institucional
+/delivery-express/ # Será migrado para /apps/delivery-express
+/pedidos-na-mao/ # Será migrado para /apps/pedidos-na-mao
+/ta-na-entrega/ # Será migrado para /apps/ta-na-entrega
+
+# Observabilidade: Grafana, métricas e logs ficam fora do App Router
+
+/casa-das-maquinas/ # Será migrado para /apps/casa-das-maquinas
 /components
-  /ui/                     # Será migrado para /packages/ui
-  /[projeto]/              # Componentes específicos de cada projeto
+/ui/ # Será migrado para /packages/ui
+/[projeto]/ # Componentes específicos de cada projeto
 /lib
-  /utils/                  # Será migrado para /packages/utils
-  /api-client/             # Será migrado para /packages/api-client
-  /auth/                   # Será migrado para /packages/auth
+/utils/ # Será migrado para /packages/utils
+/api-client/ # Será migrado para /packages/api-client
+/auth/ # Será migrado para /packages/auth
 \`\`\`
 
 ### 2. Práticas de Código

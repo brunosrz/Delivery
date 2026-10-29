@@ -6,12 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint lib/order-totals.ts tests/unit/order-totals.test.ts vitest.config.ts",
-    "format:check": "prettier --check README.md lib/order-totals.ts tests/unit/order-totals.test.ts vitest.config.ts .coderabbit.yaml .pre-commit-config.yaml",
-    "typecheck": "tsc --project tsconfig.quality.json",
+    "lint": "eslint . --max-warnings 0",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit --incremental false -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "@auth/supabase-adapter": "1.11.3",

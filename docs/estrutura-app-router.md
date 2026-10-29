@@ -10,29 +10,29 @@ Em vez de usar uma estrutura de monorepo com múltiplos apps separados, estamos 
 
 \`\`\`
 /app
-  /page.tsx                # Página principal com lista de projetos
-  /layout.tsx              # Layout compartilhado por todos os projetos
-  /site-institucional                 # Site institucional do ecossistema
-    /page.tsx
-    /[...outras páginas]
-  /delivery-express        # Aplicativo para clientes finais
-    /page.tsx
-    /[...outras páginas]
-  /pedidos-na-mao          # Sistema para restaurantes
-    /page.tsx
-    /[...outras páginas]
-  /ta-na-entrega           # Aplicativo para entregadores
-    /page.tsx
-    /[...outras páginas]
-    /page.tsx
-    /[...outras páginas]
-  /casa-das-maquinas       # Backend/API
-    /page.tsx
-    /api                   # Rotas de API
-      /[...rotas de API]
-/components                # Componentes compartilhados
-/lib                       # Utilitários e funções compartilhadas
-/public                    # Arquivos estáticos
+/page.tsx # Página principal com lista de projetos
+/layout.tsx # Layout compartilhado por todos os projetos
+/site-institucional # Site institucional do ecossistema
+/page.tsx
+/[...outras páginas]
+/delivery-express # Aplicativo para clientes finais
+/page.tsx
+/[...outras páginas]
+/pedidos-na-mao # Sistema para restaurantes
+/page.tsx
+/[...outras páginas]
+/ta-na-entrega # Aplicativo para entregadores
+/page.tsx
+/[...outras páginas]
+/page.tsx
+/[...outras páginas]
+/casa-das-maquinas # Backend/API
+/page.tsx
+/api # Rotas de API
+/[...rotas de API]
+/components # Componentes compartilhados
+/lib # Utilitários e funções compartilhadas
+/public # Arquivos estáticos
 \`\`\`
 
 ## Vantagens desta Abordagem
@@ -49,15 +49,15 @@ No futuro, cada projeto será movido para um app separado dentro de um turborepo
 
 \`\`\`
 /apps
-  /site-institucional
-  /delivery-express
-  /pedidos-na-mao
-  /ta-na-entrega
-  /casa-das-maquinas
+/site-institucional
+/delivery-express
+/pedidos-na-mao
+/ta-na-entrega
+/casa-das-maquinas
 /packages
-  /ui                     # Componentes compartilhados
-  /utils                  # Utilitários compartilhados
-  /api-client             # Cliente de API compartilhado
+/ui # Componentes compartilhados
+/utils # Utilitários compartilhados
+/api-client # Cliente de API compartilhado
 \`\`\`
 
 Esta migração será feita gradualmente, mantendo a compatibilidade entre as abordagens durante a transição.
