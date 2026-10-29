@@ -1,6 +1,6 @@
 # Planejamento do Monorepo Futuro
 
-Este documento detalha o planejamento e a estrutura do futuro monorepo para o projeto Delivery by Sorz, utilizando Turborepo como ferramenta de gerenciamento.
+Este documento detalha o planejamento e a estrutura do futuro monorepo para o projeto Ecossistema Delivery Express, utilizando Turborepo como ferramenta de gerenciamento.
 
 ## Visão Geral
 
@@ -11,11 +11,11 @@ O monorepo será estruturado para permitir o desenvolvimento e deploy independen
 \`\`\`
 /
 ├── apps/                      # Aplicações independentes
-│   ├── vitrine/               # Site de apresentação dos restaurantes
+│   ├── site-institucional/               # Site institucional do ecossistema
 │   ├── delivery-express/      # Aplicativo para clientes finais
 │   ├── pedidos-na-mao/        # Sistema para restaurantes
 │   ├── ta-na-entrega/         # Aplicativo para entregadores
-│   ├── administrativo/        # Painel administrativo
+│   ├── observabilidade/        # Integrações com Grafana, métricas e logs
 │   └── casa-das-maquinas/     # Backend centralizado com APIs
 │
 ├── packages/                  # Pacotes compartilhados
@@ -39,16 +39,16 @@ O monorepo será estruturado para permitir o desenvolvimento e deploy independen
 
 ### Apps
 
-#### 1. Vitrine
+#### 1. Site institucional
 - **Tecnologias**: Next.js, TailwindCSS
-- **Propósito**: Site de apresentação dos restaurantes parceiros
+- **Propósito**: Site institucional do ecossistema parceiros
 - **Funcionalidades**: Páginas de apresentação, cardápios, calculadora de ROI
 - **Estrutura**:
   \`\`\`
-  /apps/vitrine/
+  /apps/site-institucional/
   ├── app/                    # App Router do Next.js
   ├── public/                 # Arquivos estáticos
-  ├── components/             # Componentes específicos da Vitrine
+  ├── components/             # Componentes específicos da Site institucional
   ├── lib/                    # Utilitários específicos
   ├── next.config.js          # Configuração do Next.js
   ├── package.json            # Dependências específicas
@@ -59,7 +59,7 @@ O monorepo será estruturado para permitir o desenvolvimento e deploy independen
 - **Tecnologias**: Next.js, TailwindCSS
 - **Propósito**: Aplicativo para clientes finais realizarem pedidos
 - **Funcionalidades**: Busca de restaurantes, cardápios, carrinho, pagamento
-- **Estrutura**: Similar à Vitrine, com componentes específicos para e-commerce
+- **Estrutura**: Similar à Site institucional, com componentes específicos para e-commerce
 
 #### 3. Pedidos na Mão
 - **Tecnologias**: Next.js, TailwindCSS, React Query
@@ -73,9 +73,9 @@ O monorepo será estruturado para permitir o desenvolvimento e deploy independen
 - **Funcionalidades**: Visualização de pedidos, navegação, controle de ganhos
 - **Estrutura**: Similar às anteriores, com componentes específicos para geolocalização
 
-#### 5. Administrativo
+#### 5. Observabilidade externa
 - **Tecnologias**: Next.js, TailwindCSS, TanStack Table
-- **Propósito**: Painel administrativo para gestão da plataforma
+- **Propósito**: Integrações de observabilidade e operação, sem um aplicativo administrativo próprio
 - **Funcionalidades**: Gestão de usuários, restaurantes, configurações
 - **Estrutura**: Similar às anteriores, com componentes específicos para administração
 

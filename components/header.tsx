@@ -7,14 +7,14 @@ export function Header() {
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2">
             <img src="/favicon.png" alt="Logo" className="h-8 w-8" />
-            <span className="text-lg font-bold">Delivery by Sorz</span>
+            <span className="text-lg font-bold">Delivery Express</span>
           </Link>
           <nav className="hidden md:flex gap-6">
             <Link href="/delivery-express" className="text-sm font-medium hover:underline">
               Delivery Express
             </Link>
-            <Link href="/vitrine" className="text-sm font-medium hover:underline">
-              Vitrine
+            <Link href="/site-institucional" className="text-sm font-medium hover:underline">
+              Site institucional
             </Link>
             <Link href="/ta-na-entrega" className="text-sm font-medium hover:underline">
               Tá na Entrega

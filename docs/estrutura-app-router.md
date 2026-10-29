@@ -12,7 +12,7 @@ Em vez de usar uma estrutura de monorepo com múltiplos apps separados, estamos 
 /app
   /page.tsx                # Página principal com lista de projetos
   /layout.tsx              # Layout compartilhado por todos os projetos
-  /vitrine                 # Site de apresentação dos restaurantes
+  /site-institucional                 # Site institucional do ecossistema
     /page.tsx
     /[...outras páginas]
   /delivery-express        # Aplicativo para clientes finais
@@ -24,7 +24,6 @@ Em vez de usar uma estrutura de monorepo com múltiplos apps separados, estamos 
   /ta-na-entrega           # Aplicativo para entregadores
     /page.tsx
     /[...outras páginas]
-  /administrativo          # Painel administrativo
     /page.tsx
     /[...outras páginas]
   /casa-das-maquinas       # Backend/API
@@ -50,11 +49,10 @@ No futuro, cada projeto será movido para um app separado dentro de um turborepo
 
 \`\`\`
 /apps
-  /vitrine
+  /site-institucional
   /delivery-express
   /pedidos-na-mao
   /ta-na-entrega
-  /administrativo
   /casa-das-maquinas
 /packages
   /ui                     # Componentes compartilhados
@@ -75,9 +73,9 @@ pnpm dev
 Todos os projetos estarão disponíveis através do mesmo servidor Next.js:
 
 - **Página Principal**: http://localhost:3000
-- **Vitrine**: http://localhost:3000/vitrine
+- **Site institucional**: http://localhost:3000/site-institucional
 - **Delivery Express**: http://localhost:3000/delivery-express
 - **Pedidos na Mão**: http://localhost:3000/pedidos-na-mao
 - **Tá na Entrega**: http://localhost:3000/ta-na-entrega
-- **Administrativo**: http://localhost:3000/administrativo
+- **Observabilidade**: Grafana, métricas e logs são serviços externos ao App Router.
 - **Casa das Máquinas**: http://localhost:3000/casa-das-maquinas

@@ -14,11 +14,11 @@ Este documento descreve o plano para migrar a estrutura atual do projeto (basead
 \`\`\`
 /
 ├── apps/                      # Aplicações independentes
-│   ├── vitrine/               # SorzShow - Site institucional
-│   ├── delivery-express/      # SorzClient - App para clientes
-│   ├── pedidos-na-mao/        # SorzPainel - Painel para restaurantes
-│   ├── ta-na-entrega/         # SorzRun - App para entregadores
-│   ├── administrativo/        # SorzCore - Painel administrativo
+│   ├── site-institucional/               # Site institucional do ecossistema
+│   ├── delivery-express/      # Delivery Express - App para clientes
+│   ├── pedidos-na-mao/        # Pedidos na Mão - Painel para restaurantes
+│   ├── ta-na-entrega/         # Tá na Entrega - App para entregadores
+│   ├── observabilidade/        # Integrações com Grafana, métricas e logs
 │   └── casa-das-maquinas/     # Backend centralizado com APIs
 │
 ├── packages/                  # Pacotes compartilhados
@@ -67,28 +67,28 @@ Este documento descreve o plano para migrar a estrutura atual do projeto (basead
    - Configurar deploy independente
    - Implementar testes automatizados
 
-2. **SorzShow (Vitrine)**
-   - Migrar para `apps/vitrine`
+2. **Site institucional (Site institucional)**
+   - Migrar para `apps/site-institucional`
    - Adaptar imports para usar pacotes compartilhados
    - Configurar deploy independente
 
-3. **SorzClient (Delivery Express)**
+3. **Delivery Express (Delivery Express)**
    - Migrar para `apps/delivery-express`
    - Adaptar imports para usar pacotes compartilhados
    - Configurar deploy independente
 
-4. **SorzPainel (Pedidos na Mão)**
+4. **Pedidos na Mão (Pedidos na Mão)**
    - Migrar para `apps/pedidos-na-mao`
    - Adaptar imports para usar pacotes compartilhados
    - Configurar deploy independente
 
-5. **SorzRun (Tá na Entrega)**
+5. **Tá na Entrega (Tá na Entrega)**
    - Migrar para `apps/ta-na-entrega`
    - Adaptar imports para usar pacotes compartilhados
    - Configurar deploy independente
 
-6. **SorzCore (Administrativo)**
-   - Migrar para `apps/administrativo`
+6. **Observabilidade externa (Observabilidade externa)**
+   - Migrar para `stack de observabilidade externa`
    - Adaptar imports para usar pacotes compartilhados
    - Configurar deploy independente
 

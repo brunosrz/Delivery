@@ -4,9 +4,9 @@ Este documento lista todos os projetos contidos neste monorepo, suas descriçõe
 
 ## Aplicações Frontend
 
-### 1. Vitrine
-**Diretório:** `apps/vitrine`
-**Descrição:** Site de apresentação dos restaurantes parceiros, funcionando como uma vitrine digital para atrair clientes. Inclui páginas de apresentação, cardápios e calculadora de ROI.
+### 1. Site institucional
+**Diretório:** `apps/site-institucional`
+**Descrição:** Site institucional do ecossistema e dos restaurantes parceiros, com páginas de apresentação, cardápios e calculadora de ROI.
 **Tecnologias:** Next.js, TailwindCSS
 **URL de Desenvolvimento:** http://localhost:3000
 
@@ -28,9 +28,9 @@ Este documento lista todos os projetos contidos neste monorepo, suas descriçõe
 **Tecnologias:** Next.js, TailwindCSS
 **URL de Desenvolvimento:** http://entrega.localhost:3000 ou http://localhost:3000/entrega
 
-### 5. Administrativo
-**Diretório:** `apps/administrativo`
-**Descrição:** Painel administrativo para gestão da plataforma, usuários, restaurantes e configurações do sistema.
+### 5. Observabilidade externa
+**Diretório:** `stack de observabilidade externa`
+**Descrição:** Observabilidade e operações ficam fora do produto e devem usar Grafana, métricas e logs.
 **Tecnologias:** Next.js, TailwindCSS
 **URL de Desenvolvimento:** http://admin.localhost:3000 ou http://localhost:3000/admin
 
@@ -78,11 +78,11 @@ pnpm run dev:multisite
 
 Após iniciar, os projetos estarão disponíveis nos seguintes endereços:
 
-- **Vitrine:** http://localhost:3000
+- **Site institucional:** http://localhost:3000
 - **Delivery Express:** http://delivery.localhost:3000 ou http://localhost:3000/delivery
 - **Pedidos na Mão:** http://pedidos.localhost:3000 ou http://localhost:3000/pedidos
 - **Tá na Entrega:** http://entrega.localhost:3000 ou http://localhost:3000/entrega
-- **Administrativo:** http://admin.localhost:3000 ou http://localhost:3000/admin
+- **Observabilidade externa:** http://admin.localhost:3000 ou http://localhost:3000/admin
 - **Casa das Máquinas:** http://api.localhost:3000 ou http://localhost:3000/api
 
 ## Deploy por ambiente

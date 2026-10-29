@@ -10,7 +10,7 @@ export default function ArchitectureDashboard() {
   return (
     <div className="container mx-auto py-10">
       <div className="mb-10 text-center">
-        <h1 className="text-4xl font-bold mb-4">Delivery by Sorz</h1>
+        <h1 className="text-4xl font-bold mb-4">Ecossistema Delivery Express</h1>
         <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
           Plataforma completa para delivery e gestão de restaurantes com arquitetura moderna e escalável
         </p>
@@ -74,20 +74,20 @@ export default function ArchitectureDashboard() {
 
           <Card className="bg-white border-2 border-orange-100 hover:border-orange-300 transition-all duration-300 group">
             <CardHeader>
-              <CardTitle className="text-orange-600">Vitrine</CardTitle>
+              <CardTitle className="text-orange-600">Site institucional</CardTitle>
               <CardDescription>
-                Apresentação do sistema Sorz para restaurantes interessados em ter seu próprio sistema de delivery.
+                Site institucional do ecossistema, apresentando os aplicativos e serviços para restaurantes parceiros.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex-grow">
               <div className="aspect-video relative mb-4 rounded-md overflow-hidden bg-gray-100">
-                <Image src="/restaurant-showcase.png" alt="Interface da Vitrine" fill className="object-cover" />
+                <Image src="/restaurant-showcase.png" alt="Site institucional do ecossistema" fill className="object-cover" />
               </div>
             </CardContent>
             <CardFooter>
-              <Link href="/vitrine" className="w-full">
+              <Link href="/site-institucional" className="w-full">
                 <Button className="w-full bg-orange-400 group-hover:bg-orange-500 hover:!bg-orange-600 text-white transition-colors duration-300">
-                  Acessar Vitrine
+                  Acessar site institucional
                 </Button>
               </Link>
             </CardFooter>
@@ -122,36 +122,8 @@ export default function ArchitectureDashboard() {
 
         {/* Segunda linha com três colunas em telas grandes, duas em médias e uma em pequenas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Coluna da esquerda - Administrativo e Casa das Máquinas (um em cima do outro em telas grandes) */}
+          {/* Coluna da esquerda - Casa das Máquinas (backend compartilhado) */}
           <div className="lg:col-span-1 flex flex-col gap-6">
-            {/* Card Administrativo */}
-            <Card className="bg-white border-2 border-purple-100 hover:border-purple-300 transition-all duration-300 flex-1 group">
-              <CardHeader>
-                <CardTitle className="text-purple-600">Administrativo</CardTitle>
-                <CardDescription>
-                  Painel de super usuário para administração global do sistema, gerenciamento de restaurantes e
-                  configurações avançadas.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex-grow">
-                <div className="aspect-video relative mb-4 rounded-md overflow-hidden bg-gray-100">
-                  <Image
-                    src="/admin-dashboard-interface.png"
-                    alt="Interface do Administrativo"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Link href="/administrativo" className="w-full">
-                  <Button className="w-full bg-purple-400 group-hover:bg-purple-500 hover:!bg-purple-600 text-white transition-colors duration-300">
-                    Acessar Administrativo
-                  </Button>
-                </Link>
-              </CardFooter>
-            </Card>
-
             {/* Card Casa das Máquinas */}
             <Card className="bg-white border-2 border-gray-100 hover:border-gray-300 transition-all duration-300 flex-1 flex flex-col group">
               <CardHeader>
@@ -221,11 +193,10 @@ export default function ArchitectureDashboard() {
                         {`/app
   /page.tsx                # Página principal com lista de projetos
   /layout.tsx              # Layout compartilhado por todos os projetos
-  /vitrine                 # Vitrine - Site de apresentação dos restaurantes
+  /site-institucional      # Site institucional do ecossistema
   /delivery-express        # Aplicativo para clientes finais
   /pedidos-na-mao          # Pedidos na Mão - Sistema para restaurantes
   /ta-na-entrega           # Tá na Entrega - Aplicativo para entregadores
-  /administrativo          # Administrativo - Painel administrativo
   /casa-das-maquinas       # Casa das Máquinas - Backend/API
     /api                   # Rotas de API
 /components                # Componentes compartilhados
@@ -288,11 +259,10 @@ export default function ArchitectureDashboard() {
                       <pre className="text-sm whitespace-pre" style={{ minWidth: "600px" }}>
                         {`/
 ├── apps/                      # Aplicações independentes
-│   ├── vitrine/               # Vitrine - Site de apresentação
+│   ├── site-institucional/    # Site institucional do ecossistema
 │   ├── delivery-express/      # Delivery Express - Aplicativo para clientes
 │   ├── pedidos-na-mao/        # Pedidos na Mão - Sistema para restaurantes
 │   ├── ta-na-entrega/         # Tá na Entrega - Aplicativo para entregadores
-│   ├── administrativo/        # Administrativo - Painel administrativo
 │   └── casa-das-maquinas/     # Casa das Máquinas - Backend centralizado com APIs
 │
 ├── packages/                  # Pacotes compartilhados
@@ -426,7 +396,7 @@ export default function ArchitectureDashboard() {
       {/* Footer with dark background and white text */}
       <footer className="mt-16 py-6 px-4 bg-gray-900 text-white rounded-lg border-2 border-gray-900 hover:border-gray-700 transition-colors duration-300">
         <div className="container mx-auto text-center">
-          <p className="mb-2">© 2023 Delivery by Sorz. Todos os direitos reservados.</p>
+          <p className="mb-2">© 2026 Ecossistema Delivery Express. Todos os direitos reservados.</p>
           <p className="text-sm text-gray-400">Desenvolvido com Next.js, TailwindCSS e Turborepo</p>
         </div>
       </footer>
@@ -436,8 +406,8 @@ export default function ArchitectureDashboard() {
 
 const futureApps = [
   {
-    name: "vitrine",
-    description: "Vitrine - Site de apresentação dos restaurantes parceiros",
+    name: "site-institucional",
+    description: "Site institucional do ecossistema e apresentação dos restaurantes parceiros",
     icon: <Store className="h-5 w-5 text-orange-500" />,
   },
   {
@@ -454,11 +424,6 @@ const futureApps = [
     name: "ta-na-entrega",
     description: "Tá na Entrega - Aplicativo para entregadores parceiros",
     icon: <Rocket className="h-5 w-5 text-green-500" />,
-  },
-  {
-    name: "administrativo",
-    description: "Administrativo - Painel administrativo para gestão da plataforma",
-    icon: <LayoutDashboard className="h-5 w-5 text-purple-500" />,
   },
   {
     name: "casa-das-maquinas",

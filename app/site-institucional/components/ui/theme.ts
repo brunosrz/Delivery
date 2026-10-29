@@ -1,5 +1,5 @@
-// Tema específico para o SorzShow (vitrine)
-export const sorzShowTheme = {
+// Tema específico do site institucional do ecossistema Delivery Express.
+export const institutionalSiteTheme = {
   colors: {
     primary: "#ed8936",
     secondary: "#fbd38d",

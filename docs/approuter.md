@@ -40,11 +40,11 @@ Estamos organizando o código de forma que a migração para um monorepo seja o 
 
 \`\`\`
 /app
-  /vitrine/                # Será migrado para /apps/vitrine
+  /site-institucional/                # Será migrado para /apps/site-institucional
   /delivery-express/       # Será migrado para /apps/delivery-express
   /pedidos-na-mao/         # Será migrado para /apps/pedidos-na-mao
   /ta-na-entrega/          # Será migrado para /apps/ta-na-entrega
-  /administrativo/         # Será migrado para /apps/administrativo
+  # Observabilidade: Grafana, métricas e logs ficam fora do App Router
   /casa-das-maquinas/      # Será migrado para /apps/casa-das-maquinas
 /components
   /ui/                     # Será migrado para /packages/ui

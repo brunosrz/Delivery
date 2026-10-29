@@ -2,7 +2,7 @@
 
 ## Visão Geral
 
-O sistema Sorz é projetado como uma plataforma multi-tenant, onde cada restaurante é um tenant separado com seus próprios dados, configurações e, opcionalmente, domínio personalizado. Esta abordagem permite:
+O ecossistema Delivery Express é projetado como uma plataforma multi-tenant, onde cada restaurante é um tenant separado com seus próprios dados, configurações e, opcionalmente, domínio personalizado. Esta abordagem permite:
 
 1. Isolamento de dados entre restaurantes
 2. Personalização por restaurante
@@ -19,10 +19,10 @@ O sistema identifica o tenant atual através de três métodos principais:
    - Exemplo: `restaurante-a.com.br` → Tenant: Restaurante A
 
 2. **Subdomínio**: Quando o cliente acessa um subdomínio da plataforma
-   - Exemplo: `restaurante-b.sorz.com.br` → Tenant: Restaurante B
+   - Exemplo: `restaurante-b.delivery-express.example` → Tenant: Restaurante B
 
 3. **Parâmetro/Path**: Quando o cliente acessa via slug na URL
-   - Exemplo: `sorz.com.br/r/restaurante-c` → Tenant: Restaurante C
+   - Exemplo: `delivery-express.example/r/restaurante-c` → Tenant: Restaurante C
 
 ### Middleware de Tenant
 
@@ -51,7 +51,7 @@ export async function middleware(request: NextRequest) {
     tenantId = customDomain.tenantId;
   }
   // Verificar subdomínio
-  else if (hostname.includes('.sorz.com.br')) {
+  else if (hostname.includes('.delivery-express.example')) {
     const subdomain = hostname.split('.')[0];
     if (subdomain !== 'www') {
       const tenant = await db.tenants.findUnique({
@@ -223,7 +223,7 @@ function TenantThemeProvider({ children, tenant }) {
 
 Os restaurantes podem escolher entre:
 
-1. **Subdomínio da plataforma**: `restaurante.sorz.com.br`
+1. **Subdomínio da plataforma**: `restaurante.delivery-express.example`
 2. **Domínio próprio**: `restaurante.com.br`
 
 Para domínios próprios, será usado um provider de DNS/edge definido por ambiente:

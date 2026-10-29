@@ -1,5 +1,5 @@
-// Tema específico para o SorzRun (ta-na-entrega)
-export const sorzRunTheme = {
+// Tema específico do Tá na Entrega.
+export const taNaEntregaTheme = {
   colors: {
     primary: "#38a169",
     secondary: "#9ae6b4",

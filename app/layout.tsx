@@ -7,7 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Delivery by Sorz",
+  title: "Ecossistema Delivery Express",
   description: "Plataforma completa para delivery e gestão de restaurantes",
   icons: {
     icon: [
@@ -18,14 +18,14 @@ export const metadata: Metadata = {
     apple: { url: "/favicon.png", sizes: "180x180", type: "image/png" },
   },
   openGraph: {
-    title: "Delivery by Sorz",
+    title: "Ecossistema Delivery Express",
     description: "Plataforma completa para delivery e gestão de restaurantes",
     images: [
       {
         url: "/favicon.png",
         width: 1200,
         height: 1200,
-        alt: "Logo Delivery by Sorz",
+        alt: "Logo do ecossistema Delivery Express",
       },
     ],
     type: "website",
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Delivery by Sorz",
+    title: "Ecossistema Delivery Express",
     description: "Plataforma completa para delivery e gestão de restaurantes",
     images: ["/favicon.png"],
   },

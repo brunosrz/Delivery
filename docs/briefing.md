@@ -2,7 +2,7 @@
 
 ## Visão Geral
 
-O Delivery Express é uma plataforma de delivery de alimentos que permite aos clientes finais realizarem pedidos diretamente dos restaurantes, sem intermediários. A plataforma faz parte do ecossistema Sorz, que inclui outros módulos como Vitrine, Pedidos na Mão, Tá na Entrega e Administrativo.
+O Delivery Express é uma plataforma de delivery de alimentos que permite aos clientes finais realizarem pedidos diretamente dos restaurantes, sem intermediários. A plataforma faz parte do ecosecossistema Delivery Express, que inclui outros módulos como Site institucional, Pedidos na Mão, Tá na Entrega e Observabilidade externa.
 
 ## Objetivos
 

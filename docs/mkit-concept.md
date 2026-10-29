@@ -2,7 +2,7 @@
 
 ## Visão Geral
 
-O MKit é um conjunto completo de recursos de marketing digital e físico oferecido gratuitamente aos restaurantes parceiros da plataforma Delivery by Sorz. Projetado para elevar a presença de marca dos restaurantes e facilitar a migração de clientes de marketplaces tradicionais para o canal próprio do estabelecimento.
+O MKit é um conjunto completo de recursos de marketing digital e físico oferecido gratuitamente aos restaurantes parceiros da plataforma Ecossistema Delivery Express. Projetado para elevar a presença de marca dos restaurantes e facilitar a migração de clientes de marketplaces tradicionais para o canal próprio do estabelecimento.
 
 ## Objetivos Estratégicos
 
@@ -181,4 +181,4 @@ O sucesso do MKit será medido através de:
 
 ---
 
-O MKit representa não apenas um conjunto de ferramentas de marketing, mas um diferencial competitivo significativo da plataforma Delivery by Sorz, demonstrando o compromisso com o sucesso integral dos restaurantes parceiros.
+O MKit representa não apenas um conjunto de ferramentas de marketing, mas um diferencial competitivo significativo da plataforma Ecossistema Delivery Express, demonstrando o compromisso com o sucesso integral dos restaurantes parceiros.

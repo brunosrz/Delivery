@@ -12,11 +12,14 @@ const handler = NextAuth({
       async authorize(credentials) {
         // Aqui você implementaria a lógica real de autenticação
         // Este é apenas um exemplo para demonstração
-        if (credentials?.email === "admin@sorz.com.br" && credentials?.password === "senha123") {
+        if (
+          credentials?.email === process.env.OPERATIONS_ADMIN_EMAIL &&
+          credentials?.password === process.env.OPERATIONS_ADMIN_PASSWORD
+        ) {
           return {
             id: "1",
             name: "Admin",
-            email: "admin@sorz.com.br",
+            email: process.env.OPERATIONS_ADMIN_EMAIL ?? "",
             role: "admin",
           }
         }

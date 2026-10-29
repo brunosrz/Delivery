@@ -8,7 +8,7 @@ Embora atualmente todos os módulos estejam no mesmo projeto Next.js, a comunica
 
 \`\`\`
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  SorzClient │     │ SorzPainel  │     │   SorzRun   │
+│  Delivery Express │     │ Pedidos na Mão  │     │   Tá na Entrega   │
 └──────┬──────┘     └──────┬──────┘     └──────┬──────┘
        │                   │                   │
        │                   │                   │
@@ -22,7 +22,7 @@ Embora atualmente todos os módulos estejam no mesmo projeto Next.js, a comunica
        │                   │                   │
        │                   │                   │
 ┌──────┴──────┐     ┌──────┴──────┐     ┌──────┴──────┐
-│  SorzShow   │     │  SorzCore   │     │    Outros   │
+│  Site institucional   │     │  Observabilidade externa   │     │    Outros   │
 └─────────────┘     └─────────────┘     └─────────────┘
 \`\`\`
 
@@ -106,10 +106,10 @@ A autenticação é implementada usando NextAuth.js, que fornece:
 
 A autorização é baseada em papéis (roles) e permissões:
 
-- **Cliente**: Acesso ao SorzClient para fazer pedidos
-- **Restaurante**: Acesso ao SorzPainel para gerenciar seu restaurante
-- **Entregador**: Acesso ao SorzRun para gerenciar entregas
-- **Admin**: Acesso ao SorzCore para administrar a plataforma
+- **Cliente**: Acesso ao Delivery Express para fazer pedidos
+- **Restaurante**: Acesso ao Pedidos na Mão para gerenciar seu restaurante
+- **Entregador**: Acesso ao Tá na Entrega para gerenciar entregas
+- **Admin**: Acesso ao Observabilidade externa para administrar a plataforma
 
 ## Tratamento de Erros
 

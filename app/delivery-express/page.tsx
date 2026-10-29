@@ -46,12 +46,9 @@ export default async function DeliveryExpressPage() {
         <div className="text-center py-12">
           <h2 className="text-xl font-semibold mb-2">Nenhum restaurante disponível</h2>
           <p className="text-gray-500 mb-6">Não encontramos restaurantes cadastrados no sistema.</p>
-          <Link
-            href="/administrativo"
-            className="inline-block bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 transition-colors"
-          >
-            Ir para o Administrativo
-          </Link>
+          <p className="text-sm text-gray-500">
+            O cadastro de restaurantes é feito pela equipe de operação do ecossistema.
+          </p>
         </div>
       )}
     </div>

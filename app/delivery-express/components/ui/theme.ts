@@ -1,5 +1,5 @@
-// Tema específico para o SorzClient (delivery-express)
-export const sorzClientTheme = {
+// Tema específico do Delivery Express.
+export const deliveryExpressTheme = {
   colors: {
     primary: "#e53e3e",
     secondary: "#feb2b2",

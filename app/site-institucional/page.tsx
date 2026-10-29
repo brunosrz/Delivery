@@ -1,9 +1,9 @@
-export default function VitrinePage() {
+export default function InstitutionalSitePage() {
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-4xl font-bold mb-6">Vitrine</h1>
+      <h1 className="text-4xl font-bold mb-6">Site institucional</h1>
       <p className="text-lg mb-4">
-        Site de apresentação dos restaurantes parceiros, funcionando como uma vitrine digital para atrair clientes.
+        Apresentação do ecossistema Delivery Express e dos restaurantes parceiros, com informações para clientes e estabelecimentos.
       </p>
       <div className="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg">
         <h2 className="text-2xl font-semibold mb-4">Funcionalidades</h2>

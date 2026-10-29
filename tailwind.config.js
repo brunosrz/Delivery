@@ -52,24 +52,24 @@ module.exports = {
           foreground: "hsl(var(--card-foreground))",
         },
         // Cores personalizadas para cada módulo
-        sorzclient: {
-          DEFAULT: "#e53e3e", // Vermelho para SorzClient
+        deliveryExpress: {
+          DEFAULT: "#e53e3e", // Vermelho para Delivery Express
           hover: "#c53030",
         },
-        sorzpainel: {
-          DEFAULT: "#3182ce", // Azul para SorzPainel
+        pedidosNaMao: {
+          DEFAULT: "#3182ce", // Azul para Pedidos na Mão
           hover: "#2b6cb0",
         },
-        sorzshow: {
-          DEFAULT: "#ed8936", // Laranja para SorzShow
+        institutionalSite: {
+          DEFAULT: "#ed8936", // Laranja para o site institucional
           hover: "#dd6b20",
         },
-        sorzrun: {
-          DEFAULT: "#38a169", // Verde para SorzRun
+        taNaEntrega: {
+          DEFAULT: "#38a169", // Verde para Tá na Entrega
           hover: "#2f855a",
         },
-        sorzcore: {
-          DEFAULT: "#805ad5", // Roxo para SorzCore
+        operations: {
+          DEFAULT: "#805ad5", // Roxo para operações durante a transição
           hover: "#6b46c1",
         },
       },

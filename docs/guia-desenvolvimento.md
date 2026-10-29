@@ -2,7 +2,7 @@
 
 ## Visão Geral
 
-Este guia fornece instruções para desenvolvedores que trabalham no projeto Sorz, abordando a configuração do ambiente, convenções de código, e fluxos de trabalho recomendados.
+Este guia fornece instruções para desenvolvedores que trabalham no ecossistema Delivery Express, abordando a configuração do ambiente, convenções de código, e fluxos de trabalho recomendados.
 
 ## Configuração do Ambiente
 
@@ -16,7 +16,7 @@ Este guia fornece instruções para desenvolvedores que trabalham no projeto Sor
 
 1. Clone o repositório:
    \`\`\`bash
-   git clone https://github.com/sorz/delivery-system.git
+   git clone https://github.com/brunosrz/Delivery.git
    cd delivery-system
    \`\`\`
 
@@ -142,33 +142,33 @@ feat(pedidos): adiciona filtro por status
 
 ## Trabalhando com Módulos
 
-### SorzShow (Vitrine)
+### Site institucional (Site institucional)
 
 - Foco em apresentação e marketing
 - Páginas estáticas e otimizadas para SEO
 - Formulários de contato e demonstração
 
-### SorzClient (Delivery Express)
+### Delivery Express (Delivery Express)
 
 - Experiência do usuário final (cliente)
 - Fluxo de pedido e checkout
 - Acompanhamento de pedidos
 
-### SorzPainel (Pedidos na Mão)
+### Pedidos na Mão (Pedidos na Mão)
 
 - Interface para restaurantes
 - Gerenciamento de cardápio e pedidos
 - Relatórios e estatísticas
 
-### SorzRun (Tá na Entrega)
+### Tá na Entrega (Tá na Entrega)
 
 - Interface para entregadores
 - Gerenciamento de entregas
 - Mapas e rotas
 
-### SorzCore (Administrativo)
+### Observabilidade externa (Observabilidade externa)
 
-- Painel administrativo
+- Observabilidade e operação por Grafana, métricas e logs
 - Gerenciamento de usuários e restaurantes
 - Configurações do sistema
 
@@ -197,7 +197,7 @@ Consulte o documento [Comunicação Entre Módulos](./comunicacao-entre-modulos.
 pnpm test
 
 # Executar testes de um módulo específico
-pnpm test:vitrine
+pnpm test:site-institucional
 pnpm test:delivery
 # etc.
 

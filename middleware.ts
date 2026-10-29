@@ -7,7 +7,6 @@ const protectedRoutes = [
   "/delivery-express/profile",
   "/delivery-express/orders",
   "/delivery-express/checkout",
-  "/administrativo",
   "/pedidos-na-mao",
   "/ta-na-entrega",
 ]
@@ -51,7 +50,6 @@ export const config = {
     "/delivery-express/profile/:path*",
     "/delivery-express/orders/:path*",
     "/delivery-express/checkout/:path*",
-    "/administrativo/:path*",
     "/pedidos-na-mao/:path*",
     "/ta-na-entrega/:path*",
     "/auth/login/:path*",

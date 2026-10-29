@@ -2,7 +2,7 @@
 
 ## Visão Geral
 
-A "Casa das Máquinas" é o coração tecnológico do ecossistema Delivery by Sorz, funcionando como um backend centralizado que atende todas as aplicações do sistema (Delivery Express, Pedidos na Mão, Vitrine, Administrativo e Tá na Entrega). Construído com Next.js API Routes, este backend implementa uma arquitetura multi-tenant robusta, com foco em segurança, escalabilidade e performance.
+A "Casa das Máquinas" é o coração tecnológico do ecossistema Delivery Express, funcionando como um backend centralizado que atende todas as aplicações do sistema (Delivery Express, Pedidos na Mão, Site institucional e Tá na Entrega). Construído com Next.js API Routes, este backend implementa uma arquitetura multi-tenant robusta, com foco em segurança, escalabilidade e performance.
 
 ## Arquitetura Geral
 
@@ -149,7 +149,7 @@ Implementamos WebSockets para funcionalidades que exigem atualizações em tempo
 
 Utilizamos Stripe Connect para gerenciar pagamentos entre múltiplas partes:
 
-1. **Modelo de Plataforma**: A Sorz atua como plataforma intermediando pagamentos
+1. **Modelo de Plataforma**: O ecossistema Delivery Express atua como plataforma intermediando pagamentos
 2. **Contas Conectadas**: Cada restaurante e entregador tem sua própria conta Stripe
 3. **Distribuição Automática**:
    - Taxa da plataforma (mensalidade + 0,5%)
@@ -288,4 +288,4 @@ Implementamos um sistema de filas para processamento assíncrono:
 
 ---
 
-A Casa das Máquinas é projetada para ser o alicerce tecnológico sólido que permite o crescimento sustentável do ecossistema Delivery by Sorz, combinando segurança, performance e flexibilidade para atender às necessidades de restaurantes de todos os portes.
+A Casa das Máquinas é projetada para ser o alicerce tecnológico sólido que permite o crescimento sustentável do ecossistema Delivery Express, combinando segurança, performance e flexibilidade para atender às necessidades de restaurantes de todos os portes.

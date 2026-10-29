@@ -14,7 +14,7 @@ export default function DeliveryExpressLayout({
         <main className="flex-1">{children}</main>
         <footer className="border-t bg-white">
           <div className="container py-6 text-center text-sm text-gray-500">
-            © 2023 Delivery Express by Sorz. Todos os direitos reservados.
+            © 2026 Delivery Express. Todos os direitos reservados.
           </div>
         </footer>
       </div>

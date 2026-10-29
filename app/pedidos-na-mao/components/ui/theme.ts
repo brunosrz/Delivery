@@ -1,5 +1,5 @@
-// Tema específico para o SorzPainel (pedidos-na-mao)
-export const sorzPainelTheme = {
+// Tema específico do Pedidos na Mão.
+export const pedidosNaMaoTheme = {
   colors: {
     primary: "#3182ce",
     secondary: "#90cdf4",

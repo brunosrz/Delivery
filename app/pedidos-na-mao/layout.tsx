@@ -14,7 +14,7 @@ export default function PedidosNaMaoLayout({
         <main className="flex-1">{children}</main>
         <footer className="border-t bg-white">
           <div className="container py-6 text-center text-sm text-gray-500">
-            © 2023 Pedidos na Mão by Sorz. Todos os direitos reservados.
+            © 2026 Pedidos na Mão. Todos os direitos reservados.
           </div>
         </footer>
       </div>

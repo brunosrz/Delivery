@@ -2,12 +2,12 @@
 
 ## Visão Geral
 
-A API da Casa das Máquinas é o backend centralizado que fornece serviços para todos os módulos do sistema Sorz. Esta referência documenta os endpoints disponíveis, parâmetros, respostas e exemplos de uso.
+A API da Casa das Máquinas é o backend centralizado que fornece serviços para todos os módulos do ecossistema Delivery Express. Esta referência documenta os endpoints disponíveis, parâmetros, respostas e exemplos de uso.
 
 ## Base URL
 
 - **Desenvolvimento**: `http://localhost:3000/casa-das-maquinas/api`
-- **Produção**: `https://api.sorz.com.br`
+- **Produção**: `https://api.delivery-express.example`
 
 ## Autenticação
 
@@ -158,7 +158,7 @@ Retorna uma lista de restaurantes.
       "id": "restaurant_123",
       "name": "Restaurante A",
       "description": "Descrição do restaurante",
-      "logo": "https://storage.sorz.com.br/logos/restaurant_123.png",
+      "logo": "https://storage.delivery-express.example/logos/restaurant_123.png",
       "rating": 4.5,
       "categories": ["Pizza", "Italiana"]
     },
@@ -166,7 +166,7 @@ Retorna uma lista de restaurantes.
       "id": "restaurant_456",
       "name": "Restaurante B",
       "description": "Descrição do restaurante",
-      "logo": "https://storage.sorz.com.br/logos/restaurant_456.png",
+      "logo": "https://storage.delivery-express.example/logos/restaurant_456.png",
       "rating": 4.2,
       "categories": ["Hambúrguer", "Americana"]
     }
@@ -198,8 +198,8 @@ Retorna detalhes de um restaurante específico.
     "id": "restaurant_123",
     "name": "Restaurante A",
     "description": "Descrição detalhada do restaurante",
-    "logo": "https://storage.sorz.com.br/logos/restaurant_123.png",
-    "cover": "https://storage.sorz.com.br/covers/restaurant_123.png",
+    "logo": "https://storage.delivery-express.example/logos/restaurant_123.png",
+    "cover": "https://storage.delivery-express.example/covers/restaurant_123.png",
     "address": {
       "street": "Rua Exemplo",
       "number": "123",
@@ -394,7 +394,7 @@ Retorna os produtos do cardápio de um restaurante.
       "name": "Pizza Margherita",
       "description": "Molho de tomate, mussarela, manjericão",
       "price": 45.90,
-      "image": "https://storage.sorz.com.br/products/product_123.png",
+      "image": "https://storage.delivery-express.example/products/product_123.png",
       "categoryId": "category_456",
       "categoryName": "Pizzas",
       "available": true,
@@ -454,7 +454,7 @@ Retorna detalhes de um produto específico.
     "name": "Pizza Margherita",
     "description": "Molho de tomate, mussarela, manjericão fresco e azeite extra virgem",
     "price": 45.90,
-    "image": "https://storage.sorz.com.br/products/product_123.png",
+    "image": "https://storage.delivery-express.example/products/product_123.png",
     "categoryId": "category_456",
     "categoryName": "Pizzas",
     "available": true,
@@ -656,7 +656,7 @@ Retorna detalhes de um pedido específico.
     "restaurant": {
       "id": "restaurant_123",
       "name": "Restaurante A",
-      "logo": "https://storage.sorz.com.br/logos/restaurant_123.png",
+      "logo": "https://storage.delivery-express.example/logos/restaurant_123.png",
       "phone": "+55 11 99999-9999"
     },
     "items": [
@@ -872,7 +872,7 @@ Criei uma documentação abrangente para o projeto na pasta `/docs/` com os segu
 1. **estrutura-atual.md**
    - Explica a estrutura atual do projeto usando o App Router
    - Detalha a organização de pastas e arquivos
-   - Descreve como os diferentes módulos (SorzClient, SorzPainel, etc.) estão organizados
+   - Descreve como os diferentes módulos (Delivery Express, Pedidos na Mão, etc.) estão organizados
 
 2. **comunicacao-entre-modulos.md**
    - Documenta como os diferentes módulos se comunicam entre si
