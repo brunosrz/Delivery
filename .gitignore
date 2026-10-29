@@ -28,3 +28,6 @@ yarn-error.log*
 next-env.d.ts
 .vectora/
 !.vectora/skills.lock.json
+
+# test coverage
+coverage/
