@@ -13,11 +13,41 @@ describe("calculateOrderTotals", () => {
     });
   });
 
-  it("caps a discount at the subtotal instead of producing a negative order", () => {
+  it("caps a discount at the subtotal and still charges delivery", () => {
     expect(
-      calculateOrderTotals([{ unitPriceCents: 1000, quantity: 1 }], 0, 5000)
-        .totalCents,
-    ).toBe(0);
+      calculateOrderTotals([{ unitPriceCents: 1000, quantity: 1 }], 700, 5000),
+    ).toEqual({
+      subtotalCents: 1000,
+      deliveryCents: 700,
+      discountCents: 1000,
+      totalCents: 700,
+    });
+  });
+
+  it.each([
+    [[{ unitPriceCents: Number.MAX_SAFE_INTEGER, quantity: 2 }], 0],
+    [
+      [
+        { unitPriceCents: Number.MAX_SAFE_INTEGER, quantity: 1 },
+        { unitPriceCents: 1, quantity: 1 },
+      ],
+      0,
+    ],
+    [[{ unitPriceCents: Number.MAX_SAFE_INTEGER, quantity: 1 }], 2],
+  ])(
+    "rejects totals outside the safe integer range: %o + %i",
+    (lines, delivery) => {
+      expect(() => calculateOrderTotals(lines, delivery)).toThrow(RangeError);
+    },
+  );
+
+  it("rejects unsafe delivery and discount values", () => {
+    expect(() => calculateOrderTotals([], Number.MAX_SAFE_INTEGER + 1)).toThrow(
+      RangeError,
+    );
+    expect(() =>
+      calculateOrderTotals([], 0, Number.MAX_SAFE_INTEGER + 1),
+    ).toThrow(RangeError);
   });
 
   it.each([

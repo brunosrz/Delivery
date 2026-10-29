@@ -25,17 +25,21 @@ O Delivery Express é uma plataforma de delivery de alimentos que permite aos cl
 - **Estado**: React Hooks e Context API
 
 ### Backend
-- **API**: Next.js API Routes e tRPC
-- **Banco de Dados**: PostgreSQL com schema por tenant
-- **Cache**: Redis para sessões, carrinhos e cache
-- **Autenticação**: NextAuth.js
+
+Estado atual: Next.js Route Handlers lendo o Supabase e rotas da Casa das Máquinas com dados mock em memória; autenticação via NextAuth.js. Não há tRPC, schema por tenant nem cache Redis implementados.
+
+Arquitetura alvo (planejada na issue #17, ainda não implementada):
+
+- **API**: Casa das Máquinas em Cloudflare Workers com Hono e contratos versionados
+- **Banco de Dados**: Cloudflare D1 com migrações versionadas e isolamento por `restaurant_id`
+- **Tempo real**: Durable Objects por restaurante com WebSocket Hibernation
+- **Autenticação**: identidade única emitida pela Casa das Máquinas
 
 ### Infraestrutura
-- **Hospedagem**: definida por ambiente e validada no CI
-- **Banco de Dados**: Neon (PostgreSQL serverless)
-- **Cache**: Upstash Redis
-- **CDN**: camada de edge compatível com o ambiente escolhido
-- **Armazenamento**: provider configurável com retenção e backups definidos
+
+- **Hospedagem**: etapa futura; nenhum workflow de CI valida ou executa deploy hoje
+- **Frontend**: Next.js, com publicação planejada na Vercel
+- **Backend**: Cloudflare Workers, D1 e Durable Objects (planejado)
 
 ## Estrutura Multi-Tenant
 

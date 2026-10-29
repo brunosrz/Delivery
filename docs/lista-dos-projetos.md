@@ -87,4 +87,4 @@ Após iniciar, os projetos estarão disponíveis nos seguintes endereços:
 
 ## Deploy por ambiente
 
-Cada aplicação deve ser deployada individualmente no ambiente escolhido, aproveitando a estrutura de monorepo. A configuração precisa ser versionada no CI e não depender de arquivos gerados por plataforma.
+Hoje o repositório é uma única aplicação Next.js com um único build (`pnpm build`); não existe deploy automatizado. O deploy independente por aplicação é um plano futuro, condicionado à migração para monorepo (issues #11 e #13). Quando existir, a configuração precisa ser versionada no CI e não depender de arquivos gerados por plataforma.

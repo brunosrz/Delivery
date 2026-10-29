@@ -221,6 +221,10 @@ pnpm test:watch
 4. Após aprovação, deploy para staging
 5. Após aprovação final, deploy para produção
 
+## Releases
+
+O workflow `Release` usa o Release Please para abrir o PR de versão a cada push na `main`. Esse PR é criado com o `GITHUB_TOKEN`, e o GitHub não dispara workflows automaticamente para PRs abertos por esse token. Antes de mergear o PR de release, aprove manualmente a execução do gate `Quality` na aba Actions (ou feche e reabra o PR). A alternativa definitiva é usar um token de GitHub App, registrada como melhoria futura.
+
 ## Recursos Adicionais
 
 - [Documentação do Next.js](https://nextjs.org/docs)

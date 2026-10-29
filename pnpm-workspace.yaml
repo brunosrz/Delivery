@@ -1,0 +1,5 @@
+# Dependências autorizadas a executar scripts de instalação (pnpm 11 bloqueia as demais).
+allowBuilds:
+  esbuild: true
+  sharp: true
+  unrs-resolver: true
