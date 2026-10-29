@@ -1,0 +1,26 @@
+# vectora.toml — Configuração do workspace Vectora. Seguro para commitar.
+# Edite as seções abaixo para personalizar este workspace.
+
+[workspace]
+name = "Delivery"
+# description = ""
+
+# [storage]
+# mode = "complete"                          # "lite" | "complete" — sobrescreve o padrão global
+# postgres_dsn = "${MEUPROJETO_POSTGRES_DSN}" # nunca credenciais literais
+# qdrant_url = "http://localhost:6333"
+# qdrant_collection = "meuprojeto_articles"   # isola vetores por workspace
+# redis_url = "${MEUPROJETO_REDIS_URL}"
+
+# [rag]
+# embedding_model = "embed-multilingual-v3.0"
+# chunk_size = 1000
+# chunk_overlap = 200
+
+# [agent]
+# allowed_models = ["claude-sonnet-4-6"]
+# default_model = "claude-sonnet-4-6"
+# auto_commit = false                        # commit automático após file_write/file_edit
+
+# [hooks]
+# post_file_write = ["ruff format {file}"]  # {file} = path absoluto do arquivo editado

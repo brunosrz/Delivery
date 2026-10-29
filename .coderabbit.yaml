@@ -1,0 +1,41 @@
+language: pt-BR
+
+reviews:
+  profile: assertive
+  request_changes_workflow: true
+  high_level_summary: true
+  poem: false
+  review_status: true
+  auto_review:
+    enabled: true
+    drafts: false
+    auto_incremental_review: true
+    base_branches: [".*"]
+    auto_pause_after_reviewed_commits: 0
+  path_instructions:
+    - path: "**/*.{ts,tsx}"
+      instructions: |
+        Testes são parte do contrato da mudança: exija caso feliz, casos negativos/
+        de erro e regressões para todo comportamento alterado. Para regras de
+        pedido, preço, estoque, autenticação ou multi-tenant, confira invariantes,
+        idempotência, concorrência, autorização e falhas de rede.
+        Não trate build, teste ignorado ou resultado relatado como prova de runtime.
+        Exija assertions observáveis, limites de entrada e evidência reproduzível.
+    - path: "tests/**/*"
+      instructions: |
+        Confira se a suíte cobre comportamento normal, entrada inválida, falha de
+        dependência e regressão. Prefira testes determinísticos e independentes;
+        não aceite somente snapshots ou cobertura sem assertions.
+    - path: ".github/workflows/**"
+      instructions: |
+        Verifique triggers, permissões mínimas, versões de actions, cache, artefatos,
+        propagação de exit code e que cada gate realmente falhe quando a prova falta.
+    - path: "docs/**"
+      instructions: |
+        Documentação deve declarar escopo, dependências, decisões, critérios de
+        aceite, evidências, limitações e próximos passos; não declare capacidade não
+        implementada como pronta.
+
+chat:
+  auto_reply: true
+  art: false
