@@ -2,11 +2,7 @@ import type React from "react"
 import { DeliveryHeader } from "./components/header"
 import { AuthProvider } from "@/components/auth/auth-provider"
 
-export default function DeliveryExpressLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function DeliveryExpressLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
       <div className="flex flex-col min-h-screen">

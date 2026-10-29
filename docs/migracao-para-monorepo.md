@@ -13,29 +13,29 @@ Este documento descreve o plano para migrar a estrutura atual do projeto (basead
 
 \`\`\`
 /
-├── apps/                      # Aplicações independentes
-│   ├── site-institucional/               # Site institucional do ecossistema
-│   ├── delivery-express/      # Delivery Express - App para clientes
-│   ├── pedidos-na-mao/        # Pedidos na Mão - Painel para restaurantes
-│   ├── ta-na-entrega/         # Tá na Entrega - App para entregadores
-│   ├── observabilidade/        # Integrações com Grafana, métricas e logs
-│   └── casa-das-maquinas/     # Backend centralizado com APIs
+├── apps/ # Aplicações independentes
+│ ├── site-institucional/ # Site institucional do ecossistema
+│ ├── delivery-express/ # Delivery Express - App para clientes
+│ ├── pedidos-na-mao/ # Pedidos na Mão - Painel para restaurantes
+│ ├── ta-na-entrega/ # Tá na Entrega - App para entregadores
+│ ├── observabilidade/ # Integrações com Grafana, métricas e logs
+│ └── casa-das-maquinas/ # Backend centralizado com APIs
 │
-├── packages/                  # Pacotes compartilhados
-│   ├── ui/                    # Biblioteca de componentes UI
-│   ├── config/                # Configurações compartilhadas
-│   ├── tsconfig/              # Configurações TypeScript
-│   ├── eslint-config/         # Configurações ESLint
-│   ├── utils/                 # Utilitários compartilhados
-│   ├── api-client/            # Cliente de API para consumir a Casa das Máquinas
-│   ├── auth/                  # Lógica de autenticação compartilhada
-│   └── types/                 # Tipos TypeScript compartilhados
+├── packages/ # Pacotes compartilhados
+│ ├── ui/ # Biblioteca de componentes UI
+│ ├── config/ # Configurações compartilhadas
+│ ├── tsconfig/ # Configurações TypeScript
+│ ├── eslint-config/ # Configurações ESLint
+│ ├── utils/ # Utilitários compartilhados
+│ ├── api-client/ # Cliente de API para consumir a Casa das Máquinas
+│ ├── auth/ # Lógica de autenticação compartilhada
+│ └── types/ # Tipos TypeScript compartilhados
 │
-├── docs/                      # Documentação do projeto
-├── .github/                   # Configurações de CI/CD e GitHub Actions
-├── turbo.json                 # Configuração do Turborepo
-├── package.json               # Dependências do monorepo
-└── pnpm-workspace.yaml        # Configuração do workspace PNPM
+├── docs/ # Documentação do projeto
+├── .github/ # Configurações de CI/CD e GitHub Actions
+├── turbo.json # Configuração do Turborepo
+├── package.json # Dependências do monorepo
+└── pnpm-workspace.yaml # Configuração do workspace PNPM
 \`\`\`
 
 ## Fases da Migração

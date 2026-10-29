@@ -17,7 +17,6 @@ interface RestaurantCardProps {
 }
 
 export function RestaurantCard({
-  id,
   name,
   slug,
   logoUrl,

@@ -9,17 +9,16 @@ interface ProductCardProps {
   id: string
   title: string
   slug: string
-  description?: string
+  description?: string | null
   price: number
-  imageUrl?: string
-  originalPrice?: number
-  discountPercentage?: number
-  featured?: boolean
+  imageUrl?: string | null
+  originalPrice?: number | null
+  discountPercentage?: number | null
+  featured?: boolean | null
   restaurantSlug: string
 }
 
 export function ProductCard({
-  id,
   title,
   slug,
   description,

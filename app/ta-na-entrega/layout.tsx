@@ -2,11 +2,7 @@ import type React from "react"
 import { AuthProvider } from "@/components/auth/auth-provider"
 import { EntregaHeader } from "./components/header"
 
-export default function TaNaEntregaLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function TaNaEntregaLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
       <div className="flex flex-col min-h-screen">

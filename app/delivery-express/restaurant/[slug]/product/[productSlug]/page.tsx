@@ -2,9 +2,10 @@ import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import Image from "next/image"
 import { createServerSupabaseClient } from "@/lib/supabase-server"
-import { getFromCacheOrFetch } from "@/lib/redis-client"
 import { ProductCard } from "@/app/delivery-express/components/product-card"
 import { addToCart } from "@/app/delivery-express/actions"
+import type { Json } from "@/types/supabase"
+import type { AddonGroupWithAddons, ListedProduct } from "@/types/catalog"
 
 // Componente de carregamento
 function ProductSkeleton() {
@@ -20,8 +21,8 @@ function ProductSkeleton() {
 }
 
 // Componente para exibir informações nutricionais
-function NutritionalInfo({ info }: { info: Record<string, any> | null }) {
-  if (!info) return null
+function NutritionalInfo({ info }: { info: Json | null }) {
+  if (!info || typeof info !== "object" || Array.isArray(info)) return null
 
   return (
     <div className="mt-6 bg-gray-50 p-4 rounded-lg">
@@ -30,7 +31,7 @@ function NutritionalInfo({ info }: { info: Record<string, any> | null }) {
         {Object.entries(info).map(([key, value]) => (
           <div key={key} className="flex justify-between">
             <span className="text-gray-600">{key}</span>
-            <span className="font-medium">{value}</span>
+            <span className="font-medium">{String(value ?? "")}</span>
           </div>
         ))}
       </div>
@@ -57,7 +58,7 @@ function Ingredients({ ingredients }: { ingredients: string[] | null }) {
 }
 
 // Componente para exibir grupos de adicionais
-function AddonGroups({ addonGroups }: { addonGroups: any[] }) {
+function AddonGroups({ addonGroups }: { addonGroups: AddonGroupWithAddons[] }) {
   if (!addonGroups || addonGroups.length === 0) return null
 
   return (
@@ -73,7 +74,7 @@ function AddonGroups({ addonGroups }: { addonGroups: any[] }) {
             </span>
           </div>
           <div className="space-y-2">
-            {group.addons.map((addon: any) => (
+            {group.addons.map((addon) => (
               <div key={addon.id} className="flex items-center justify-between p-3 border rounded-lg">
                 <label className="flex items-center flex-1">
                   <input
@@ -96,13 +97,7 @@ function AddonGroups({ addonGroups }: { addonGroups: any[] }) {
 }
 
 // Componente para exibir produtos relacionados
-function RelatedProducts({
-  products,
-  restaurantSlug,
-}: {
-  products: any[]
-  restaurantSlug: string
-}) {
+function RelatedProducts({ products, restaurantSlug }: { products: ListedProduct[]; restaurantSlug: string }) {
   if (!products || products.length === 0) return null
 
   return (
@@ -131,112 +126,106 @@ function RelatedProducts({
 
 // Função para buscar dados do produto
 async function getProductData(restaurantSlug: string, productSlug: string) {
-  return getFromCacheOrFetch(
-    `restaurant:${restaurantSlug}:product:${productSlug}`,
-    async () => {
-      const supabase = createServerSupabaseClient()
+  const supabase = createServerSupabaseClient()
 
-      // Busca o restaurante pelo slug
-      const { data: restaurant, error: restaurantError } = await supabase
-        .from("restaurants")
-        .select("id, name, restaurant_slug")
-        .eq("restaurant_slug", restaurantSlug)
-        .single()
+  // Busca o restaurante pelo slug
+  const { data: restaurant, error: restaurantError } = await supabase
+    .from("restaurants")
+    .select("id, name, restaurant_slug")
+    .eq("restaurant_slug", restaurantSlug)
+    .single()
 
-      if (restaurantError || !restaurant) {
-        console.error("Erro ao buscar restaurante:", restaurantError)
-        return null
-      }
+  if (restaurantError || !restaurant) {
+    console.error("Erro ao buscar restaurante:", restaurantError)
+    return null
+  }
 
-      // Busca o produto pelo slug
-      const { data: product, error: productError } = await supabase
-        .from("products")
-        .select("*")
-        .eq("restaurant_id", restaurant.id)
-        .eq("product_slug", productSlug)
-        .eq("available", true)
-        .single()
+  // Busca o produto pelo slug
+  const { data: product, error: productError } = await supabase
+    .from("products")
+    .select("*")
+    .eq("restaurant_id", restaurant.id)
+    .eq("product_slug", productSlug)
+    .eq("available", true)
+    .single()
 
-      if (productError || !product) {
-        console.error("Erro ao buscar produto:", productError)
-        return null
-      }
+  if (productError || !product) {
+    console.error("Erro ao buscar produto:", productError)
+    return null
+  }
 
-      // Busca os grupos de adicionais do produto
-      const { data: addonGroups, error: addonGroupsError } = await supabase
-        .from("addon_groups")
-        .select(`
-          id,
-          title,
-          min,
-          max,
-          required,
-          addons (
-            id,
-            title,
-            price
-          )
-        `)
-        .eq("product_id", product.id)
-        .order("title")
+  // Busca os grupos de adicionais do produto
+  const { data: addonGroups, error: addonGroupsError } = await supabase
+    .from("addon_groups")
+    .select(
+      `
+      id,
+      title,
+      min,
+      max,
+      required,
+      addons (
+        id,
+        title,
+        price
+      )
+    `,
+    )
+    .eq("product_id", product.id)
+    .order("title")
 
-      if (addonGroupsError) {
-        console.error("Erro ao buscar grupos de adicionais:", addonGroupsError)
-        return {
-          restaurant,
-          product,
-          addonGroups: [],
-          relatedProducts: [],
-        }
-      }
+  if (addonGroupsError) {
+    console.error("Erro ao buscar grupos de adicionais:", addonGroupsError)
+    return {
+      restaurant,
+      product,
+      addonGroups: [],
+      relatedProducts: [],
+    }
+  }
 
-      // Busca produtos relacionados (da mesma categoria)
-      const { data: relatedProducts, error: relatedError } = await supabase
-        .from("products")
-        .select(`
-          id,
-          title,
-          description,
-          image_url,
-          price,
-          product_slug,
-          original_price,
-          discount_percentage,
-          featured
-        `)
-        .eq("restaurant_id", restaurant.id)
-        .neq("id", product.id)
-        .eq("available", true)
-        .limit(3)
+  // Busca produtos relacionados (da mesma categoria)
+  const { data: relatedProducts, error: relatedError } = await supabase
+    .from("products")
+    .select(
+      `
+      id,
+      title,
+      description,
+      image_url,
+      price,
+      product_slug,
+      original_price,
+      discount_percentage,
+      featured
+    `,
+    )
+    .eq("restaurant_id", restaurant.id)
+    .neq("id", product.id)
+    .eq("available", true)
+    .limit(3)
 
-      if (relatedError) {
-        console.error("Erro ao buscar produtos relacionados:", relatedError)
-        return {
-          restaurant,
-          product,
-          addonGroups,
-          relatedProducts: [],
-        }
-      }
+  if (relatedError) {
+    console.error("Erro ao buscar produtos relacionados:", relatedError)
+    return {
+      restaurant,
+      product,
+      addonGroups,
+      relatedProducts: [],
+    }
+  }
 
-      return {
-        restaurant,
-        product,
-        addonGroups,
-        relatedProducts,
-      }
-    },
-    900, // Cache por 15 minutos
-  )
+  return {
+    restaurant,
+    product,
+    addonGroups,
+    relatedProducts,
+  }
 }
 
 // Componente principal da página
-export default async function ProductPage({
-  params,
-}: {
-  params: { slug: string; productSlug: string }
-}) {
-  const { slug, productSlug } = params
+export default async function ProductPage({ params }: { params: Promise<{ slug: string; productSlug: string }> }) {
+  const { slug, productSlug } = await params
 
   // Buscar dados do produto
   const productData = await getProductData(slug, productSlug)
@@ -246,7 +235,7 @@ export default async function ProductPage({
     notFound()
   }
 
-  const { restaurant, product, addonGroups, relatedProducts } = productData
+  const { product, addonGroups, relatedProducts } = productData
 
   const formattedPrice = product.price.toLocaleString("pt-BR", {
     style: "currency",
