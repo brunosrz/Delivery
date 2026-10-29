@@ -3,8 +3,8 @@ import { notFound } from "next/navigation"
 import Image from "next/image"
 import { createServerSupabaseClient } from "@/lib/supabase-server"
 import { getFromCacheOrFetch } from "@/lib/redis-client"
-import { ProductCard } from "../../../components/product-card"
-import { addToCart } from "../../../actions"
+import { ProductCard } from "@/app/delivery-express/components/product-card"
+import { addToCart } from "@/app/delivery-express/actions"
 
 // Componente de carregamento
 function ProductSkeleton() {
