@@ -17,6 +17,10 @@
       "migrations_dir": "migrations",
     },
   ],
+  "durable_objects": {
+    "bindings": [{ "name": "RESTAURANT_ROOM", "class_name": "RestaurantRoom" }],
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["RestaurantRoom"] }],
   "vars": {
     "API_VERSION": "v1",
     // Origem pública do app web: o login passa pelo proxy /api/auth do Next, então os cookies são do próprio site.

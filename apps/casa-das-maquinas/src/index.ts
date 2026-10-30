@@ -18,7 +18,31 @@ import { cors } from "hono/cors"
 import { createMiddleware } from "hono/factory"
 import { canManageRestaurant, createAuth, getSessionUser } from "./auth.js"
 import { type AppEnv, created, fail, logError, ok, requestId } from "./http.js"
+import { type LiveScope, signTicket, verifyTicket } from "./live-ticket.js"
 import { createOrdersService } from "./orders.js"
+import type { LiveEvent } from "./restaurant-room.js"
+
+export { RestaurantRoom } from "./restaurant-room.js"
+
+/** Publica no objeto do restaurante; falha de tempo real nunca desfaz o pedido já gravado. */
+async function publishOrderEvent(
+  env: Env,
+  type: LiveEvent["type"],
+  order: { id: string; restaurantId: string; status: string; updatedAt: string },
+) {
+  try {
+    await env.RESTAURANT_ROOM.getByName(order.restaurantId).publish({
+      type,
+      orderId: order.id,
+      status: order.status,
+      at: order.updatedAt,
+    })
+  } catch (error) {
+    console.error(
+      JSON.stringify({ level: "error", event: "live_publish_failed", orderId: order.id, message: String(error) }),
+    )
+  }
+}
 import { createCatalogRepository } from "./repositories/catalog.js"
 
 const app = new OpenAPIHono<AppEnv>({
@@ -58,6 +82,7 @@ app.use("/v1/me", withSession)
 app.use("/v1/manage/*", withSession)
 app.use("/v1/orders", withSession)
 app.use("/v1/orders/*", withSession)
+app.use("/v1/live/tickets", withSession)
 
 app.onError((error, c) => {
   logError(c, "unhandled_error", error)
@@ -213,7 +238,9 @@ app.openapi(
       return fail(c, code, result.error.message, result.error.fields)
     }
     c.header("idempotent-replayed", String(result.value.replayed))
-    return result.value.replayed ? ok(c, result.value.order) : created(c, result.value.order)
+    if (result.value.replayed) return ok(c, result.value.order)
+    await publishOrderEvent(c.env, "order.created", result.value.order)
+    return created(c, result.value.order)
   },
 )
 
@@ -274,6 +301,7 @@ app.openapi(
       const code = result.error.code as "not_found" | "forbidden" | "invalid_transition"
       return fail(c, code, result.error.message)
     }
+    await publishOrderEvent(c.env, "order.updated", result.value)
     return ok(c, result.value)
   },
 )
@@ -300,6 +328,60 @@ app.openapi(
     return ok(c, await createOrdersService(c.env).listForRestaurant(restaurantId))
   },
 )
+
+const LiveTicketRequest = z.discriminatedUnion("scope", [
+  z.object({ scope: z.literal("restaurant"), restaurantId: Id }).strict(),
+  z.object({ scope: z.literal("order"), orderId: Id }).strict(),
+])
+
+app.openapi(
+  createRoute({
+    method: "post",
+    path: "/v1/live/tickets",
+    request: { body: json(LiveTicketRequest) },
+    responses: {
+      200: {
+        content: { "application/json": { schema: envelope(z.object({ ticket: z.string(), expiresIn: z.number() })) } },
+        description: "Ticket de 60 s para abrir o WebSocket",
+      },
+      401: errorResponse,
+      403: errorResponse,
+      404: errorResponse,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const body = c.req.valid("json")
+
+    let scope: LiveScope
+    if (body.scope === "restaurant") {
+      if (!canManageRestaurant(user, body.restaurantId)) return fail(c, "forbidden", "sem acesso a este restaurante")
+      scope = { scope: "restaurant", restaurantId: body.restaurantId }
+    } else {
+      const order = await createOrdersService(c.env).get(user, body.orderId)
+      if (!order.ok) return fail(c, "not_found", "pedido não encontrado")
+      scope = { scope: "order", restaurantId: order.value.restaurantId, orderId: order.value.id }
+    }
+
+    const ticket = await signTicket(c.env.BETTER_AUTH_SECRET, { ...scope, sub: user.id })
+    return ok(c, { ticket, expiresIn: 60 })
+  },
+)
+
+// Upgrade para WebSocket: valida o ticket e repassa ao objeto do restaurante.
+app.get("/v1/live", async (c) => {
+  if (c.req.header("upgrade") !== "websocket") return fail(c, "bad_request", "use WebSocket")
+  const ticket = await verifyTicket(c.env.BETTER_AUTH_SECRET, c.req.query("ticket") ?? "")
+  if (!ticket) return fail(c, "unauthenticated", "ticket inválido ou expirado")
+
+  const headers = new Headers({ upgrade: "websocket" })
+  if (ticket.scope === "order") headers.set("x-live-order", ticket.orderId)
+  const since = c.req.query("since")
+  if (since && /^\d{1,15}$/.test(since)) headers.set("x-live-since", since)
+
+  return c.env.RESTAURANT_ROOM.getByName(ticket.restaurantId).fetch(new Request("https://room/connect", { headers }))
+})
 
 app.doc31("/v1/openapi.json", {
   openapi: "3.1.0",

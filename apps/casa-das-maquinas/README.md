@@ -20,6 +20,17 @@ Toda resposta usa o envelope `{ data, error, meta: { requestId, apiVersion } }`.
 - O app web expõe `/api/auth/*` como proxy para cá, então o cookie de sessão é do próprio site. `BETTER_AUTH_URL` deve ser a origem pública do app web, e `TRUSTED_ORIGINS` lista as origens aceitas.
 - Segredos: `BETTER_AUTH_SECRET` (obrigatório) e `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` (opcionais), via `wrangler secret put` em produção e `.dev.vars` localmente (veja `.dev.vars.example`).
 
+## Tempo real
+
+Cada restaurante tem um Durable Object `RestaurantRoom` (SQLite + WebSocket Hibernation):
+
+- grava cada evento numerado (`seq`) antes de distribuir e guarda os 500 mais recentes;
+- sockets da equipe (escopo restaurante) recebem tudo; sockets de cliente (escopo pedido) recebem só o próprio pedido;
+- `ping` é respondido com `pong` sem acordar o objeto, e conexões ociosas não consomem duração;
+- o browser não envia o cookie do site ao domínio do Worker, então o app web pede um ticket assinado (HMAC, 60 s) no servidor e o repassa ao cliente.
+
+Uma falha ao publicar no tempo real é registrada no log e não desfaz o pedido gravado no D1.
+
 ## Desenvolvimento
 
 ```bash
