@@ -1,28 +1,19 @@
 import { NextResponse } from "next/server"
 import { createServerSupabaseClient } from "@/lib/supabase-server"
-import { getFromCacheOrFetch } from "@/lib/redis-client"
 
 export async function GET() {
   try {
-    const restaurants = await getFromCacheOrFetch(
-      "restaurants:all",
-      async () => {
-        const supabase = createServerSupabaseClient()
-        const { data, error } = await supabase
-          .from("restaurants")
-          .select("*")
-          .order("priority", { ascending: false })
-          .order("name")
+    const supabase = createServerSupabaseClient()
+    const { data: restaurants, error } = await supabase
+      .from("restaurants")
+      .select("*")
+      .order("priority", { ascending: false })
+      .order("name")
 
-        if (error) {
-          console.error("Erro ao buscar restaurantes:", error)
-          throw error
-        }
-
-        return data
-      },
-      1800, // Cache por 30 minutos
-    )
+    if (error) {
+      console.error("Erro ao buscar restaurantes:", error)
+      throw error
+    }
 
     return NextResponse.json(restaurants)
   } catch (error) {

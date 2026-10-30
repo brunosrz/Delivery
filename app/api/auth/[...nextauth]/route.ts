@@ -10,8 +10,16 @@ const getSupabase = () => {
   if (!supabaseUrl || !supabaseServiceKey) {
     throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required for authentication")
   }
-  return createClient(supabaseUrl, supabaseServiceKey)
+  // Cliente por tentativa de login: sem timer de refresh nem sessão persistida entre requisições.
+  return createClient(supabaseUrl, supabaseServiceKey, { auth: { autoRefreshToken: false, persistSession: false } })
 }
+
+const googleLoginEnabled = Boolean(
+  process.env.GOOGLE_CLIENT_ID &&
+  process.env.GOOGLE_CLIENT_SECRET &&
+  process.env.SUPABASE_URL &&
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+)
 
 const handler = NextAuth({
   ...(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -66,11 +74,16 @@ const handler = NextAuth({
       },
     }),
 
-    // Provedor Google OAuth
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
+    // Provedor Google OAuth: só existe com credenciais e com o adapter que persiste a conta.
+    // Sem o adapter, o login aceitaria o "sub" do Google como id de usuário sem conta persistida.
+    ...(googleLoginEnabled
+      ? [
+          GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID!,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+          }),
+        ]
+      : []),
   ],
 
   // Páginas personalizadas
