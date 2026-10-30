@@ -37,3 +37,37 @@ playwright-report/
 # wrangler
 .wrangler/
 .dev.vars*
+!.dev.vars.example
+
+# build e saídas geradas
+dist/
+.turbo/
+*.tsbuildinfo
+.eslintcache
+.prettiercache
+.vitest/
+blob-report/
+playwright/.cache/
+.pnpm-store/
+
+# logs
+*.log
+logs/
+
+# temporários e backups
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+tmp/
+temp/
+
+# sistema operacional e editores
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.idea/
+.vscode/
+!.vscode/extensions.json
