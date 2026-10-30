@@ -124,4 +124,12 @@ describe("createApiClient", () => {
     await createApiClient({ baseUrl: "https://api.test", fetch, retries: 3 }).listRestaurants()
     expect(fetch).toHaveBeenCalledTimes(1)
   })
+
+  it("remove barras finais de baseUrl em tempo linear", async () => {
+    const fetch = vi.fn(async () => jsonResponse({ data: [], error: null, meta }))
+    const started = performance.now()
+    await createApiClient({ baseUrl: "https://api.test" + "/".repeat(50_000), fetch }).listRestaurants()
+    expect(performance.now() - started).toBeLessThan(1000)
+    expect(fetch).toHaveBeenCalledWith("https://api.test/v1/restaurants", expect.anything())
+  })
 })
