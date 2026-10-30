@@ -1,4 +1,3 @@
-import Link from "next/link"
 import { createServerSupabaseClient } from "@/lib/supabase-server"
 import { RestaurantCard } from "./components/restaurant-card"
 
@@ -36,9 +35,9 @@ export default async function DeliveryExpressPage() {
               slug={restaurant.restaurant_slug}
               logoUrl={restaurant.logo_url || undefined}
               description={restaurant.description || undefined}
-              isOpen={restaurant.is_open}
-              deliveryEnabled={restaurant.delivery_enabled}
-              pickupEnabled={restaurant.pickup_enabled}
+              isOpen={restaurant.is_open ?? undefined}
+              deliveryEnabled={restaurant.delivery_enabled ?? undefined}
+              pickupEnabled={restaurant.pickup_enabled ?? undefined}
             />
           ))}
         </div>

@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Code2, Database, FileCode2, GitFork, Layers, LayoutDashboard, Rocket, Store } from "lucide-react"
+import { Database, GitFork, Layers, Store } from "lucide-react"
 
 export default function ArchitectureDashboard() {
   return (
@@ -81,7 +81,12 @@ export default function ArchitectureDashboard() {
             </CardHeader>
             <CardContent className="flex-grow">
               <div className="aspect-video relative mb-4 rounded-md overflow-hidden bg-gray-100">
-                <Image src="/restaurant-showcase.png" alt="Site institucional do ecossistema" fill className="object-cover" />
+                <Image
+                  src="/restaurant-showcase.png"
+                  alt="Site institucional do ecossistema"
+                  fill
+                  className="object-cover"
+                />
               </div>
             </CardContent>
             <CardFooter>
@@ -403,105 +408,3 @@ export default function ArchitectureDashboard() {
     </div>
   )
 }
-
-const futureApps = [
-  {
-    name: "site-institucional",
-    description: "Site institucional do ecossistema e apresentação dos restaurantes parceiros",
-    icon: <Store className="h-5 w-5 text-orange-500" />,
-  },
-  {
-    name: "delivery-express",
-    description: "Delivery Express - Aplicativo web para clientes finais realizarem pedidos",
-    icon: <Rocket className="h-5 w-5 text-red-500" />,
-  },
-  {
-    name: "pedidos-na-mao",
-    description: "Pedidos na Mão - Sistema para restaurantes gerenciarem seus pedidos",
-    icon: <LayoutDashboard className="h-5 w-5 text-blue-500" />,
-  },
-  {
-    name: "ta-na-entrega",
-    description: "Tá na Entrega - Aplicativo para entregadores parceiros",
-    icon: <Rocket className="h-5 w-5 text-green-500" />,
-  },
-  {
-    name: "casa-das-maquinas",
-    description: "Casa das Máquinas - Backend centralizado com APIs",
-    icon: <Database className="h-5 w-5 text-gray-500" />,
-  },
-]
-
-const futurePackages = [
-  {
-    name: "ui",
-    description: "Biblioteca de componentes compartilhados",
-    icon: <Code2 className="h-5 w-5 text-purple-500" />,
-  },
-  {
-    name: "config",
-    description: "Configurações compartilhadas",
-    icon: <FileCode2 className="h-5 w-5 text-purple-500" />,
-  },
-  {
-    name: "tsconfig",
-    description: "Configurações TypeScript compartilhadas",
-    icon: <FileCode2 className="h-5 w-5 text-purple-500" />,
-  },
-  {
-    name: "eslint-config",
-    description: "Configurações ESLint compartilhadas",
-    icon: <FileCode2 className="h-5 w-5 text-purple-500" />,
-  },
-  {
-    name: "utils",
-    description: "Utilitários e funções auxiliares compartilhadas",
-    icon: <Code2 className="h-5 w-5 text-purple-500" />,
-  },
-  {
-    name: "api-client",
-    description: "Cliente para consumir as APIs da Casa das Máquinas",
-    icon: <Database className="h-5 w-5 text-purple-500" />,
-  },
-  {
-    name: "auth",
-    description: "Lógica de autenticação compartilhada",
-    icon: <Code2 className="h-5 w-5 text-purple-500" />,
-  },
-  {
-    name: "types",
-    description: "Tipos TypeScript compartilhados",
-    icon: <FileCode2 className="h-5 w-5 text-purple-500" />,
-  },
-]
-
-const migrationPhases = [
-  {
-    name: "Preparação",
-    tasks: [
-      "Identificar componentes compartilhados",
-      "Refatorar código para minimizar acoplamento",
-      "Padronizar interfaces entre projetos",
-    ],
-  },
-  {
-    name: "Criação da Estrutura",
-    tasks: [
-      "Configurar Turborepo e PNPM workspaces",
-      "Criar pacotes compartilhados básicos",
-      "Configurar CI/CD para o monorepo",
-    ],
-  },
-  {
-    name: "Migração dos Projetos",
-    tasks: [
-      "Migrar um projeto por vez",
-      "Adaptar imports para usar pacotes compartilhados",
-      "Testar cada projeto após migração",
-    ],
-  },
-  {
-    name: "Refinamento",
-    tasks: ["Otimizar builds e caches", "Implementar testes automatizados", "Documentar processo de desenvolvimento"],
-  },
-]
