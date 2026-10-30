@@ -1,7 +1,11 @@
 {
   "release-type": "node",
-  "package-name": "delivery",
   "bump-minor-pre-major": true,
   "include-component-in-tag": false,
-  "changelog-path": "CHANGELOG.md"
+  "packages": {
+    ".": {
+      "package-name": "delivery",
+      "changelog-path": "CHANGELOG.md"
+    }
+  }
 }
