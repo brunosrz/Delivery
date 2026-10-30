@@ -21,12 +21,14 @@ export async function GET(request: Request, { params }: { params: { slug: string
     // Busca as seções do menu com seus produtos
     const { data: sections, error: sectionsError } = await supabase
       .from("menu_sections")
-      .select(`
+      .select(
+        `
         id,
         title,
         is_recommended,
         priority
-      `)
+      `,
+      )
       .eq("restaurant_id", restaurant.id)
       .order("priority", { ascending: false })
       .order("title")
@@ -41,7 +43,8 @@ export async function GET(request: Request, { params }: { params: { slug: string
       sections.map(async (section) => {
         const { data: sectionProducts, error: productsError } = await supabase
           .from("menu_section_products")
-          .select(`
+          .select(
+            `
             product_id,
             products (
               id,
@@ -56,7 +59,8 @@ export async function GET(request: Request, { params }: { params: { slug: string
               preparation_time,
               available
             )
-          `)
+          `,
+          )
           .eq("section_id", section.id)
 
         if (productsError) {

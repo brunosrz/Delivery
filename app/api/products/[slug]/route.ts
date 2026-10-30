@@ -9,14 +9,16 @@ export async function GET(request: Request, { params }: { params: { slug: string
     // Busca o produto pelo slug
     const { data: product, error: productError } = await supabase
       .from("products")
-      .select(`
+      .select(
+        `
         *,
         restaurant:restaurant_id (
           id,
           name,
           restaurant_slug
         )
-      `)
+      `,
+      )
       .eq("product_slug", slug)
       .eq("available", true)
       .single()
@@ -29,7 +31,8 @@ export async function GET(request: Request, { params }: { params: { slug: string
     // Busca os grupos de adicionais do produto
     const { data: addonGroups, error: addonGroupsError } = await supabase
       .from("addon_groups")
-      .select(`
+      .select(
+        `
         id,
         title,
         min,
@@ -40,7 +43,8 @@ export async function GET(request: Request, { params }: { params: { slug: string
           title,
           price
         )
-      `)
+      `,
+      )
       .eq("product_id", product.id)
       .order("title")
 
@@ -52,10 +56,12 @@ export async function GET(request: Request, { params }: { params: { slug: string
     // Busca as categorias (seções) do produto
     const { data: categories, error: categoriesError } = await supabase
       .from("menu_sections")
-      .select(`
+      .select(
+        `
         id,
         title
-      `)
+      `,
+      )
       .eq("restaurant_id", product.restaurant_id)
       .in("id", supabase.from("menu_section_products").select("section_id").eq("product_id", product.id))
 
@@ -67,7 +73,8 @@ export async function GET(request: Request, { params }: { params: { slug: string
     // Busca produtos relacionados (da mesma categoria)
     const { data: relatedProducts, error: relatedError } = await supabase
       .from("products")
-      .select(`
+      .select(
+        `
         id,
         title,
         description,
@@ -77,7 +84,8 @@ export async function GET(request: Request, { params }: { params: { slug: string
         original_price,
         discount_percentage,
         featured
-      `)
+      `,
+      )
       .eq("restaurant_id", product.restaurant_id)
       .neq("id", product.id)
       .eq("available", true)

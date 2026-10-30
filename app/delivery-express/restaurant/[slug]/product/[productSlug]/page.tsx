@@ -96,13 +96,7 @@ function AddonGroups({ addonGroups }: { addonGroups: any[] }) {
 }
 
 // Componente para exibir produtos relacionados
-function RelatedProducts({
-  products,
-  restaurantSlug,
-}: {
-  products: any[]
-  restaurantSlug: string
-}) {
+function RelatedProducts({ products, restaurantSlug }: { products: any[]; restaurantSlug: string }) {
   if (!products || products.length === 0) return null
 
   return (
@@ -165,7 +159,8 @@ async function getProductData(restaurantSlug: string, productSlug: string) {
       // Busca os grupos de adicionais do produto
       const { data: addonGroups, error: addonGroupsError } = await supabase
         .from("addon_groups")
-        .select(`
+        .select(
+          `
           id,
           title,
           min,
@@ -176,7 +171,8 @@ async function getProductData(restaurantSlug: string, productSlug: string) {
             title,
             price
           )
-        `)
+        `,
+        )
         .eq("product_id", product.id)
         .order("title")
 
@@ -193,7 +189,8 @@ async function getProductData(restaurantSlug: string, productSlug: string) {
       // Busca produtos relacionados (da mesma categoria)
       const { data: relatedProducts, error: relatedError } = await supabase
         .from("products")
-        .select(`
+        .select(
+          `
           id,
           title,
           description,
@@ -203,7 +200,8 @@ async function getProductData(restaurantSlug: string, productSlug: string) {
           original_price,
           discount_percentage,
           featured
-        `)
+        `,
+        )
         .eq("restaurant_id", restaurant.id)
         .neq("id", product.id)
         .eq("available", true)
@@ -231,11 +229,7 @@ async function getProductData(restaurantSlug: string, productSlug: string) {
 }
 
 // Componente principal da página
-export default async function ProductPage({
-  params,
-}: {
-  params: { slug: string; productSlug: string }
-}) {
+export default async function ProductPage({ params }: { params: { slug: string; productSlug: string } }) {
   const { slug, productSlug } = params
 
   // Buscar dados do produto

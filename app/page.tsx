@@ -81,7 +81,12 @@ export default function ArchitectureDashboard() {
             </CardHeader>
             <CardContent className="flex-grow">
               <div className="aspect-video relative mb-4 rounded-md overflow-hidden bg-gray-100">
-                <Image src="/restaurant-showcase.png" alt="Site institucional do ecossistema" fill className="object-cover" />
+                <Image
+                  src="/restaurant-showcase.png"
+                  alt="Site institucional do ecossistema"
+                  fill
+                  className="object-cover"
+                />
               </div>
             </CardContent>
             <CardFooter>
