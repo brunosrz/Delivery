@@ -1,90 +1,40 @@
-# Lista de Projetos no Monorepo
+# Catálogo de aplicações
 
-Este documento lista todos os projetos contidos neste monorepo, suas descrições e responsabilidades.
+Este documento lista as aplicações do ecossistema, onde cada uma vive no repositório hoje e onde será publicada. O estado de cada módulo (implementado, parcial, demonstração, em construção ou planejado) é mantido junto ao código e verificado por teste.
 
-## Aplicações Frontend
+## Estrutura atual
 
-### 1. Site institucional
-**Diretório:** `apps/site-institucional`
-**Descrição:** Site institucional do ecossistema e dos restaurantes parceiros, com páginas de apresentação, cardápios e calculadora de ROI.
-**Tecnologias:** Next.js, TailwindCSS
-**URL de Desenvolvimento:** http://localhost:3000
+O repositório é **uma única aplicação Next.js 15 (App Router)** com um único build (`pnpm build`). Cada produto é uma rota de primeiro nível em `app/`. Não existem `apps/*` nem pacotes compartilhados publicados; a separação em monorepo é um plano futuro (issues #11 e #13).
 
-### 2. Delivery Express
-**Diretório:** `apps/delivery-express`
-**Descrição:** Aplicativo web para clientes finais realizarem pedidos de delivery diretamente dos restaurantes, sem intermediários.
-**Tecnologias:** Next.js, TailwindCSS
-**URL de Desenvolvimento:** http://delivery.localhost:3000 ou http://localhost:3000/delivery
+| Produto            | Público     | Rota atual               | Observação                                                     |
+| ------------------ | ----------- | ------------------------ | -------------------------------------------------------------- |
+| Site institucional | Público     | `app/site-institucional` | Página de apresentação; contato ainda não existe               |
+| Delivery Express   | Cliente     | `app/delivery-express`   | Catálogo lido do Supabase; sem carrinho nem pedido persistidos |
+| Pedidos na Mão     | Restaurante | `app/pedidos-na-mao`     | Lista de funcionalidades planejadas                            |
+| Tá na Entrega      | Entregador  | `app/ta-na-entrega`      | Lista de funcionalidades planejadas                            |
+| MKit               | Restaurante | `app/mkit`               | Conteúdo estático do conceito                                  |
+| Casa das Máquinas  | Backend     | `app/casa-das-maquinas`  | Página de arquitetura; a API ainda não existe                  |
 
-### 3. Pedidos na Mão
-**Diretório:** `apps/pedidos-na-mao`
-**Descrição:** Sistema para restaurantes gerenciarem seus pedidos, cardápios e operações diárias.
-**Tecnologias:** Next.js, TailwindCSS
-**URL de Desenvolvimento:** http://pedidos.localhost:3000 ou http://localhost:3000/pedidos
+Observabilidade e operação ficam fora do produto (Grafana, métricas e logs externos) e não têm rota própria.
 
-### 4. Tá na Entrega
-**Diretório:** `apps/ta-na-entrega`
-**Descrição:** Aplicativo para entregadores parceiros gerenciarem suas entregas e ganhos.
-**Tecnologias:** Next.js, TailwindCSS
-**URL de Desenvolvimento:** http://entrega.localhost:3000 ou http://localhost:3000/entrega
+## Hospedagem planejada
 
-### 5. Observabilidade externa
-**Diretório:** `stack de observabilidade externa`
-**Descrição:** Observabilidade e operações ficam fora do produto e devem usar Grafana, métricas e logs.
-**Tecnologias:** Next.js, TailwindCSS
-**URL de Desenvolvimento:** http://admin.localhost:3000 ou http://localhost:3000/admin
+| Projeto                                                                    | Hospedagem                                      | Forma                                                              |
+| -------------------------------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------ |
+| Site institucional, Delivery Express, Pedidos na Mão, Tá na Entrega e MKit | Vercel, como uma única aplicação Next.js        | Web responsivo; Pedidos na Mão e Tá na Entrega como PWA instalável |
+| Casa das Máquinas                                                          | Cloudflare Workers com D1 e Durable Objects     | API v1 e WebSocket                                                 |
+| Serviço de preço em Rust (#15)                                             | Cloudflare Workers (workers-rs), acesso interno | Sem endereço público                                               |
 
-## Backend
+## Desenvolvimento local
 
-### 6. Casa das Máquinas
-**Diretório:** `apps/casa-das-maquinas`
-**Descrição:** Backend centralizado que fornece APIs para todas as aplicações frontend. Implementa a lógica de negócio, autenticação, autorização e integração com serviços externos.
-**Tecnologias:** Next.js API Routes, tRPC
-**URL de Desenvolvimento:** http://api.localhost:3000 ou http://localhost:3000/api
-
-## Pacotes Compartilhados
-
-Os pacotes compartilhados estão localizados no diretório `packages/` e são utilizados por múltiplas aplicações:
-
-### UI
-**Diretório:** `packages/ui`
-**Descrição:** Biblioteca de componentes compartilhados entre as aplicações frontend.
-
-### Config
-**Diretório:** `packages/config`
-**Descrição:** Configurações compartilhadas para ESLint, TypeScript, Tailwind, etc.
-
-### Utils
-**Diretório:** `packages/utils`
-**Descrição:** Utilitários e funções auxiliares compartilhadas.
-
-### API
-**Diretório:** `packages/api`
-**Descrição:** Clientes de API e tipos compartilhados entre frontend e backend.
-
-## Desenvolvimento Multisite
-
-Durante o desenvolvimento, todos os projetos podem ser acessados através de um único servidor gateway, que roteia as requisições para o projeto correto com base no subdomínio ou caminho da URL.
-
-Para iniciar o ambiente de desenvolvimento multisite:
-
-\`\`\`bash
-# Instalar dependências
+```bash
 pnpm install
+cp .env.example .env.local
+pnpm dev
+```
 
-# Iniciar o gateway e todos os projetos
-pnpm run dev:multisite
-\`\`\`
-
-Após iniciar, os projetos estarão disponíveis nos seguintes endereços:
-
-- **Site institucional:** http://localhost:3000
-- **Delivery Express:** http://delivery.localhost:3000 ou http://localhost:3000/delivery
-- **Pedidos na Mão:** http://pedidos.localhost:3000 ou http://localhost:3000/pedidos
-- **Tá na Entrega:** http://entrega.localhost:3000 ou http://localhost:3000/entrega
-- **Observabilidade externa:** http://admin.localhost:3000 ou http://localhost:3000/admin
-- **Casa das Máquinas:** http://api.localhost:3000 ou http://localhost:3000/api
+Todos os produtos ficam acessíveis em `http://localhost:3000/<rota>`; não há gateway por subdomínio.
 
 ## Deploy por ambiente
 
-Cada aplicação deve ser deployada individualmente no ambiente escolhido, aproveitando a estrutura de monorepo. A configuração precisa ser versionada no CI e não depender de arquivos gerados por plataforma.
+Hoje o repositório é uma única aplicação Next.js com um único build (`pnpm build`); não existe deploy automatizado. O deploy independente por aplicação é um plano futuro, condicionado à migração para monorepo (issues #11 e #13). Quando existir, a configuração precisa ser versionada no CI e não depender de arquivos gerados por plataforma.

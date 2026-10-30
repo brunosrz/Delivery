@@ -4,10 +4,15 @@ Plataforma web para catálogos, pedidos e operação de restaurantes. O projeto 
 
 ## Desenvolvimento local
 
+Requisitos: Node.js 22 LTS e pnpm 11.
+
 ```bash
 pnpm install
+cp .env.example .env.local
 pnpm dev
 ```
+
+O `pnpm build` local exige as variáveis de Supabase e NextAuth listadas em [`.env.example`](.env.example). No CI, o build usa valores dummy e não acessa serviços externos; use valores dummy apenas em testes ou CI.
 
 Validações disponíveis:
 
