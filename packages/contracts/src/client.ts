@@ -23,8 +23,15 @@ function unavailable(message: string, requestId: string | null): ApiResult<never
   return { ok: false, status: 0, error: { code: "unavailable", message }, requestId }
 }
 
+// Remove barras finais sem regex: uma expressão do tipo "barra+ no fim" tem custo quadrático em entradas com muitas barras.
+function trimTrailingSlashes(value: string): string {
+  let end = value.length
+  while (end > 0 && value.charCodeAt(end - 1) === 47) end--
+  return value.slice(0, end)
+}
+
 export function createApiClient(options: ApiClientOptions) {
-  const baseUrl = options.baseUrl.replace(/\/+$/, "")
+  const baseUrl = trimTrailingSlashes(options.baseUrl)
   const timeoutMs = options.timeoutMs ?? 5000
   const retries = options.retries ?? 1
   const doFetch = options.fetch ?? fetch
