@@ -73,7 +73,7 @@ export default function ResetPasswordPage() {
       setTimeout(() => {
         router.push("/auth/login")
       }, 2000)
-    } catch (error: any) {
+    } catch (error) {
       console.error("Erro ao redefinir senha:", error)
       setError("Ocorreu um erro ao redefinir sua senha. Tente novamente.")
     } finally {

@@ -78,9 +78,9 @@ export default function RegisterPage() {
           router.push("/auth/login")
         }, 3000)
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Erro no registro:", error)
-      setError(error.message || "Ocorreu um erro ao registrar. Por favor, tente novamente.")
+      setError((error instanceof Error && error.message) || "Ocorreu um erro ao registrar. Por favor, tente novamente.")
     } finally {
       setIsLoading(false)
     }
