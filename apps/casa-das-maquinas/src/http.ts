@@ -39,6 +39,10 @@ export function ok<T>(c: Context<AppEnv>, data: T) {
   return c.json({ data, error: null, meta: meta(c) }, 200)
 }
 
+export function created<T>(c: Context<AppEnv>, data: T) {
+  return c.json({ data, error: null, meta: meta(c) }, 201)
+}
+
 export function fail<C extends ErrorCode>(c: Context<AppEnv>, code: C, message: string, fields?: ApiError["fields"]) {
   const error: ApiError = fields ? { code, message, fields } : { code, message }
   return c.json({ data: null, error, meta: meta(c) }, STATUS_BY_CODE[code] as (typeof STATUS_BY_CODE)[C])

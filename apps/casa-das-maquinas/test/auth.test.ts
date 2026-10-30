@@ -1,49 +1,9 @@
 import { SessionUser, envelope } from "@delivery/contracts"
 import { env, exports } from "cloudflare:workers"
 import { describe, expect, it } from "vitest"
-
-const ORIGIN = "http://localhost:3000"
-const PASSWORD = "senha-forte-123"
-
-const call = (path: string, init: RequestInit = {}) =>
-  exports.default.fetch(
-    new Request(`https://api.test${path}`, {
-      ...init,
-      headers: { origin: ORIGIN, ...Object.fromEntries(new Headers(init.headers).entries()) },
-    }),
-  )
-
-const postJson = (path: string, body: unknown, headers: Record<string, string> = {}) =>
-  call(path, {
-    method: "POST",
-    headers: { "content-type": "application/json", ...headers },
-    body: JSON.stringify(body),
-  })
-
-function sessionCookie(response: Response): string {
-  const cookie = response.headers.getSetCookie().find((value) => value.includes("session_token"))
-  if (!cookie) throw new Error("cookie de sessão ausente")
-  return cookie.split(";")[0] ?? ""
-}
-
-async function signUp(email: string) {
-  const response = await postJson("/api/auth/sign-up/email", { email, password: PASSWORD, name: "Pessoa Teste" })
-  expect(response.status).toBe(200)
-  const { user } = (await response.json()) as { user: { id: string } }
-  return { userId: user.id, cookie: sessionCookie(response) }
-}
+import { PASSWORD, call, makeStaff, postJson, sessionCookie, setRole, signUp } from "./helpers"
 
 const me = (cookie?: string) => call("/v1/me", cookie ? { headers: { cookie } } : {})
-
-const setRole = (userId: string, role: string) =>
-  env.DB.prepare("update user set role = ? where id = ?").bind(role, userId).run()
-
-async function makeStaff(userId: string, restaurantId: string) {
-  await setRole(userId, "restaurant_staff")
-  await env.DB.prepare("insert into restaurant_members (user_id, restaurant_id, created_at) values (?, ?, ?)")
-    .bind(userId, restaurantId, Date.now())
-    .run()
-}
 
 describe("cadastro e sessão", () => {
   it("cadastra como cliente e devolve o usuário em /v1/me", async () => {

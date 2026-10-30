@@ -1,9 +1,24 @@
-import { API_VERSION, Id, Menu, Restaurant, SessionUser, Slug, envelope } from "@delivery/contracts"
+import {
+  API_VERSION,
+  CreateOrderRequest,
+  Id,
+  IdempotencyKey,
+  Menu,
+  Order,
+  Quote,
+  QuoteRequest,
+  Restaurant,
+  SessionUser,
+  Slug,
+  StatusTransitionRequest,
+  envelope,
+} from "@delivery/contracts"
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi"
 import { cors } from "hono/cors"
 import { createMiddleware } from "hono/factory"
 import { canManageRestaurant, createAuth, getSessionUser } from "./auth.js"
-import { type AppEnv, fail, logError, ok, requestId } from "./http.js"
+import { type AppEnv, created, fail, logError, ok, requestId } from "./http.js"
+import { createOrdersService } from "./orders.js"
 import { createCatalogRepository } from "./repositories/catalog.js"
 
 const app = new OpenAPIHono<AppEnv>({
@@ -41,6 +56,8 @@ const withSession = createMiddleware<AppEnv>(async (c, next) => {
 })
 app.use("/v1/me", withSession)
 app.use("/v1/manage/*", withSession)
+app.use("/v1/orders", withSession)
+app.use("/v1/orders/*", withSession)
 
 app.onError((error, c) => {
   logError(c, "unhandled_error", error)
@@ -144,6 +161,143 @@ app.openapi(
     const restaurant = await createCatalogRepository(c.env.DB).getRestaurantById(restaurantId)
     if (!restaurant) return fail(c, "not_found", "restaurante não encontrado")
     return ok(c, restaurant)
+  },
+)
+
+const json = <T extends z.ZodType>(schema: T) => ({ content: { "application/json": { schema } }, required: true })
+
+app.openapi(
+  createRoute({
+    method: "post",
+    path: "/v1/quotes",
+    request: { body: json(QuoteRequest) },
+    responses: {
+      200: {
+        content: { "application/json": { schema: envelope(Quote) } },
+        description: "Cotação calculada no servidor",
+      },
+      400: errorResponse,
+      404: errorResponse,
+    },
+  }),
+  async (c) => {
+    const result = await createOrdersService(c.env).quote(c.req.valid("json"))
+    if (!result.ok)
+      return fail(c, result.error.code as "bad_request" | "not_found", result.error.message, result.error.fields)
+    return ok(c, result.value)
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "post",
+    path: "/v1/orders",
+    request: { headers: z.object({ "idempotency-key": IdempotencyKey }), body: json(CreateOrderRequest) },
+    responses: {
+      201: { content: { "application/json": { schema: envelope(Order) } }, description: "Pedido criado" },
+      200: { content: { "application/json": { schema: envelope(Order) } }, description: "Repetição idempotente" },
+      400: errorResponse,
+      401: errorResponse,
+      404: errorResponse,
+      409: errorResponse,
+      422: errorResponse,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const key = c.req.valid("header")["idempotency-key"]
+    const result = await createOrdersService(c.env).create(user, key, c.req.valid("json"))
+    if (!result.ok) {
+      const code = result.error.code as "bad_request" | "not_found" | "conflict" | "idempotency_mismatch"
+      return fail(c, code, result.error.message, result.error.fields)
+    }
+    c.header("idempotent-replayed", String(result.value.replayed))
+    return result.value.replayed ? ok(c, result.value.order) : created(c, result.value.order)
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "get",
+    path: "/v1/orders",
+    responses: {
+      200: { content: { "application/json": { schema: envelope(z.array(Order)) } }, description: "Pedidos do cliente" },
+      401: errorResponse,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    return ok(c, await createOrdersService(c.env).listForCustomer(user))
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "get",
+    path: "/v1/orders/{orderId}",
+    request: { params: z.object({ orderId: Id }) },
+    responses: {
+      200: { content: { "application/json": { schema: envelope(Order) } }, description: "Pedido" },
+      401: errorResponse,
+      404: errorResponse,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const result = await createOrdersService(c.env).get(user, c.req.valid("param").orderId)
+    if (!result.ok) return fail(c, "not_found", result.error.message)
+    return ok(c, result.value)
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "post",
+    path: "/v1/orders/{orderId}/transitions",
+    request: { params: z.object({ orderId: Id }), body: json(StatusTransitionRequest) },
+    responses: {
+      200: { content: { "application/json": { schema: envelope(Order) } }, description: "Status atualizado" },
+      401: errorResponse,
+      403: errorResponse,
+      404: errorResponse,
+      409: errorResponse,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const result = await createOrdersService(c.env).transition(user, c.req.valid("param").orderId, c.req.valid("json"))
+    if (!result.ok) {
+      const code = result.error.code as "not_found" | "forbidden" | "invalid_transition"
+      return fail(c, code, result.error.message)
+    }
+    return ok(c, result.value)
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "get",
+    path: "/v1/manage/restaurants/{restaurantId}/orders",
+    request: { params: z.object({ restaurantId: Id }) },
+    responses: {
+      200: {
+        content: { "application/json": { schema: envelope(z.array(Order)) } },
+        description: "Fila do restaurante",
+      },
+      401: errorResponse,
+      403: errorResponse,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const { restaurantId } = c.req.valid("param")
+    if (!canManageRestaurant(user, restaurantId)) return fail(c, "forbidden", "sem acesso a este restaurante")
+    return ok(c, await createOrdersService(c.env).listForRestaurant(restaurantId))
   },
 )
 
