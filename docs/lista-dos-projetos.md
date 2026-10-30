@@ -4,16 +4,16 @@ Este documento lista as aplicações do ecossistema, onde cada uma vive no repos
 
 ## Estrutura atual
 
-O repositório é **uma única aplicação Next.js 15 (App Router)** com um único build (`pnpm build`). Cada produto é uma rota de primeiro nível em `app/`. Não existem `apps/*` nem pacotes compartilhados publicados; a separação em monorepo é um plano futuro (issues #11 e #13).
+O repositório é um **workspace pnpm**. Os frontends são uma única aplicação Next.js 15 (App Router) em `apps/web`, com um único build e uma rota de primeiro nível por produto. As regras puras ficam em `packages/domain` (totais em centavos e máquina de estados do pedido) e os contratos da API v1 em `packages/contracts` (schemas zod). O backend da Casa das Máquinas entra em `apps/casa-das-maquinas` na Fase 2 (issue #4).
 
-| Produto            | Público     | Rota atual               | Observação                                                     |
-| ------------------ | ----------- | ------------------------ | -------------------------------------------------------------- |
-| Site institucional | Público     | `app/site-institucional` | Página de apresentação; contato ainda não existe               |
-| Delivery Express   | Cliente     | `app/delivery-express`   | Catálogo lido do Supabase; sem carrinho nem pedido persistidos |
-| Pedidos na Mão     | Restaurante | `app/pedidos-na-mao`     | Lista de funcionalidades planejadas                            |
-| Tá na Entrega      | Entregador  | `app/ta-na-entrega`      | Lista de funcionalidades planejadas                            |
-| MKit               | Restaurante | `app/mkit`               | Conteúdo estático do conceito                                  |
-| Casa das Máquinas  | Backend     | `app/casa-das-maquinas`  | Página de arquitetura; a API ainda não existe                  |
+| Produto            | Público     | Rota atual                        | Observação                                                     |
+| ------------------ | ----------- | --------------------------------- | -------------------------------------------------------------- |
+| Site institucional | Público     | `apps/web/app/site-institucional` | Página de apresentação; contato ainda não existe               |
+| Delivery Express   | Cliente     | `apps/web/app/delivery-express`   | Catálogo lido do Supabase; sem carrinho nem pedido persistidos |
+| Pedidos na Mão     | Restaurante | `apps/web/app/pedidos-na-mao`     | Lista de funcionalidades planejadas                            |
+| Tá na Entrega      | Entregador  | `apps/web/app/ta-na-entrega`      | Lista de funcionalidades planejadas                            |
+| MKit               | Restaurante | `apps/web/app/mkit`               | Conteúdo estático do conceito                                  |
+| Casa das Máquinas  | Backend     | `apps/web/app/casa-das-maquinas`  | Página de arquitetura; a API ainda não existe                  |
 
 Observabilidade e operação ficam fora do produto (Grafana, métricas e logs externos) e não têm rota própria.
 
@@ -29,7 +29,7 @@ Observabilidade e operação ficam fora do produto (Grafana, métricas e logs ex
 
 ```bash
 pnpm install
-cp .env.example .env.local
+cp .env.example apps/web/.env.local
 pnpm dev
 ```
 
@@ -37,4 +37,4 @@ Todos os produtos ficam acessíveis em `http://localhost:3000/<rota>`; não há 
 
 ## Deploy por ambiente
 
-Hoje o repositório é uma única aplicação Next.js com um único build (`pnpm build`); não existe deploy automatizado. O deploy independente por aplicação é um plano futuro, condicionado à migração para monorepo (issues #11 e #13). Quando existir, a configuração precisa ser versionada no CI e não depender de arquivos gerados por plataforma.
+Hoje só existe um app publicável (`apps/web`, `pnpm build`) e não há deploy automatizado. O deploy independente de cada app do workspace (web na Vercel, Casa das Máquinas na Cloudflare) entra com a Fase 2 (issues #4, #11 e #13). Quando existir, a configuração precisa ser versionada no CI e não depender de arquivos gerados por plataforma.

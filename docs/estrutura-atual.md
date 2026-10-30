@@ -1,6 +1,6 @@
 # Inventário da aplicação existente
 
-Mapa verificável do que existe no repositório hoje. O estado de cada produto vem de [`lib/ecosystem-status.ts`](../lib/ecosystem-status.ts). Esse mesmo arquivo alimenta a página inicial, e o teste `tests/unit/ecosystem-status.test.ts` falha se uma rota listada deixar de existir.
+Mapa verificável do que existe no repositório hoje. O estado de cada produto vem de [`apps/web/lib/ecosystem-status.ts`](../apps/web/lib/ecosystem-status.ts). Esse mesmo arquivo alimenta a página inicial, e o teste `apps/web/tests/unit/ecosystem-status.test.ts` falha se uma rota listada deixar de existir.
 
 Legenda: **implementado** (funciona de ponta a ponta), **parcial** (funciona com limitações declaradas), **demonstração** (conteúdo estático), **em construção** (só a casca da página) e **planejado** (apenas desenho).
 

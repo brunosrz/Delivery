@@ -8,7 +8,7 @@ export default defineConfig({
     include: ["tests/**/*.test.ts"],
     coverage: {
       provider: "v8",
-      include: ["lib/order-totals.ts", "lib/ecosystem-status.ts", "middleware.ts", "lib/route-access.ts"],
+      include: ["lib/ecosystem-status.ts", "lib/route-access.ts", "middleware.ts"],
       reporter: ["text", "json-summary"],
       thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
     },

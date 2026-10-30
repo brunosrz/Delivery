@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { calculateOrderTotals } from "@/lib/order-totals"
+import { calculateOrderTotals } from "../src/index.js"
 
 describe("calculateOrderTotals", () => {
   it("calculates subtotal, delivery and discount in integer cents", () => {

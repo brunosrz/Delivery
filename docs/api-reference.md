@@ -6,7 +6,7 @@ A API da Casa das Máquinas é o backend centralizado que fornece serviços para
 
 ## Base URL
 
-> Estado atual: esta referência descreve o contrato planejado. As rotas mock que existiam em `app/casa-das-maquinas/api` foram removidas; a API real será a Casa das Máquinas em Cloudflare Workers (issues #1 e #4).
+> Estado atual: os contratos da API v1 são código em [`packages/contracts`](../packages/contracts/src) (schemas zod com testes), a fonte de verdade desta referência. A API que os implementa será a Casa das Máquinas em Cloudflare Workers (issue #4), que publicará a OpenAPI gerada desses schemas em `/v1/openapi.json`. O texto abaixo é o desenho histórico e será substituído por essa OpenAPI.
 
 - **Desenvolvimento**: planejado, via `wrangler dev`
 - **Produção**: planejado, em Cloudflare Workers

@@ -19,9 +19,10 @@ repos:
         types: [text]
       - id: eslint
         name: eslint
-        entry: pnpm exec eslint --max-warnings 0
+        entry: pnpm lint
         language: system
         files: \.(ts|tsx|js|mjs)$
+        pass_filenames: false
       - id: typecheck
         name: typescript typecheck
         entry: pnpm typecheck
