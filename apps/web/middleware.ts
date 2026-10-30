@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server"
-import { getToken } from "next-auth/jwt"
+import { getSessionCookie } from "better-auth/cookies"
 import type { NextRequest } from "next/server"
 import { isAuthRoute as matchesAuthRoute, isProtectedRoute as matchesProtectedRoute } from "@/lib/route-access"
 
-export async function middleware(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Verifica se a rota atual requer autenticação
@@ -12,11 +12,9 @@ export async function middleware(request: NextRequest) {
   // Verifica se a rota atual é uma rota de autenticação
   const isAuthRoute = matchesAuthRoute(pathname)
 
-  // Obtém o token de autenticação
-  const token = await getToken({
-    req: request,
-    secret: process.env.NEXTAUTH_SECRET,
-  })
+  // Checagem otimista: só a presença do cookie. A validação real da sessão e do
+  // papel é feita pela Casa das Máquinas nas páginas (lib/session.ts).
+  const token = getSessionCookie(request)
 
   // Redireciona para login se tentar acessar rota protegida sem autenticação
   if (isProtectedRoute && !token) {

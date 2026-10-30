@@ -63,10 +63,7 @@
       "indexes": {
         "addon_groups_product_idx": {
           "name": "addon_groups_product_idx",
-          "columns": [
-            "product_id",
-            "position"
-          ],
+          "columns": ["product_id", "position"],
           "isUnique": false
         }
       },
@@ -75,12 +72,8 @@
           "name": "addon_groups_restaurant_id_restaurants_id_fk",
           "tableFrom": "addon_groups",
           "tableTo": "restaurants",
-          "columnsFrom": [
-            "restaurant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["restaurant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -88,12 +81,8 @@
           "name": "addon_groups_product_id_products_id_fk",
           "tableFrom": "addon_groups",
           "tableTo": "products",
-          "columnsFrom": [
-            "product_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["product_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -166,10 +155,7 @@
       "indexes": {
         "addon_options_group_idx": {
           "name": "addon_options_group_idx",
-          "columns": [
-            "group_id",
-            "position"
-          ],
+          "columns": ["group_id", "position"],
           "isUnique": false
         }
       },
@@ -178,12 +164,8 @@
           "name": "addon_options_restaurant_id_restaurants_id_fk",
           "tableFrom": "addon_options",
           "tableTo": "restaurants",
-          "columnsFrom": [
-            "restaurant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["restaurant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -191,12 +173,8 @@
           "name": "addon_options_group_id_addon_groups_id_fk",
           "tableFrom": "addon_options",
           "tableTo": "addon_groups",
-          "columnsFrom": [
-            "group_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["group_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -262,10 +240,7 @@
       "indexes": {
         "menu_sections_restaurant_idx": {
           "name": "menu_sections_restaurant_idx",
-          "columns": [
-            "restaurant_id",
-            "position"
-          ],
+          "columns": ["restaurant_id", "position"],
           "isUnique": false
         }
       },
@@ -274,12 +249,8 @@
           "name": "menu_sections_restaurant_id_restaurants_id_fk",
           "tableFrom": "menu_sections",
           "tableTo": "restaurants",
-          "columnsFrom": [
-            "restaurant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["restaurant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -330,9 +301,7 @@
       "indexes": {
         "opening_hours_restaurant_idx": {
           "name": "opening_hours_restaurant_idx",
-          "columns": [
-            "restaurant_id"
-          ],
+          "columns": ["restaurant_id"],
           "isUnique": false
         }
       },
@@ -341,12 +310,8 @@
           "name": "opening_hours_restaurant_id_restaurants_id_fk",
           "tableFrom": "opening_hours",
           "tableTo": "restaurants",
-          "columnsFrom": [
-            "restaurant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["restaurant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -474,18 +439,12 @@
       "indexes": {
         "products_restaurant_slug_unique": {
           "name": "products_restaurant_slug_unique",
-          "columns": [
-            "restaurant_id",
-            "slug"
-          ],
+          "columns": ["restaurant_id", "slug"],
           "isUnique": true
         },
         "products_section_idx": {
           "name": "products_section_idx",
-          "columns": [
-            "section_id",
-            "position"
-          ],
+          "columns": ["section_id", "position"],
           "isUnique": false
         }
       },
@@ -494,12 +453,8 @@
           "name": "products_restaurant_id_restaurants_id_fk",
           "tableFrom": "products",
           "tableTo": "restaurants",
-          "columnsFrom": [
-            "restaurant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["restaurant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -507,12 +462,8 @@
           "name": "products_section_id_menu_sections_id_fk",
           "tableFrom": "products",
           "tableTo": "menu_sections",
-          "columnsFrom": [
-            "section_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["section_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -651,9 +602,7 @@
       "indexes": {
         "restaurants_slug_unique": {
           "name": "restaurants_slug_unique",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": true
         }
       },

@@ -42,7 +42,9 @@ export const ECOSYSTEM_PRODUCTS: readonly EcosystemProduct[] = [
     route: "/pedidos-na-mao",
     state: "stub",
     summary: "Painel do restaurante para fila de pedidos, status e cardápio.",
-    limitations: ["Hoje exibe apenas a lista de funcionalidades planejadas."],
+    limitations: [
+      "Exige login de equipe do restaurante; o painel ainda exibe só a lista de funcionalidades planejadas.",
+    ],
     issues: [17],
   },
   {
@@ -52,7 +54,7 @@ export const ECOSYSTEM_PRODUCTS: readonly EcosystemProduct[] = [
     route: "/ta-na-entrega",
     state: "stub",
     summary: "App do entregador para aceitar pedidos, retirar e entregar.",
-    limitations: ["Hoje exibe apenas a lista de funcionalidades planejadas."],
+    limitations: ["Exige login de entregador; o app ainda exibe só a lista de funcionalidades planejadas."],
     issues: [17],
   },
   {
@@ -84,7 +86,7 @@ export const ECOSYSTEM_PRODUCTS: readonly EcosystemProduct[] = [
     summary: "Backend centralizado em Cloudflare Workers com D1: API v1 de catálogo e OpenAPI.",
     limitations: [
       "Ainda não publicado; o Delivery Express já consome a API de catálogo.",
-      "Pedidos, autenticação, tempo real e isolamento completo por tenant estão nas próximas etapas.",
+      "Pedidos e tempo real estão nas próximas etapas; autenticação e isolamento por restaurante já existem.",
     ],
     issues: [4, 1, 6, 14],
   },

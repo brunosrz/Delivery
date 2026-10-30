@@ -1,4 +1,18 @@
-export default function PedidosNaMaoPage() {
+import { redirect } from "next/navigation"
+import { AccessDenied } from "@/components/auth/access-denied"
+import { getSessionUser } from "@/lib/session"
+
+export const dynamic = "force-dynamic"
+
+export default async function PedidosNaMaoPage() {
+  const user = await getSessionUser()
+  if (!user) redirect("/auth/login?callbackUrl=%2Fpedidos-na-mao")
+  if (!["restaurant_staff", "admin"].includes(user.role)) {
+    return (
+      <AccessDenied product="Pedidos na Mão" requirement="Disponível apenas para a equipe de restaurantes parceiros." />
+    )
+  }
+
   return (
     <div className="container mx-auto py-10">
       <h1 className="text-4xl font-bold mb-6">Pedidos na Mão</h1>

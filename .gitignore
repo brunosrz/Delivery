@@ -37,3 +37,4 @@ playwright-report/
 # wrangler
 .wrangler/
 .dev.vars*
+!.dev.vars.example

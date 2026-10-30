@@ -19,5 +19,8 @@
   ],
   "vars": {
     "API_VERSION": "v1",
+    // Origem pública do app web: o login passa pelo proxy /api/auth do Next, então os cookies são do próprio site.
+    "BETTER_AUTH_URL": "http://localhost:3000",
+    "TRUSTED_ORIGINS": "http://localhost:3000,http://127.0.0.1:3000,http://127.0.0.1:3100",
   },
 }

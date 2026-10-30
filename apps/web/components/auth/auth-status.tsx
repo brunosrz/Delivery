@@ -1,6 +1,7 @@
 "use client"
 
-import { useSession, signOut } from "next-auth/react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -11,52 +12,54 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import Link from "next/link"
+import { authClient } from "@/lib/auth-client"
+
+function initials(name: string): string {
+  return (
+    name
+      .split(" ")
+      .filter(Boolean)
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "U"
+  )
+}
 
 export function AuthStatus() {
-  const { data: session, status } = useSession()
-  const isLoading = status === "loading"
+  const router = useRouter()
+  const { data: session, isPending } = authClient.useSession()
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center gap-2">
-        <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse"></div>
-        <div className="h-4 w-20 bg-gray-200 rounded animate-pulse"></div>
-      </div>
-    )
+  if (isPending) {
+    return <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse" aria-label="Carregando sessão" />
   }
 
   if (!session) {
     return (
       <div className="flex items-center gap-2">
-        <Link href="/auth/login">
-          <Button variant="ghost" size="sm">
-            Entrar
-          </Button>
-        </Link>
-        <Link href="/auth/register">
-          <Button size="sm">Registrar</Button>
-        </Link>
+        <Button asChild variant="ghost" size="sm">
+          <Link href="/auth/login">Entrar</Link>
+        </Button>
+        <Button asChild size="sm">
+          <Link href="/auth/register">Criar conta</Link>
+        </Button>
       </div>
     )
   }
 
-  const userInitials = session.user?.name
-    ? session.user.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .substring(0, 2)
-    : "U"
+  // Permanece na página atual: rotas protegidas voltam a exigir login no próximo acesso.
+  async function signOut() {
+    await authClient.signOut()
+    router.refresh()
+  }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+        <Button variant="ghost" className="relative h-8 w-8 rounded-full" aria-label={`Conta de ${session.user.name}`}>
           <Avatar className="h-8 w-8">
-            <AvatarImage src={session.user.image || ""} alt={session.user.name || ""} />
-            <AvatarFallback>{userInitials}</AvatarFallback>
+            <AvatarImage src={session.user.image ?? undefined} alt="" />
+            <AvatarFallback>{initials(session.user.name)}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
@@ -68,7 +71,7 @@ export function AuthStatus() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="cursor-pointer" onClick={() => signOut({ callbackUrl: "/" })}>
+        <DropdownMenuItem className="cursor-pointer" onSelect={signOut}>
           Sair
         </DropdownMenuItem>
       </DropdownMenuContent>

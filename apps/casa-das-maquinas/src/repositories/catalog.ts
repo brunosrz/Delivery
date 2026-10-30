@@ -47,6 +47,13 @@ export function createCatalogRepository(d1: D1Database) {
       return rows.map((row) => toRestaurant(row, hoursByRestaurant.get(row.id) ?? []))
     },
 
+    async getRestaurantById(id: string): Promise<Restaurant | null> {
+      const [row] = await db.select().from(schema.restaurants).where(eq(schema.restaurants.id, id)).limit(1)
+      if (!row) return null
+      const hours = await db.select().from(schema.openingHours).where(eq(schema.openingHours.restaurantId, id))
+      return toRestaurant(row, hours)
+    },
+
     /**
      * Cardápio completo de um restaurante. Toda consulta filha é filtrada pelo
      * restaurant_id resolvido a partir do slug, nunca por ids vindos do cliente.

@@ -1,10 +1,10 @@
-import { API_VERSION, type ApiError, type ErrorCode } from "@delivery/contracts"
+import { API_VERSION, type ApiError, type ErrorCode, type SessionUser } from "@delivery/contracts"
 import type { Context, MiddlewareHandler } from "hono"
 import type { ContentfulStatusCode } from "hono/utils/http-status"
 
 export type AppEnv = {
   Bindings: Env
-  Variables: { requestId: string }
+  Variables: { requestId: string; user: SessionUser | null }
 }
 
 const STATUS_BY_CODE = {

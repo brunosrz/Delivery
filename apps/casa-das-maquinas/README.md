@@ -13,9 +13,17 @@ Backend centralizado do ecossistema Delivery Express: API v1 em Cloudflare Worke
 
 Toda resposta usa o envelope `{ data, error, meta: { requestId, apiVersion } }`. O header `X-Request-Id` é propagado quando válido, ou gerado.
 
+## Autenticação e tenant
+
+- O papel nunca vem do cliente: todo cadastro nasce `customer`. Equipe de restaurante é o papel `restaurant_staff` mais um vínculo em `restaurant_members`.
+- `canManageRestaurant` é a única regra de acesso a dados de gestão. A autorização acontece antes da consulta, para quem não gere o restaurante não descobrir se ele existe.
+- O app web expõe `/api/auth/*` como proxy para cá, então o cookie de sessão é do próprio site. `BETTER_AUTH_URL` deve ser a origem pública do app web, e `TRUSTED_ORIGINS` lista as origens aceitas.
+- Segredos: `BETTER_AUTH_SECRET` (obrigatório) e `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` (opcionais), via `wrangler secret put` em produção e `.dev.vars` localmente (veja `.dev.vars.example`).
+
 ## Desenvolvimento
 
 ```bash
+cp apps/casa-das-maquinas/.dev.vars.example apps/casa-das-maquinas/.dev.vars
 pnpm --filter @delivery/casa-das-maquinas db:migrate:local
 pnpm --filter @delivery/casa-das-maquinas exec wrangler d1 execute DB --local --file seed/demo.sql
 pnpm --filter @delivery/casa-das-maquinas dev

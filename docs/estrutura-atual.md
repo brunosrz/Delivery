@@ -6,24 +6,22 @@ Legenda: **implementado** (funciona de ponta a ponta), **parcial** (funciona com
 
 ## Páginas
 
-| Rota                                                              | Estado        | Fonte de dados                                        | Limitações e dono dos dados                                                                           |
-| ----------------------------------------------------------------- | ------------- | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `/`                                                               | implementado  | `lib/ecosystem-status.ts`                             | Hub com o estado real de cada produto                                                                 |
-| `/delivery-express`                                               | parcial       | Casa das Máquinas (`GET /v1/restaurants`)             | Renderizada por requisição; mostra "Catálogo indisponível" se a API falhar ou não estiver configurada |
-| `/delivery-express/restaurant/[slug]`                             | parcial       | Casa das Máquinas (`GET /v1/restaurants/{slug}/menu`) | 404 real para restaurante inexistente                                                                 |
-| `/delivery-express/restaurant/[slug]/product/[productSlug]`       | parcial       | Cardápio da Casa das Máquinas                         | Adicionais com regra de seleção; sacola desabilitada até a #18                                        |
-| `/pedidos-na-mao`                                                 | em construção | —                                                     | Exige login; lista funcionalidades planejadas                                                         |
-| `/ta-na-entrega`                                                  | em construção | —                                                     | Exige login; lista funcionalidades planejadas                                                         |
-| `/site-institucional`                                             | em construção | —                                                     | Sem contato nem conteúdo comercial                                                                    |
-| `/mkit`                                                           | demonstração  | —                                                     | Conceito estático (#12)                                                                               |
-| `/casa-das-maquinas`                                              | parcial       | —                                                     | Página da arquitetura; a API de catálogo vive em `apps/casa-das-maquinas`                             |
-| `/auth/login`                                                     | parcial       | NextAuth + Supabase Auth                              | O botão Google só aparece com o provider configurado                                                  |
-| `/auth/register`, `/auth/forgot-password`, `/auth/reset-password` | parcial       | Supabase Auth no navegador                            | Sessão separada da do NextAuth; a unificação é a Fase 2                                               |
-| `/auth/error`, `/auth/verify-request`                             | implementado  | —                                                     | Páginas estáticas                                                                                     |
+| Rota                                                        | Estado        | Fonte de dados                                          | Limitações e dono dos dados                                                                           |
+| ----------------------------------------------------------- | ------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `/`                                                         | implementado  | `lib/ecosystem-status.ts`                               | Hub com o estado real de cada produto                                                                 |
+| `/delivery-express`                                         | parcial       | Casa das Máquinas (`GET /v1/restaurants`)               | Renderizada por requisição; mostra "Catálogo indisponível" se a API falhar ou não estiver configurada |
+| `/delivery-express/restaurant/[slug]`                       | parcial       | Casa das Máquinas (`GET /v1/restaurants/{slug}/menu`)   | 404 real para restaurante inexistente                                                                 |
+| `/delivery-express/restaurant/[slug]/product/[productSlug]` | parcial       | Cardápio da Casa das Máquinas                           | Adicionais com regra de seleção; sacola desabilitada até a #18                                        |
+| `/pedidos-na-mao`                                           | em construção | Sessão via Casa das Máquinas                            | Exige login e papel de equipe ou administração; lista funcionalidades planejadas                      |
+| `/ta-na-entrega`                                            | em construção | Sessão via Casa das Máquinas                            | Exige login e papel de entregador ou administração; lista funcionalidades planejadas                  |
+| `/site-institucional`                                       | em construção | —                                                       | Sem contato nem conteúdo comercial                                                                    |
+| `/mkit`                                                     | demonstração  | —                                                       | Conceito estático (#12)                                                                               |
+| `/casa-das-maquinas`                                        | parcial       | —                                                       | Página da arquitetura; a API de catálogo vive em `apps/casa-das-maquinas`                             |
+| `/auth/login`, `/auth/register`                             | implementado  | Better Auth na Casa das Máquinas, via proxy `/api/auth` | E-mail e senha; recuperação de senha depende de envio de e-mail (planejado)                           |
 
 ## Rotas de API
 
-O catálogo é servido pela Casa das Máquinas (`apps/casa-das-maquinas`, rotas `/v1`). No app web resta apenas `GET/POST /api/auth/[...nextauth]` (parcial: credenciais via Supabase, Google opcional) até a autenticação unificada da Fase 2.
+O catálogo é servido pela Casa das Máquinas (`apps/casa-das-maquinas`, rotas `/v1`). No app web resta apenas o proxy `GET/POST /api/auth/*`, que repassa login, cadastro e sessão ao Better Auth da Casa das Máquinas para manter o cookie no domínio do site.
 
 ## Removido na Fase 0
 
@@ -35,6 +33,7 @@ Removido porque estava quebrado, simulado ou sem nenhum uso:
 - `packages/` sem `package.json`;
 - 39 componentes shadcn sem uso;
 - as rotas `/api/restaurants` e `/api/products` do Next, que duplicavam o catálogo da Casa das Máquinas;
+- NextAuth, o adapter e o cliente Supabase, e as páginas de recuperação de senha que dependiam do Supabase Auth;
 - links para `/cart`, `/orders`, `/profile` e `/site-institucional/contato`, páginas que não existem.
 
 ## Prova automatizada

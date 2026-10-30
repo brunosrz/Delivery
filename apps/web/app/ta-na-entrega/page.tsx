@@ -1,4 +1,16 @@
-export default function TaNaEntregaPage() {
+import { redirect } from "next/navigation"
+import { AccessDenied } from "@/components/auth/access-denied"
+import { getSessionUser } from "@/lib/session"
+
+export const dynamic = "force-dynamic"
+
+export default async function TaNaEntregaPage() {
+  const user = await getSessionUser()
+  if (!user) redirect("/auth/login?callbackUrl=%2Fta-na-entrega")
+  if (!["courier", "admin"].includes(user.role)) {
+    return <AccessDenied product="Tá na Entrega" requirement="Disponível apenas para entregadores parceiros." />
+  }
+
   return (
     <div className="container mx-auto py-10">
       <h1 className="text-4xl font-bold mb-6">Tá na Entrega</h1>
