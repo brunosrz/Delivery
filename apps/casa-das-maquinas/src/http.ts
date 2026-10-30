@@ -28,7 +28,8 @@ export const requestId: MiddlewareHandler<AppEnv> = async (c, next) => {
   const id = incoming && REQUEST_ID_PATTERN.test(incoming) ? incoming : crypto.randomUUID()
   c.set("requestId", id)
   await next()
-  c.header("x-request-id", id)
+  // Respostas 101 (upgrade para WebSocket) têm headers imutáveis: não recebem x-request-id.
+  if (c.res.status !== 101) c.header("x-request-id", id)
 }
 
 function meta(c: Context<AppEnv>) {

@@ -377,6 +377,8 @@ app.get("/v1/live", async (c) => {
 
   const headers = new Headers({ upgrade: "websocket" })
   if (ticket.scope === "order") headers.set("x-live-order", ticket.orderId)
+  headers.set("x-live-sub", ticket.sub)
+  headers.set("x-live-restaurant", ticket.restaurantId)
   const since = c.req.query("since")
   if (since && /^\d{1,15}$/.test(since)) headers.set("x-live-since", since)
 

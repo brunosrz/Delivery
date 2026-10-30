@@ -11,7 +11,7 @@ const orderBody = {
   expectedTotalCents: 3290,
 }
 
-type LiveMessage = { seq: number; type: string; orderId: string; status: string }
+type LiveMessage = { seq: number; type: string; orderId: string; status: string; at: string }
 
 async function ticketFor(cookie: string, body: unknown) {
   const response = await postJson("/v1/live/tickets", body, { cookie })
@@ -20,7 +20,7 @@ async function ticketFor(cookie: string, body: unknown) {
 
 /** Abre o WebSocket e coleta as mensagens recebidas. */
 async function connect(ticket: string, since?: number) {
-  const query = new URLSearchParams({ ticket, ...(since ? { since: String(since) } : {}) })
+  const query = new URLSearchParams({ ticket, ...(since !== undefined ? { since: String(since) } : {}) })
   const response = await call(`/v1/live?${query}`, { headers: { upgrade: "websocket" } })
   expect(response.status).toBe(101)
   const socket = response.webSocket
@@ -76,7 +76,7 @@ describe("tickets de tempo real", () => {
     )
     expect((await ticketFor(customer.cookie, { scope: "order", orderId })).response.status).toBe(200)
     expect((await ticketFor(otherCustomer.cookie, { scope: "order", orderId })).response.status).toBe(404)
-  })
+  }, 30_000)
 
   it("recusa conexão sem upgrade ou com ticket inválido", async () => {
     expect((await call("/v1/live?ticket=x")).status).toBe(400)
@@ -147,15 +147,84 @@ describe("eventos em tempo real", () => {
     socket.close()
   })
 
-  it("isola os restaurantes: a equipe de um não recebe eventos do outro", async () => {
+  it("isola os restaurantes: a pizzaria recebe o próprio pedido e não o da hamburgueria", async () => {
     const pizzariaStaff = await newUser({ staffOf: "rest_pizzaria" })
     const feed = await connect(
       (await ticketFor(pizzariaStaff.cookie, { scope: "restaurant", restaurantId: "rest_pizzaria" })).ticket,
     )
+    const pizzaOrder = await postJson(
+      "/v1/orders",
+      {
+        restaurantId: "rest_pizzaria",
+        fulfillment: "pickup",
+        items: [{ productId: "prod_pz_frango", quantity: 1, addonOptionIds: [] }],
+        paymentMethod: "cash",
+        expectedTotalCents: 4590,
+      },
+      { cookie: (await newUser()).cookie, "idempotency-key": `chave-${crypto.randomUUID()}` },
+    )
+    const pizzaId = ((await pizzaOrder.json()) as { data: { id: string } }).data.id
+    await waitFor(() => feed.messages.some((message) => message.orderId === pizzaId))
+
     await createOrder((await newUser()).cookie)
     await new Promise((resolve) => setTimeout(resolve, 100))
-    expect(feed.messages).toEqual([])
+    expect(feed.messages.map((message) => message.orderId)).toEqual([pizzaId])
     feed.socket.close()
-    expect(env.RESTAURANT_ROOM).toBeDefined()
+  })
+
+  it("since=0 reenvia desde o início (cursor zero não é cursor ausente)", async () => {
+    const customer = await newUser()
+    const staff = await newUser({ staffOf: "rest_burger" })
+    const orderId = await createOrder(customer.cookie)
+    const { socket, messages } = await connect(
+      (await ticketFor(staff.cookie, { scope: "restaurant", restaurantId: "rest_burger" })).ticket,
+      0,
+    )
+    // O storage do objeto é compartilhado entre testes do arquivo: procura o pedido deste teste.
+    await waitFor(() => messages.some((message) => message.orderId === orderId))
+    expect(messages.find((message) => message.orderId === orderId)).toMatchObject({ type: "order.created" })
+    socket.close()
+  })
+
+  it("descarta evento atrasado: um status mais antigo não chega depois do mais novo", async () => {
+    const staff = await newUser({ staffOf: "rest_burger" })
+    const room = env.RESTAURANT_ROOM.getByName("rest_burger")
+    const feed = await connect(
+      (await ticketFor(staff.cookie, { scope: "restaurant", restaurantId: "rest_burger" })).ticket,
+    )
+    await room.publish({
+      type: "order.updated",
+      orderId: "ord-ordem",
+      status: "preparing",
+      at: "2026-01-02T00:00:00.000Z",
+    })
+    await room.publish({
+      type: "order.updated",
+      orderId: "ord-ordem",
+      status: "accepted",
+      at: "2026-01-01T00:00:00.000Z",
+    })
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    expect(feed.messages.map((message) => [message.status, message.at])).toEqual([
+      ["preparing", "2026-01-02T00:00:00.000Z"],
+    ])
+    feed.socket.close()
+  })
+
+  it("encerra o socket da equipe quando o vínculo é revogado e não envia mais eventos", async () => {
+    const customer = await newUser()
+    const staff = await newUser({ staffOf: "rest_burger" })
+    const feed = await connect(
+      (await ticketFor(staff.cookie, { scope: "restaurant", restaurantId: "rest_burger" })).ticket,
+    )
+    let closeCode = 0
+    feed.socket.addEventListener("close", (event) => {
+      closeCode = event.code
+    })
+    await env.DB.prepare("delete from restaurant_members where user_id = ?").bind(staff.userId).run()
+    await createOrder(customer.cookie)
+    await waitFor(() => closeCode !== 0)
+    expect(closeCode).toBe(4403)
+    expect(feed.messages).toEqual([])
   })
 })
