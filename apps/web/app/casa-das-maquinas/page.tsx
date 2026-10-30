@@ -41,19 +41,20 @@ export default function CasaDasMaquinasPage() {
         <div className="flex items-center gap-3 mb-4">
           <Database className="h-8 w-8" aria-hidden="true" />
           <h1 className="text-4xl font-bold">Casa das Máquinas</h1>
-          <Badge variant="outline" className="bg-purple-100 text-purple-800">
-            Planejado
+          <Badge variant="outline" className="bg-yellow-100 text-yellow-800">
+            Parcial
           </Badge>
         </div>
         <p className="text-xl text-gray-600">
           Backend centralizado do ecossistema: uma única API para o Delivery Express, o Pedidos na Mão e o Tá na
-          Entrega. Esta página descreve a arquitetura alvo; a implementação ainda não começou.
+          Entrega. A API v1 de catálogo já existe em `apps/casa-das-maquinas` com testes no runtime do Workers; pedidos,
+          autenticação e tempo real estão nas próximas etapas.
         </p>
       </header>
 
       <section aria-labelledby="componentes" className="mb-10">
         <h2 id="componentes" className="text-2xl font-semibold mb-4">
-          Componentes planejados
+          Componentes
         </h2>
         <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {COMPONENTS.map((component) => (

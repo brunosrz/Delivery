@@ -82,9 +82,12 @@ export const ECOSYSTEM_PRODUCTS: readonly EcosystemProduct[] = [
     name: "Casa das Máquinas",
     audience: "Backend",
     route: "/casa-das-maquinas",
-    state: "planejado",
-    summary: "Backend centralizado em Cloudflare Workers, D1 e Durable Objects.",
-    limitations: ["A página descreve a arquitetura alvo; a API ainda não foi implementada."],
+    state: "parcial",
+    summary: "Backend centralizado em Cloudflare Workers com D1: API v1 de catálogo e OpenAPI.",
+    limitations: [
+      "Ainda não publicado e ainda não consumido pelos frontends.",
+      "Pedidos, autenticação, tempo real e isolamento completo por tenant estão nas próximas etapas.",
+    ],
     issues: [4, 1, 6, 14],
   },
 ]

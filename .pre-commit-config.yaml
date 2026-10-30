@@ -1,3 +1,5 @@
+# Arquivos gerados (wrangler types, drizzle-kit) não são reformatados à mão.
+exclude: ^apps/casa-das-maquinas/(src/worker-configuration.d.ts|migrations/meta/)
 default_language_version:
   node: system
 repos:
