@@ -1,344 +1,118 @@
-import { Suspense } from "react"
-import { notFound } from "next/navigation"
 import Image from "next/image"
-import { createServerSupabaseClient } from "@/lib/supabase-server"
-import { ProductCard } from "@/app/delivery-express/components/product-card"
-import { addToCart } from "@/app/delivery-express/actions"
-import type { Json } from "@/types/supabase"
-import type { AddonGroupWithAddons, ListedProduct } from "@/types/catalog"
+import Link from "next/link"
+import { notFound } from "next/navigation"
+import type { AddonGroup } from "@delivery/contracts"
+import { formatCents } from "@/lib/utils"
+import { CatalogUnavailable } from "@/app/delivery-express/catalog-unavailable"
+import { loadMenu } from "@/app/delivery-express/menu"
 
-// Componente de carregamento
-function ProductSkeleton() {
-  return (
-    <div className="animate-pulse">
-      <div className="h-64 bg-gray-200 w-full mb-4 rounded-lg"></div>
-      <div className="h-8 bg-gray-200 w-1/2 mb-4"></div>
-      <div className="h-4 bg-gray-200 w-full mb-2"></div>
-      <div className="h-4 bg-gray-200 w-3/4 mb-4"></div>
-      <div className="h-10 bg-gray-200 w-1/3 mb-4"></div>
-    </div>
-  )
+export const dynamic = "force-dynamic"
+
+function selectionRule(group: AddonGroup): string {
+  if (group.minSelections === 0)
+    return group.maxSelections === 1 ? "Opcional, escolha até 1" : `Opcional, até ${group.maxSelections}`
+  if (group.minSelections === group.maxSelections) return `Obrigatório, escolha ${group.minSelections}`
+  return `Obrigatório, de ${group.minSelections} a ${group.maxSelections}`
 }
 
-// Componente para exibir informações nutricionais
-function NutritionalInfo({ info }: { info: Json | null }) {
-  if (!info || typeof info !== "object" || Array.isArray(info)) return null
-
+function AddonGroupFieldset({ group }: { group: AddonGroup }) {
+  const single = group.maxSelections === 1
   return (
-    <div className="mt-6 bg-gray-50 p-4 rounded-lg">
-      <h3 className="font-semibold text-lg mb-2">Informações Nutricionais</h3>
-      <div className="grid grid-cols-2 gap-2">
-        {Object.entries(info).map(([key, value]) => (
-          <div key={key} className="flex justify-between">
-            <span className="text-gray-600">{key}</span>
-            <span className="font-medium">{String(value ?? "")}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// Componente para exibir ingredientes
-function Ingredients({ ingredients }: { ingredients: string[] | null }) {
-  if (!ingredients || ingredients.length === 0) return null
-
-  return (
-    <div className="mt-6">
-      <h3 className="font-semibold text-lg mb-2">Ingredientes</h3>
-      <ul className="list-disc pl-5 space-y-1">
-        {ingredients.map((ingredient, index) => (
-          <li key={index} className="text-gray-600">
-            {ingredient}
+    <fieldset className="mb-6 rounded-lg border p-4">
+      <legend className="px-1 font-semibold">{group.name}</legend>
+      <p className="mb-3 text-sm text-gray-600">{selectionRule(group)}</p>
+      <ul className="space-y-2">
+        {group.options.map((option) => (
+          <li key={option.id}>
+            <label className="flex items-center justify-between gap-3 rounded-md border p-3">
+              <span className="flex items-center gap-3">
+                <input
+                  type={single ? "radio" : "checkbox"}
+                  name={`addon-${group.id}`}
+                  value={option.id}
+                  disabled={!option.available}
+                />
+                {option.name}
+                {!option.available && <span className="text-sm text-gray-500">(indisponível)</span>}
+              </span>
+              {option.priceCents > 0 && <span className="font-medium">+ {formatCents(option.priceCents)}</span>}
+            </label>
           </li>
         ))}
       </ul>
-    </div>
+    </fieldset>
   )
 }
 
-// Componente para exibir grupos de adicionais
-function AddonGroups({ addonGroups }: { addonGroups: AddonGroupWithAddons[] }) {
-  if (!addonGroups || addonGroups.length === 0) return null
-
-  return (
-    <div className="mt-6">
-      <h3 className="font-semibold text-lg mb-4">Adicionais</h3>
-      {addonGroups.map((group) => (
-        <div key={group.id} className="mb-6">
-          <div className="flex justify-between items-center mb-2">
-            <h4 className="font-medium">{group.title}</h4>
-            <span className="text-sm text-gray-500">
-              {group.required ? "Obrigatório" : "Opcional"} •{group.min > 0 ? ` Mín ${group.min}` : ""}
-              {group.max ? ` • Máx ${group.max}` : ""}
-            </span>
-          </div>
-          <div className="space-y-2">
-            {group.addons.map((addon) => (
-              <div key={addon.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <label className="flex items-center flex-1">
-                  <input
-                    type={group.max === 1 ? "radio" : "checkbox"}
-                    name={`addon-group-${group.id}`}
-                    className="mr-3"
-                  />
-                  <span>{addon.title}</span>
-                </label>
-                {addon.price > 0 && (
-                  <span className="font-medium">+ R$ {addon.price.toFixed(2).replace(".", ",")}</span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-// Componente para exibir produtos relacionados
-function RelatedProducts({ products, restaurantSlug }: { products: ListedProduct[]; restaurantSlug: string }) {
-  if (!products || products.length === 0) return null
-
-  return (
-    <div className="mt-8">
-      <h3 className="text-xl font-bold mb-4">Você também pode gostar</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {products.map((product) => (
-          <ProductCard
-            key={product.id}
-            id={product.id}
-            title={product.title}
-            slug={product.product_slug}
-            description={product.description}
-            price={product.price}
-            imageUrl={product.image_url}
-            originalPrice={product.original_price}
-            discountPercentage={product.discount_percentage}
-            featured={product.featured}
-            restaurantSlug={restaurantSlug}
-          />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// Função para buscar dados do produto
-async function getProductData(restaurantSlug: string, productSlug: string) {
-  const supabase = createServerSupabaseClient()
-
-  // Busca o restaurante pelo slug
-  const { data: restaurant, error: restaurantError } = await supabase
-    .from("restaurants")
-    .select("id, name, restaurant_slug")
-    .eq("restaurant_slug", restaurantSlug)
-    .single()
-
-  if (restaurantError || !restaurant) {
-    console.error("Erro ao buscar restaurante:", restaurantError)
-    return null
-  }
-
-  // Busca o produto pelo slug
-  const { data: product, error: productError } = await supabase
-    .from("products")
-    .select("*")
-    .eq("restaurant_id", restaurant.id)
-    .eq("product_slug", productSlug)
-    .eq("available", true)
-    .single()
-
-  if (productError || !product) {
-    console.error("Erro ao buscar produto:", productError)
-    return null
-  }
-
-  // Busca os grupos de adicionais do produto
-  const { data: addonGroups, error: addonGroupsError } = await supabase
-    .from("addon_groups")
-    .select(
-      `
-      id,
-      title,
-      min,
-      max,
-      required,
-      addons (
-        id,
-        title,
-        price
-      )
-    `,
-    )
-    .eq("product_id", product.id)
-    .order("title")
-
-  if (addonGroupsError) {
-    console.error("Erro ao buscar grupos de adicionais:", addonGroupsError)
-    return {
-      restaurant,
-      product,
-      addonGroups: [],
-      relatedProducts: [],
-    }
-  }
-
-  // Busca produtos relacionados (da mesma categoria)
-  const { data: relatedProducts, error: relatedError } = await supabase
-    .from("products")
-    .select(
-      `
-      id,
-      title,
-      description,
-      image_url,
-      price,
-      product_slug,
-      original_price,
-      discount_percentage,
-      featured
-    `,
-    )
-    .eq("restaurant_id", restaurant.id)
-    .neq("id", product.id)
-    .eq("available", true)
-    .limit(3)
-
-  if (relatedError) {
-    console.error("Erro ao buscar produtos relacionados:", relatedError)
-    return {
-      restaurant,
-      product,
-      addonGroups,
-      relatedProducts: [],
-    }
-  }
-
-  return {
-    restaurant,
-    product,
-    addonGroups,
-    relatedProducts,
-  }
-}
-
-// Componente principal da página
 export default async function ProductPage({ params }: { params: Promise<{ slug: string; productSlug: string }> }) {
   const { slug, productSlug } = await params
+  const loaded = await loadMenu(slug)
+  if (loaded.status === "unavailable") return <CatalogUnavailable title="Delivery Express" />
 
-  // Buscar dados do produto
-  const productData = await getProductData(slug, productSlug)
-
-  // Se o produto não existir, retornar 404
-  if (!productData || !productData.product) {
-    notFound()
-  }
-
-  const { product, addonGroups, relatedProducts } = productData
-
-  const formattedPrice = product.price.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  })
-
-  const formattedOriginalPrice = product.original_price?.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  })
+  const { restaurant, sections } = loaded.menu
+  const product = sections.flatMap((section) => section.products).find((candidate) => candidate.slug === productSlug)
+  if (!product) notFound()
 
   return (
-    <div className="pb-16">
-      <main className="container mx-auto py-8 px-4">
-        <Suspense fallback={<ProductSkeleton />}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="relative h-80 rounded-lg overflow-hidden">
-              <Image
-                src={product.image_url || "/placeholder.svg?height=320&width=640&query=food"}
-                alt={product.title}
-                fill
-                className="object-cover"
-                priority
+    <div className="container mx-auto px-4 py-8">
+      <nav aria-label="Navegação estrutural" className="mb-6 text-sm">
+        <Link href={`/delivery-express/restaurant/${restaurant.slug}`} className="underline">
+          {restaurant.name}
+        </Link>
+        <span aria-hidden="true"> / </span>
+        <span>{product.name}</span>
+      </nav>
+
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+        <div className="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
+          <Image src={product.imageUrl ?? "/placeholder.svg"} alt="" fill className="object-cover" priority />
+        </div>
+
+        <div>
+          <h1 className="mb-2 text-3xl font-bold">{product.name}</h1>
+          {product.description && <p className="mb-4 text-gray-700">{product.description}</p>}
+          <p className="mb-6">
+            <span className="text-2xl font-bold text-orange-700">{formatCents(product.priceCents)}</span>
+            {product.originalPriceCents !== null && product.originalPriceCents > product.priceCents && (
+              <span className="ml-2 text-gray-500 line-through">
+                <span className="sr-only">de </span>
+                {formatCents(product.originalPriceCents)}
+              </span>
+            )}
+          </p>
+
+          <form aria-describedby="carrinho-status">
+            {product.addonGroups.map((group) => (
+              <AddonGroupFieldset key={group.id} group={group} />
+            ))}
+
+            <label className="mb-4 block">
+              <span className="mb-1 block font-medium">Quantidade</span>
+              <input
+                type="number"
+                name="quantity"
+                min={1}
+                max={product.maxQuantity}
+                defaultValue={1}
+                className="w-24 rounded-md border px-3 py-2"
               />
-              {product.discount_percentage && (
-                <div className="absolute top-4 left-4 bg-red-500 text-white px-2 py-1 rounded-md">
-                  {product.discount_percentage}% OFF
-                </div>
-              )}
-              {product.featured && (
-                <div className="absolute top-4 right-4 bg-amber-500 text-white px-2 py-1 rounded-md">Destaque</div>
-              )}
-            </div>
+            </label>
 
-            <div>
-              <h1 className="text-3xl font-bold mb-2">{product.title}</h1>
-
-              {product.description && <p className="text-gray-600 mb-4">{product.description}</p>}
-
-              <div className="flex items-end mb-6">
-                <div>
-                  <div className="text-3xl font-bold text-orange-600">{formattedPrice}</div>
-
-                  {product.original_price && (
-                    <div className="text-sm text-gray-500 line-through">{formattedOriginalPrice}</div>
-                  )}
-                </div>
-
-                {product.preparation_time && (
-                  <div className="ml-auto text-sm text-gray-500">
-                    ⏱️ Tempo de preparo: {product.preparation_time} min
-                  </div>
-                )}
-              </div>
-
-              <form action={addToCart}>
-                <input type="hidden" name="productId" value={product.id} />
-
-                <div className="mb-4">
-                  <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
-                    Quantidade
-                  </label>
-                  <select id="quantity" name="quantity" className="w-full p-2 border rounded-md" defaultValue="1">
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                      <option key={num} value={num}>
-                        {num}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="mb-4">
-                  <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
-                    Observações
-                  </label>
-                  <textarea
-                    id="notes"
-                    name="notes"
-                    rows={3}
-                    className="w-full p-2 border rounded-md"
-                    placeholder="Ex: Sem cebola, molho à parte, etc."
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full bg-orange-600 text-white py-3 px-4 rounded-md font-medium hover:bg-orange-700 transition-colors"
-                >
-                  Adicionar ao Carrinho
-                </button>
-              </form>
-            </div>
-          </div>
-
-          <Ingredients ingredients={product.ingredients} />
-
-          <NutritionalInfo info={product.nutritional_info} />
-
-          <AddonGroups addonGroups={addonGroups} />
-
-          <RelatedProducts products={relatedProducts} restaurantSlug={slug} />
-        </Suspense>
-      </main>
+            <button
+              type="submit"
+              disabled
+              className="w-full rounded-md bg-orange-600 px-4 py-3 font-semibold text-white disabled:opacity-60"
+            >
+              Adicionar à sacola
+            </button>
+            <p id="carrinho-status" className="mt-2 text-sm text-gray-600">
+              {product.available
+                ? "A sacola e o checkout ainda estão em desenvolvimento (issue #18)."
+                : "Produto indisponível no momento."}
+            </p>
+          </form>
+        </div>
+      </div>
     </div>
   )
 }

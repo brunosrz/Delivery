@@ -12,7 +12,8 @@
     "lint": "eslint . --max-warnings 0",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
-    "test:coverage": "vitest run"
+    "test:coverage": "vitest run",
+    "e2e:serve": "node scripts/e2e-serve.mjs"
   },
   "dependencies": {
     "@delivery/contracts": "workspace:*",

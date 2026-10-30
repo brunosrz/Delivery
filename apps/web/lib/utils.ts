@@ -5,9 +5,9 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value)
+const BRL = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" })
+
+/** Formata centavos inteiros como reais. A divisão só acontece na exibição. */
+export function formatCents(cents: number): string {
+  return BRL.format(cents / 100)
 }

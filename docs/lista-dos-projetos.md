@@ -6,14 +6,14 @@ Este documento lista as aplicações do ecossistema, onde cada uma vive no repos
 
 O repositório é um **workspace pnpm**. Os frontends são uma única aplicação Next.js 15 (App Router) em `apps/web`, com um único build e uma rota de primeiro nível por produto. As regras puras ficam em `packages/domain` (totais em centavos e máquina de estados do pedido) e os contratos da API v1 em `packages/contracts` (schemas zod). O backend da Casa das Máquinas entra em `apps/casa-das-maquinas` na Fase 2 (issue #4).
 
-| Produto            | Público     | Rota atual                        | Observação                                                     |
-| ------------------ | ----------- | --------------------------------- | -------------------------------------------------------------- |
-| Site institucional | Público     | `apps/web/app/site-institucional` | Página de apresentação; contato ainda não existe               |
-| Delivery Express   | Cliente     | `apps/web/app/delivery-express`   | Catálogo lido do Supabase; sem carrinho nem pedido persistidos |
-| Pedidos na Mão     | Restaurante | `apps/web/app/pedidos-na-mao`     | Lista de funcionalidades planejadas                            |
-| Tá na Entrega      | Entregador  | `apps/web/app/ta-na-entrega`      | Lista de funcionalidades planejadas                            |
-| MKit               | Restaurante | `apps/web/app/mkit`               | Conteúdo estático do conceito                                  |
-| Casa das Máquinas  | Backend     | `apps/web/app/casa-das-maquinas`  | Página de arquitetura; a API ainda não existe                  |
+| Produto            | Público     | Rota atual                        | Observação                                                               |
+| ------------------ | ----------- | --------------------------------- | ------------------------------------------------------------------------ |
+| Site institucional | Público     | `apps/web/app/site-institucional` | Página de apresentação; contato ainda não existe                         |
+| Delivery Express   | Cliente     | `apps/web/app/delivery-express`   | Catálogo via API da Casa das Máquinas; sem sacola nem pedido persistidos |
+| Pedidos na Mão     | Restaurante | `apps/web/app/pedidos-na-mao`     | Lista de funcionalidades planejadas                                      |
+| Tá na Entrega      | Entregador  | `apps/web/app/ta-na-entrega`      | Lista de funcionalidades planejadas                                      |
+| MKit               | Restaurante | `apps/web/app/mkit`               | Conteúdo estático do conceito                                            |
+| Casa das Máquinas  | Backend     | `apps/web/app/casa-das-maquinas`  | Página de arquitetura; a API vive em `apps/casa-das-maquinas`            |
 
 Observabilidade e operação ficam fora do produto (Grafana, métricas e logs externos) e não têm rota própria.
 

@@ -1,64 +1,36 @@
-"use client"
-
 import Image from "next/image"
 import Link from "next/link"
+import type { Product } from "@delivery/contracts"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { formatCents } from "@/lib/utils"
 
-interface ProductCardProps {
-  id: string
-  title: string
-  slug: string
-  description?: string | null
-  price: number
-  imageUrl?: string | null
-  originalPrice?: number | null
-  discountPercentage?: number | null
-  featured?: boolean | null
-  restaurantSlug: string
-}
-
-export function ProductCard({
-  title,
-  slug,
-  description,
-  price,
-  imageUrl,
-  originalPrice,
-  discountPercentage,
-  featured,
-  restaurantSlug,
-}: ProductCardProps) {
-  const formattedPrice = price.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  })
-
-  const formattedOriginalPrice = originalPrice?.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  })
+export function ProductCard({ product, restaurantSlug }: { product: Product; restaurantSlug: string }) {
+  const onSale = product.originalPriceCents !== null && product.originalPriceCents > product.priceCents
 
   return (
-    <Link href={`/delivery-express/restaurant/${restaurantSlug}/product/${slug}`}>
+    <Link href={`/delivery-express/restaurant/${restaurantSlug}/product/${product.slug}`} className="block h-full">
       <Card className="h-full overflow-hidden transition-all hover:shadow-md">
         <div className="relative h-40 w-full bg-gray-100">
-          <Image
-            src={imageUrl || "/placeholder.svg?height=160&width=320&query=food"}
-            alt={title}
-            fill
-            className="object-cover"
-          />
-          {discountPercentage && <Badge className="absolute left-2 top-2 bg-red-500">{discountPercentage}% OFF</Badge>}
-          {featured && <Badge className="absolute right-2 top-2 bg-amber-500">Destaque</Badge>}
+          <Image src={product.imageUrl ?? "/placeholder.svg"} alt="" fill className="object-cover" />
+          {!product.available && (
+            <Badge variant="destructive" className="absolute right-2 top-2">
+              Indisponível
+            </Badge>
+          )}
         </div>
         <CardContent className="p-4">
-          <h3 className="font-bold">{title}</h3>
-          {description && <p className="mt-1 text-sm text-gray-500 line-clamp-2">{description}</p>}
-          <div className="mt-2">
-            <span className="text-lg font-bold text-orange-600">{formattedPrice}</span>
-            {originalPrice && <span className="ml-2 text-sm text-gray-500 line-through">{formattedOriginalPrice}</span>}
-          </div>
+          <h3 className="font-bold">{product.name}</h3>
+          {product.description && <p className="mt-1 text-sm text-gray-600 line-clamp-2">{product.description}</p>}
+          <p className="mt-2">
+            <span className="text-lg font-bold text-orange-700">{formatCents(product.priceCents)}</span>
+            {onSale && (
+              <span className="ml-2 text-sm text-gray-500 line-through">
+                <span className="sr-only">de </span>
+                {formatCents(product.originalPriceCents ?? 0)}
+              </span>
+            )}
+          </p>
         </CardContent>
       </Card>
     </Link>

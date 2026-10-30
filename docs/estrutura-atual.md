@@ -6,29 +6,24 @@ Legenda: **implementado** (funciona de ponta a ponta), **parcial** (funciona com
 
 ## Páginas
 
-| Rota                                                              | Estado        | Fonte de dados                                        | Limitações e dono dos dados                                                  |
-| ----------------------------------------------------------------- | ------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `/`                                                               | implementado  | `lib/ecosystem-status.ts`                             | Hub com o estado real de cada produto                                        |
-| `/delivery-express`                                               | parcial       | Supabase (`restaurants`)                              | Renderizada por requisição; mostra "Catálogo indisponível" se o banco falhar |
-| `/delivery-express/restaurant/[slug]`                             | parcial       | Supabase (`restaurants`, `menu_sections`, `products`) | 404 quando o restaurante não existe ou o banco falha                         |
-| `/delivery-express/restaurant/[slug]/product/[productSlug]`       | parcial       | Supabase (`products`, `addon_groups`, `addons`)       | `addToCart` só valida a entrada; não há carrinho persistido (#18)            |
-| `/pedidos-na-mao`                                                 | em construção | —                                                     | Exige login; lista funcionalidades planejadas                                |
-| `/ta-na-entrega`                                                  | em construção | —                                                     | Exige login; lista funcionalidades planejadas                                |
-| `/site-institucional`                                             | em construção | —                                                     | Sem contato nem conteúdo comercial                                           |
-| `/mkit`                                                           | demonstração  | —                                                     | Conceito estático (#12)                                                      |
-| `/casa-das-maquinas`                                              | parcial       | —                                                     | Página da arquitetura; a API de catálogo vive em `apps/casa-das-maquinas`    |
-| `/auth/login`                                                     | parcial       | NextAuth + Supabase Auth                              | O botão Google só aparece com o provider configurado                         |
-| `/auth/register`, `/auth/forgot-password`, `/auth/reset-password` | parcial       | Supabase Auth no navegador                            | Sessão separada da do NextAuth; a unificação é a Fase 2                      |
-| `/auth/error`, `/auth/verify-request`                             | implementado  | —                                                     | Páginas estáticas                                                            |
+| Rota                                                              | Estado        | Fonte de dados                                        | Limitações e dono dos dados                                                                           |
+| ----------------------------------------------------------------- | ------------- | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `/`                                                               | implementado  | `lib/ecosystem-status.ts`                             | Hub com o estado real de cada produto                                                                 |
+| `/delivery-express`                                               | parcial       | Casa das Máquinas (`GET /v1/restaurants`)             | Renderizada por requisição; mostra "Catálogo indisponível" se a API falhar ou não estiver configurada |
+| `/delivery-express/restaurant/[slug]`                             | parcial       | Casa das Máquinas (`GET /v1/restaurants/{slug}/menu`) | 404 real para restaurante inexistente                                                                 |
+| `/delivery-express/restaurant/[slug]/product/[productSlug]`       | parcial       | Cardápio da Casa das Máquinas                         | Adicionais com regra de seleção; sacola desabilitada até a #18                                        |
+| `/pedidos-na-mao`                                                 | em construção | —                                                     | Exige login; lista funcionalidades planejadas                                                         |
+| `/ta-na-entrega`                                                  | em construção | —                                                     | Exige login; lista funcionalidades planejadas                                                         |
+| `/site-institucional`                                             | em construção | —                                                     | Sem contato nem conteúdo comercial                                                                    |
+| `/mkit`                                                           | demonstração  | —                                                     | Conceito estático (#12)                                                                               |
+| `/casa-das-maquinas`                                              | parcial       | —                                                     | Página da arquitetura; a API de catálogo vive em `apps/casa-das-maquinas`                             |
+| `/auth/login`                                                     | parcial       | NextAuth + Supabase Auth                              | O botão Google só aparece com o provider configurado                                                  |
+| `/auth/register`, `/auth/forgot-password`, `/auth/reset-password` | parcial       | Supabase Auth no navegador                            | Sessão separada da do NextAuth; a unificação é a Fase 2                                               |
+| `/auth/error`, `/auth/verify-request`                             | implementado  | —                                                     | Páginas estáticas                                                                                     |
 
 ## Rotas de API
 
-| Rota                               | Estado       | Observação                                     |
-| ---------------------------------- | ------------ | ---------------------------------------------- |
-| `GET /api/restaurants`             | implementado | Lista restaurantes do Supabase                 |
-| `GET /api/restaurants/[slug]/menu` | implementado | Seções e produtos de um restaurante            |
-| `GET /api/products/[slug]`         | implementado | Produto, adicionais, categorias e relacionados |
-| `GET/POST /api/auth/[...nextauth]` | parcial      | Credenciais via Supabase; Google opcional      |
+O catálogo é servido pela Casa das Máquinas (`apps/casa-das-maquinas`, rotas `/v1`). No app web resta apenas `GET/POST /api/auth/[...nextauth]` (parcial: credenciais via Supabase, Google opcional) até a autenticação unificada da Fase 2.
 
 ## Removido na Fase 0
 
@@ -39,9 +34,10 @@ Removido porque estava quebrado, simulado ou sem nenhum uso:
 - o wrapper de cache Redis que não fazia cache;
 - `packages/` sem `package.json`;
 - 39 componentes shadcn sem uso;
+- as rotas `/api/restaurants` e `/api/products` do Next, que duplicavam o catálogo da Casa das Máquinas;
 - links para `/cart`, `/orders`, `/profile` e `/site-institucional/contato`, páginas que não existem.
 
 ## Prova automatizada
 
 - `pnpm test`: unidades de preço, middleware de autenticação e catálogo de estado.
-- `pnpm e2e`: smoke tests Playwright em desktop e mobile. Cobrem o hub, cada produto sem erro 5xx, o estado de catálogo indisponível, a resposta 404 e o redirecionamento de rota protegida para o login.
+- `pnpm e2e`: Playwright em desktop e mobile contra a Casa das Máquinas real (`wrangler dev` com D1 local e seed sintético). Cobrem o hub, cada produto sem erro 5xx, o estado de catálogo indisponível, a resposta 404 e o redirecionamento de rota protegida para o login.

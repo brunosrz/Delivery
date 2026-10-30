@@ -30,11 +30,9 @@ export const ECOSYSTEM_PRODUCTS: readonly EcosystemProduct[] = [
     audience: "Cliente",
     route: "/delivery-express",
     state: "parcial",
-    summary: "Lista restaurantes, cardápio por seção e detalhe do produto com adicionais.",
-    limitations: [
-      "Carrinho, checkout e acompanhamento de pedido ainda não existem.",
-      "Os dados vêm do Supabase; sem credenciais o catálogo fica indisponível.",
-    ],
+    summary:
+      "Lista restaurantes, cardápio por seção e detalhe do produto com adicionais, via API da Casa das Máquinas.",
+    limitations: ["Sacola, checkout e acompanhamento de pedido ainda não existem (#18)."],
     issues: [18, 3],
   },
   {
@@ -85,7 +83,7 @@ export const ECOSYSTEM_PRODUCTS: readonly EcosystemProduct[] = [
     state: "parcial",
     summary: "Backend centralizado em Cloudflare Workers com D1: API v1 de catálogo e OpenAPI.",
     limitations: [
-      "Ainda não publicado e ainda não consumido pelos frontends.",
+      "Ainda não publicado; o Delivery Express já consome a API de catálogo.",
       "Pedidos, autenticação, tempo real e isolamento completo por tenant estão nas próximas etapas.",
     ],
     issues: [4, 1, 6, 14],

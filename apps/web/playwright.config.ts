@@ -1,6 +1,8 @@
 import { defineConfig, devices } from "@playwright/test"
 
 const port = Number(process.env.E2E_PORT ?? 3100)
+const apiPort = Number(process.env.E2E_API_PORT ?? 8787)
+const apiUrl = `http://127.0.0.1:${apiPort}`
 
 export default defineConfig({
   testDir: "tests/e2e",
@@ -16,10 +18,21 @@ export default defineConfig({
     { name: "desktop", use: { ...devices["Desktop Chrome"] } },
     { name: "mobile", use: { ...devices["Pixel 7"] } },
   ],
-  webServer: {
-    command: `pnpm exec next start -p ${port}`,
-    url: `http://127.0.0.1:${port}`,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  webServer: [
+    {
+      // Casa das Máquinas real (workerd + D1 local com seed sintético).
+      command: "pnpm --filter @delivery/casa-das-maquinas e2e:serve",
+      url: `${apiUrl}/v1/health`,
+      env: { E2E_API_PORT: String(apiPort) },
+      reuseExistingServer: !process.env.CI,
+      timeout: 180_000,
+    },
+    {
+      command: `pnpm exec next start -p ${port}`,
+      url: `http://127.0.0.1:${port}`,
+      env: { CASA_DAS_MAQUINAS_URL: apiUrl },
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+    },
+  ],
 })
