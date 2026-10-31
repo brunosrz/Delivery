@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentação
+    url: https://github.com/brunosrz/Delivery/tree/main/docs
+    about: Consulte a documentação antes de abrir uma issue; a resposta pode já estar lá.

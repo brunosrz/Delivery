@@ -230,9 +230,9 @@ pnpm test:watch
 
 ## Releases
 
-O workflow `Release` usa o Release Please para abrir o PR de versão a cada push na `main`. Esse PR é criado com o `GITHUB_TOKEN`, e o GitHub não dispara workflows automaticamente para PRs abertos por esse token.
+As linhas de release ficam em `.github/release-lines.json`: `main` é a série estável (patches, ex.: `0.1.x`) e `release/X.Y` é a próxima minor em desenvolvimento. Cada PR recebe automaticamente a milestone da linha da sua base (`pr-release-milestone.yml`) e o CI bloqueia combinações incompatíveis. O título do PR precisa seguir Conventional Commits, pois alimenta o versionamento e o changelog do Release Please. Ao publicar uma minor, `rotate-release-lines.yml` abre a próxima `release/X.Y`, e `forward-port-release.yml` mantém a minor em desenvolvimento atualizada com `main`. O detalhe dos workflows e dos secrets está em `.github/DEPLOYMENT.md`.
 
-**Critério de merge:** o PR de release só pode ser mergeado quando o gate `Quality` tiver concluído com sucesso no commit atual do PR. Aprovar manualmente a execução na aba Actions (ou fechar e reabrir o PR) apenas inicia o gate; não substitui o resultado verde. A alternativa definitiva é usar um token de GitHub App, registrada como melhoria futura.
+**Critério de merge:** o PR de release só pode ser mergeado quando o gate `Quality` tiver concluído com sucesso no commit atual do PR. PRs abertos com o `GITHUB_TOKEN` não disparam workflows; aprovar a execução na aba Actions (ou configurar o secret `RELEASE_PLEASE_TOKEN`) apenas inicia o gate, não substitui o resultado verde.
 
 ## Recursos Adicionais
 
