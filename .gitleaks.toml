@@ -1,0 +1,8 @@
+# Regras padrão do gitleaks, mais uma exceção para os testes que usam credenciais FICTÍCIAS
+# (por exemplo, para provar que a redaction de logs as mascara).
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Fixtures de teste com valores fictícios"
+paths = ['''apps/casa-das-maquinas/test/.*\.ts''']
