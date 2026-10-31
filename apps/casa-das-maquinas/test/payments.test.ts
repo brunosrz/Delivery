@@ -35,7 +35,8 @@ function installAsaas(options: { down?: boolean } = {}) {
   const payments = new Map<string, Record<string, unknown>>()
   asaas = vi.fn<FetchFn>(async (input, init) => {
     const url = new URL(typeof input === "string" ? input : input instanceof URL ? input.href : input.url)
-    if (!url.hostname.endsWith("asaas.com")) throw new Error(`fetch inesperado: ${url.href}`)
+    if (!["api-sandbox.asaas.com", "api.asaas.com"].includes(url.hostname))
+      throw new Error(`fetch inesperado: ${url.href}`)
     if (options.down) return json({}, 503)
     const method = init?.method ?? "GET"
     if (method === "POST" && url.pathname === "/v3/customers") return json({ id: "cus_000000001" })

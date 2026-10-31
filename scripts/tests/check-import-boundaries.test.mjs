@@ -30,7 +30,10 @@ afterEach(() => rmSync(root, { recursive: true, force: true }))
 describe("checkBoundaries", () => {
   it("aceita as dependências permitidas", () => {
     write("packages/contracts/src/a.ts", 'import { x } from "@delivery/domain"\nexport const y = x')
-    write("apps/web/app/page.tsx", 'import { y } from "@delivery/contracts"\nimport "@delivery/domain"\nexport default y')
+    write(
+      "apps/web/app/page.tsx",
+      'import { y } from "@delivery/contracts"\nimport "@delivery/domain"\nexport default y',
+    )
     assert.deepEqual(checkBoundaries(root), [])
   })
 
