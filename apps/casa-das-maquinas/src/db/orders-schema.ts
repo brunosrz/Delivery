@@ -78,7 +78,7 @@ export const paymentCharges = sqliteTable(
       .default("asaas"),
     /** Identificador `pay_…` no Asaas; é por ele que o webhook encontra o pedido. */
     providerChargeId: text("provider_charge_id").notNull(),
-    billingType: text("billing_type", { enum: ["PIX", "UNDEFINED"] }).notNull(),
+    billingType: text("billing_type", { enum: ["PIX", "CREDIT_CARD", "UNDEFINED"] }).notNull(),
     invoiceUrl: text("invoice_url"),
     pixPayload: text("pix_payload"),
     pixQrImage: text("pix_qr_image"),
@@ -173,3 +173,21 @@ export const mkitMaterials = sqliteTable(
   },
   (table) => [index("mkit_materials_restaurant_idx").on(table.restaurantId, table.updatedAt)],
 )
+
+/**
+ * Uma linha por pedido que serializa a emissão da cobrança. O Asaas não tem Idempotency-Key e a busca por
+ * externalReference não vê uma criação ainda em voo; sem isto, duas tentativas simultâneas poderiam criar duas
+ * cobranças. A tentativa só segue se conseguir reivindicar o lease por UPDATE condicional.
+ */
+export const paymentAttempts = sqliteTable("payment_attempts", {
+  orderId: text("order_id")
+    .primaryKey()
+    .references(() => orders.id, { onDelete: "cascade" }),
+  state: text("state", { enum: ["not_created", "creating", "created", "creation_failed"] })
+    .notNull()
+    .default("not_created"),
+  leaseExpiresAt: text("lease_expires_at"),
+  attempts: integer("attempts").notNull().default(0),
+  lastError: text("last_error"),
+  updatedAt: text("updated_at").notNull().default(isoNow),
+})

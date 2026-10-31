@@ -162,4 +162,37 @@ describe("fila do restaurante, entregas e transição", () => {
     expect(url).toBe("https://api.test/v1/orders/ord_1/transitions")
     expect(JSON.parse(init.body as string)).toEqual({ to: "accepted" })
   })
+
+  it("aceita Retry-After como data HTTP", async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-10-31T12:00:00Z"))
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({ data: null, error: { code: "unavailable", message: "x" }, meta }, 503, {
+          "retry-after": new Date("2026-10-31T12:00:01Z").toUTCString(),
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ data: [], error: null, meta }))
+    const pending = createApiClient({ baseUrl: "https://api.test", fetch, retries: 1 }).listRestaurants()
+    await vi.advanceTimersByTimeAsync(500)
+    expect(fetch).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(600)
+    expect((await pending).ok).toBe(true)
+  })
+
+  it("ignora Retry-After inválido ou no passado", async () => {
+    vi.useFakeTimers()
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({ data: null, error: { code: "unavailable", message: "x" }, meta }, 503, {
+          "retry-after": "lixo",
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ data: [], error: null, meta }))
+    const pending = createApiClient({ baseUrl: "https://api.test", fetch, retries: 1 }).listRestaurants()
+    await vi.advanceTimersByTimeAsync(0)
+    expect((await pending).ok).toBe(true)
+  })
 })

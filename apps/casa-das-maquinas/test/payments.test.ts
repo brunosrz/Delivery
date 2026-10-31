@@ -180,7 +180,7 @@ describe("pedido com cartão (crédito ou débito)", () => {
 
     const [paymentCall] = asaasCalls((method, path) => method === "POST" && path === "/v3/payments")
     const body = JSON.parse((paymentCall?.[1] as RequestInit).body as string)
-    expect(body.billingType).toBe("UNDEFINED")
+    expect(body.billingType).toBe("CREDIT_CARD")
     expect(body).not.toHaveProperty("creditCard")
     expect(asaasCalls((_method, path) => path.endsWith("/pixQrCode"))).toHaveLength(0)
   })
@@ -211,6 +211,27 @@ describe("falha do Asaas", () => {
     const again = await postJson(`/v1/orders/${order.id}/payment`, {}, { cookie })
     expect(again.status).toBe(200)
     expect(asaasCalls((method, path) => method === "POST" && path === "/v3/payments")).toHaveLength(1)
+  })
+
+  it("tentativas simultâneas geram uma única cobrança no Asaas", async () => {
+    installAsaas({ down: true })
+    const { cookie } = await newUser()
+    const order = await parseOrder(await createOrder(cookie, orderBody("pix")))
+    expect(order.charge).toBeUndefined()
+
+    installAsaas()
+    const responses = await Promise.all(
+      Array.from({ length: 5 }, () => postJson(`/v1/orders/${order.id}/payment`, { payer }, { cookie })),
+    )
+    // Quem não reivindicou o lease recebe 409 (em andamento) ou 200 (já pronta); nunca uma segunda cobrança.
+    for (const response of responses) expect([200, 409]).toContain(response.status)
+    expect(responses.some((response) => response.status === 200)).toBe(true)
+    expect(asaasCalls((method, path) => method === "POST" && path === "/v3/payments")).toHaveLength(1)
+
+    const attempt = await env.DB.prepare("select state from payment_attempts where order_id = ?")
+      .bind(order.id)
+      .first<{ state: string }>()
+    expect(attempt?.state).toBe("created")
   })
 
   it("não deixa outro cliente emitir cobrança do pedido", async () => {

@@ -8,7 +8,7 @@ Implementação da issue #43. Referência: [documentação do Asaas](https://doc
 | ----------------------------------- | ------------- | ---------------------------------------------------- |
 | `cash`, `pix_on_delivery`, `card_on_delivery` | Na entrega    | Nenhuma                                              |
 | `pix`                               | Online        | `billingType: PIX` + QR Code dinâmico                |
-| `card`                              | Online        | Fatura hospedada (`billingType: UNDEFINED`, `invoiceUrl`) com crédito ou débito |
+| `card`                              | Online        | Fatura hospedada (`billingType: CREDIT_CARD`, `invoiceUrl`); o débito depende de a conta ter o método habilitado |
 
 A API do Asaas não aceita cartão de débito: "os dados de cartão de débito não podem ser enviados diretamente pela API". Por isso o cartão (crédito e débito) usa a fatura hospedada do Asaas, o que também mantém dados de cartão fora da Casa das Máquinas (fora do escopo PCI). Não existe campo de cartão no contrato do pedido.
 
@@ -22,7 +22,7 @@ A API do Asaas não aceita cartão de débito: "os dados de cartão de débito n
 
 ## Garantias
 
-- **Sem cobrança duplicada:** o Asaas não tem `Idempotency-Key`. A deduplicação é uma linha única por pedido em `payment_charges` e a busca por `externalReference` antes de criar. Repetir a criação do pedido com a mesma chave não cobra de novo.
+- **Sem cobrança duplicada:** o Asaas não tem `Idempotency-Key`. A deduplicação tem três camadas: uma linha única por pedido em `payment_charges`, a busca por `externalReference` antes de criar e um lease por pedido em `payment_attempts` (tentativa de 60 s, reivindicada por UPDATE condicional) que impede duas tentativas simultâneas de criarem duas cobranças; quem perde o lease recebe 409. Repetir a criação do pedido com a mesma chave não cobra de novo. Risco que permanece: `externalReference` não tem garantia de unicidade nem de leitura imediata após a escrita no Asaas.
 - **Webhook idempotente:** a entrega é *at least once*. O `id` do evento é chave primária em `payment_webhook_events`; o UPDATE do pedido é condicional ao status lido e o evento só é registrado se o UPDATE mudou uma linha. Cinco entregas simultâneas do mesmo evento têm um único efeito.
 - **Ordem dos eventos:** a máquina de estados do pagamento (`packages/domain/src/payment-status.ts`) aceita `pending→paid|failed`, `failed→paid` e `paid→refunded`. Um estorno antes do pagamento é reconhecido (200) e ignorado.
 - **Resposta 200 para o que não é nosso:** cobrança desconhecida, evento sem efeito (visualização da fatura, split etc.) e valor divergente do pedido são registrados e respondidos com 200, para não pausar a fila do Asaas (15 falhas seguidas pausam). Só token inválido (401), corpo inválido (400) e disputa de concorrência (409) geram reenvio.

@@ -10,7 +10,7 @@ const BASE_URL = {
 const USER_AGENT = "delivery-casa-das-maquinas"
 const TIMEOUT_MS = 8000
 
-export type AsaasBillingType = "PIX" | "UNDEFINED"
+export type AsaasBillingType = "PIX" | "CREDIT_CARD"
 
 export type AsaasPayment = {
   id: string

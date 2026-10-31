@@ -36,9 +36,13 @@ function trimTrailingSlashes(value: string): string {
   return value.slice(0, end)
 }
 
-function retryAfterMs(response: Response): number {
-  const seconds = Number(response.headers.get("retry-after"))
-  return Number.isFinite(seconds) && seconds > 0 ? Math.min(seconds * 1000, MAX_RETRY_AFTER_MS) : 0
+/** Retry-After vem em segundos ou como data HTTP; o resultado é limitado pelo teto. */
+function retryAfterMs(response: Response, now = Date.now()): number {
+  const header = response.headers.get("retry-after")
+  if (!header) return 0
+  const seconds = Number(header)
+  const waitMs = Number.isFinite(seconds) ? seconds * 1000 : Date.parse(header) - now
+  return Number.isFinite(waitMs) && waitMs > 0 ? Math.min(waitMs, MAX_RETRY_AFTER_MS) : 0
 }
 
 export function createApiClient(options: ApiClientOptions) {

@@ -15,6 +15,9 @@ import * as schema from "./db/orders-schema.js"
 
 type ChargeRow = typeof schema.paymentCharges.$inferSelect
 
+/** Quanto tempo uma tentativa de cobrança segura o lease antes de outra poder assumir. */
+const LEASE_MS = 60_000
+
 export type PaymentFailure = { ok: false; error: { code: ErrorCode; message: string } }
 export type PaymentResult<T> = { ok: true; value: T } | PaymentFailure
 
@@ -105,6 +108,15 @@ export function createPaymentsService(env: Env, injected?: AsaasClient) {
     return config ? createAsaasClient(config) : null
   }
 
+  /** Fecha a tentativa. O erro guarda só a categoria: nunca mensagem do provedor, CPF ou chave. */
+  async function markAttempt(orderId: string, state: "created" | "creation_failed", error: string | null = null) {
+    await env.DB.prepare(
+      "update payment_attempts set state = ?, lease_expires_at = null, last_error = ?, updated_at = ? where order_id = ?",
+    )
+      .bind(state, error, new Date().toISOString(), orderId)
+      .run()
+  }
+
   async function chargeForOrder(orderId: string): Promise<ChargeRow | undefined> {
     const [row] = await db
       .select()
@@ -128,6 +140,23 @@ export function createPaymentsService(env: Env, injected?: AsaasClient) {
       const asaas = client()
       if (!asaas) return fail("unavailable", "pagamento online não configurado")
 
+      // Serializa as tentativas: só quem reivindicar o lease chama o Asaas.
+      const now = new Date()
+      await env.DB.prepare("insert or ignore into payment_attempts (order_id) values (?)").bind(order.id).run()
+      const claim = await env.DB.prepare(
+        "update payment_attempts set state = 'creating', lease_expires_at = ?, attempts = attempts + 1, updated_at = ? " +
+          "where order_id = ? and (state in ('not_created', 'creation_failed') or (state = 'creating' and lease_expires_at < ?))",
+      )
+        .bind(new Date(now.getTime() + LEASE_MS).toISOString(), now.toISOString(), order.id, now.toISOString())
+        .run()
+      if (claim.meta.changes !== 1) return fail("conflict", "a cobrança deste pedido já está sendo gerada")
+      // Outra tentativa pode ter terminado entre a primeira leitura e a reivindicação.
+      const finished = await chargeForOrder(order.id)
+      if (finished) {
+        await markAttempt(order.id, "created")
+        return { ok: true, value: toCharge(finished) }
+      }
+
       try {
         const [linked] = await db
           .select()
@@ -145,7 +174,7 @@ export function createPaymentsService(env: Env, injected?: AsaasClient) {
             .onConflictDoNothing()
         }
 
-        const billingType: AsaasBillingType = order.paymentMethod === "pix" ? "PIX" : "UNDEFINED"
+        const billingType: AsaasBillingType = order.paymentMethod === "pix" ? "PIX" : "CREDIT_CARD"
         const payment =
           (await asaas.findPaymentByReference(order.id)) ??
           (await asaas.createPayment({
@@ -174,8 +203,10 @@ export function createPaymentsService(env: Env, injected?: AsaasClient) {
           .onConflictDoNothing()
 
         const saved = await chargeForOrder(order.id)
+        await markAttempt(order.id, saved ? "created" : "creation_failed")
         return saved ? { ok: true, value: toCharge(saved) } : fail("internal", "cobrança não registrada")
       } catch (error) {
+        await markAttempt(order.id, "creation_failed", error instanceof AsaasError ? error.kind : "unexpected")
         console.error(
           JSON.stringify({
             level: "error",
