@@ -18,7 +18,7 @@ import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi"
 import { cors } from "hono/cors"
 import { createMiddleware } from "hono/factory"
 import { canManageRestaurant, createAuth, getSessionUser } from "./auth.js"
-import { type AppEnv, created, fail, logError, ok, requestId } from "./http.js"
+import { type AppEnv, accessLog, created, fail, logError, ok, requestId } from "./http.js"
 import { type LiveScope, signTicket, verifyTicket } from "./live-ticket.js"
 import { createOrdersService } from "./orders.js"
 import { createPaymentsService } from "./payments.js"
@@ -63,6 +63,7 @@ const app = new OpenAPIHono<AppEnv>({
 })
 
 app.use("*", requestId)
+app.use("*", accessLog)
 // Leituras públicas do catálogo aceitam qualquer origem; rotas com sessão passam pelo proxy do app web.
 app.use(
   "/v1/restaurants/*",

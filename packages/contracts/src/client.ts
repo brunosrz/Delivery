@@ -23,7 +23,7 @@ const RETRYABLE_STATUS = new Set([502, 503, 504])
 const MAX_RETRY_AFTER_MS = 2000
 
 /** Headers extras por chamada, por exemplo o cookie repassado por um Server Component. */
-export type CallOptions = { headers?: Record<string, string> }
+export type CallOptions = { headers?: Record<string, string> | undefined }
 
 function unavailable(message: string, requestId: string | null): ApiResult<never> {
   return { ok: false, status: 0, error: { code: "unavailable", message }, requestId }
@@ -52,7 +52,7 @@ export function createApiClient(options: ApiClientOptions) {
     path: string
     data: T
     body?: unknown
-    headers?: Record<string, string>
+    headers?: Record<string, string> | undefined
     /** Só leituras e escritas com Idempotency-Key podem ser repetidas. */
     retryable: boolean
   }
