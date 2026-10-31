@@ -6,6 +6,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 HELP = """Delivery - Node 22+, pnpm 11, Python 3 e SCons no PATH.
@@ -68,6 +69,7 @@ class Tasks:
                 log.flush()
 
             emit(f"\n[{self.name}] $ {' '.join(args)}\n")
+            started = time.perf_counter()
             try:
                 command = [self.resolve(args[0]), *args[1:]]
                 proc = subprocess.Popen(
@@ -98,7 +100,7 @@ class Tasks:
                     raise
                 finally:
                     stream.close()
-                emit(f"[{self.name}] exit={code}\n")
+                emit(f"[{self.name}] exit={code} duration={time.perf_counter() - started:.1f}s\n")
                 if code:
                     raise RuntimeError(f"Comando falhou ({code}): {args[0]}")
             except OSError as error:
