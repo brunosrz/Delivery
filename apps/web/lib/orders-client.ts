@@ -1,5 +1,8 @@
 import { type ApiError, type CreateOrderRequest, Order, Quote, type QuoteRequest, envelope } from "@delivery/contracts"
-import type { z } from "zod"
+
+// O web não depende do zod diretamente: os tipos vêm do que os contratos exportam.
+type Schema = Parameters<typeof envelope>[0]
+type Output<T extends Schema> = T["_output"]
 
 export type CallResult<T> = { ok: true; data: T; replayed?: boolean } | { ok: false; status: number; error: ApiError }
 
@@ -9,12 +12,12 @@ const unavailable: CallResult<never> = {
   error: { code: "unavailable", message: "Não foi possível falar com o servidor. Tente de novo." },
 }
 
-async function call<T extends z.ZodType>(
+async function call<T extends Schema>(
   path: string,
   schema: T,
   init: RequestInit,
   doFetch: typeof fetch,
-): Promise<CallResult<z.infer<T>>> {
+): Promise<CallResult<Output<T>>> {
   let response: Response
   try {
     response = await doFetch(`/api/v1/${path}`, init)
@@ -35,7 +38,7 @@ async function call<T extends z.ZodType>(
   if (!parsed.success) {
     return { ok: false, status: response.status, error: { code: "internal", message: "Resposta fora do contrato." } }
   }
-  const result = parsed.data as { data: z.infer<T>; error: null } | { data: null; error: ApiError }
+  const result = parsed.data as { data: Output<T>; error: null } | { data: null; error: ApiError }
   if (result.error === null) {
     return { ok: true, data: result.data, replayed: response.headers.get("idempotent-replayed") === "true" }
   }
