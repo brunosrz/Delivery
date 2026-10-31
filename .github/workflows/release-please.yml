@@ -1,8 +1,8 @@
 name: Release Please
 
 # Cada linha de release tem seu próprio manifesto e configuração:
-# - main: linha de desenvolvimento (release-please-config.development.json)
-# - release/**: linha de manutenção (release-please-config.maintenance.json)
+# - main: manutenção da versão estável 0.1.x (release-please-config.maintenance.json)
+# - release/**: desenvolvimento da próxima versão 0.x.0 (release-please-config.development.json)
 # O push que mescla a PR de release é ignorado para não abrir outra PR.
 
 on:
@@ -31,11 +31,11 @@ jobs:
         run: |
           set -euo pipefail
           if [[ "$GITHUB_REF_NAME" == "main" ]]; then
-            echo "config=release-please-config.development.json" >> "$GITHUB_OUTPUT"
-            echo "manifest=.release-please-manifest.development.json" >> "$GITHUB_OUTPUT"
-          else
             echo "config=release-please-config.maintenance.json" >> "$GITHUB_OUTPUT"
             echo "manifest=.release-please-manifest.maintenance.json" >> "$GITHUB_OUTPUT"
+          else
+            echo "config=release-please-config.development.json" >> "$GITHUB_OUTPUT"
+            echo "manifest=.release-please-manifest.development.json" >> "$GITHUB_OUTPUT"
           fi
       # PRs de release criadas com GITHUB_TOKEN não disparam workflows: o gate Quality
       # dessas PRs precisa ser aprovado manualmente (ver docs/guia-desenvolvimento.md).
