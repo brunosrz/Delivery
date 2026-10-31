@@ -14,6 +14,16 @@ const ALLOWED: readonly Allowed[] = [
   { methods: ["POST"], pattern: /^orders\/[A-Za-z0-9_-]{1,64}\/payment$/ },
   // Equipe do restaurante e entregadores; o backend valida papel e vínculo com o restaurante.
   { methods: ["POST"], pattern: /^orders\/[A-Za-z0-9_-]{1,64}\/transitions$/ },
+  // MKit: materiais de marketing do restaurante (o backend exige equipe do restaurante ou admin).
+  { methods: ["GET", "POST"], pattern: /^manage\/restaurants\/[A-Za-z0-9_-]{1,64}\/mkit\/materials$/ },
+  {
+    methods: ["PATCH", "DELETE"],
+    pattern: /^manage\/restaurants\/[A-Za-z0-9_-]{1,64}\/mkit\/materials\/[A-Za-z0-9_-]{1,64}$/,
+  },
+  {
+    methods: ["GET"],
+    pattern: /^manage\/restaurants\/[A-Za-z0-9_-]{1,64}\/mkit\/materials\/[A-Za-z0-9_-]{1,64}\/export$/,
+  },
 ]
 
 export function isAllowed(method: string, path: readonly string[]): boolean {

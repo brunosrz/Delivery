@@ -31,7 +31,7 @@ async function proxy(request: Request, { params }: { params: Promise<{ path: str
     upstream = await fetch(target, {
       method: request.method,
       headers,
-      body: request.method === "GET" ? undefined : await request.arrayBuffer(),
+      body: request.method === "GET" || request.method === "DELETE" ? undefined : await request.arrayBuffer(),
       redirect: "manual",
       signal: AbortSignal.timeout(10000),
     })
@@ -44,7 +44,10 @@ async function proxy(request: Request, { params }: { params: Promise<{ path: str
   if (contentType) responseHeaders.set("content-type", contentType)
   const replayed = upstream.headers.get("idempotent-replayed")
   if (replayed) responseHeaders.set("idempotent-replayed", replayed)
+  // Exportação de material do MKit: o navegador baixa o arquivo com o nome sugerido pelo servidor.
+  const disposition = upstream.headers.get("content-disposition")
+  if (disposition) responseHeaders.set("content-disposition", disposition)
   return new Response(upstream.body, { status: upstream.status, headers: responseHeaders })
 }
 
-export { proxy as GET, proxy as POST }
+export { proxy as GET, proxy as POST, proxy as PATCH, proxy as DELETE }

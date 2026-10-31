@@ -13,11 +13,19 @@ describe("isAllowed", () => {
     ["GET", ["orders", "ord_123"]],
     ["POST", ["orders", "ord_123", "payment"]],
     ["POST", ["orders", "ord_123", "transitions"]],
+    ["GET", ["manage", "restaurants", "rest_1", "mkit", "materials"]],
+    ["POST", ["manage", "restaurants", "rest_1", "mkit", "materials"]],
+    ["PATCH", ["manage", "restaurants", "rest_1", "mkit", "materials", "m1"]],
+    ["DELETE", ["manage", "restaurants", "rest_1", "mkit", "materials", "m1"]],
+    ["GET", ["manage", "restaurants", "rest_1", "mkit", "materials", "m1", "export"]],
   ])("permite %s %j", (method, path) => expect(isAllowed(method, path)).toBe(true))
 
   it.each([
     ["GET", ["orders", "ord_1", "transitions"]],
     ["GET", ["manage", "restaurants", "r1", "orders"]],
+    ["GET", ["manage", "restaurants", "r1"]],
+    ["POST", ["manage", "restaurants", "r1", "mkit", "materials", "m1", "export"]],
+    ["PUT", ["manage", "restaurants", "r1", "mkit", "materials", "m1"]],
     ["POST", ["webhooks", "asaas"]],
     ["GET", ["me"]],
     ["GET", ["quotes"]],

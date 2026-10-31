@@ -154,6 +154,13 @@ export default function MKitPage() {
                   </a>{" "}
                   para importar no Google Agenda, Outlook ou Apple Calendário.
                 </p>
+                <p className="mt-2 text-sm">
+                  Equipe do restaurante:{" "}
+                  <a href="/mkit/materiais" className="underline">
+                    gerenciar materiais de marketing
+                  </a>
+                  .
+                </p>
               </CardContent>
             </Card>
 
