@@ -36,3 +36,22 @@ describe("sanitizeText", () => {
     expect(sanitizeText("<scr\nipt>x</scr\nipt>y")).toBe("xy")
   })
 })
+
+describe("sanitizeText contra marcação aninhada", () => {
+  it.each([
+    "<scr<script>ipt>alert(1)</scr</script>ipt>",
+    "<<b>script>alert(1)<</b>/script>",
+    "<!<!-- x -->-- y -->texto",
+    "<<script>script>alert(1)</script>",
+    "a<scr<!-- x -->ipt>b",
+  ])("não deixa sobrar colchetes angulares em %s", (input) => {
+    const output = sanitizeText(input)
+    expect(output).not.toMatch(/[<>]/)
+    expect(output.toLowerCase()).not.toContain("<script")
+  })
+
+  it("mantém o texto legítimo ao redor", () => {
+    expect(sanitizeText("Oferta <<b>b>boa</b>!")).not.toMatch(/[<>]/)
+    expect(sanitizeText("2 por 1")).toBe("2 por 1")
+  })
+})

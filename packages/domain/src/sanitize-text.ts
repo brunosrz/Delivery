@@ -11,18 +11,35 @@ function isInvisible(code: number): boolean {
   )
 }
 
+const MARKUP_PATTERNS: readonly RegExp[] = [
+  // Comentários e blocos que carregam conteúdo ativo saem inteiros, com o que está dentro.
+  /<!--[\s\S]*?-->/g,
+  /<(script|style)\b[\s\S]*?<\/\1\s*>/gi,
+  /<[^>]*>/g,
+]
+
+/**
+ * Remove a marcação repetidamente até o texto parar de mudar: uma única passada deixaria "<scr<script>ipt>" virar
+ * "<script>" depois de remover o miolo. Por fim, qualquer "<" ou ">" que sobrar é descartado: o texto dos materiais
+ * nunca precisa de colchetes angulares.
+ */
+function stripMarkup(input: string): string {
+  let current = input
+  for (;;) {
+    let next = current
+    for (const pattern of MARKUP_PATTERNS) next = next.replace(pattern, "")
+    if (next === current) break
+    current = next
+  }
+  return current.replace(/[<>]/g, "")
+}
+
 export function sanitizeText(input: string): string {
   // Quebras de linha primeiro: o CR (13) também é "controle" e sumiria antes de virar LF.
-  const withoutMarkup = input
-    .replace(/\r\n?/g, "\n")
-    // Comentários e blocos que carregam conteúdo ativo saem inteiros, com o que está dentro.
-    .replace(/<!--[\s\S]*?-->/g, "")
-    .replace(/<(script|style)\b[\s\S]*?<\/\1\s*>/gi, "")
-    .replace(/<[^>]*>/g, "")
+  const withoutMarkup = stripMarkup(input.replace(/\r\n?/g, "\n"))
   return Array.from(withoutMarkup)
     .filter((char) => !isInvisible(char.codePointAt(0) ?? 0))
     .join("")
-    .replace(/\r\n?/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim()
 }
