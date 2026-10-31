@@ -263,6 +263,15 @@ export function createPaymentsService(env: Env, injected?: AsaasClient) {
           env.DB.prepare(
             "insert or ignore into payment_webhook_events (event_id, event, provider_charge_id, received_at) select ?, ?, ?, ? where changes() = 1",
           ).bind(eventId, event, payment.id, now),
+          // O pagamento muda o pedido: avisa o painel pela caixa de saída (só se o evento acima foi gravado).
+          env.DB.prepare(
+            "insert into outbox_jobs (id, restaurant_id, order_id, payload) select ?, ?, ?, ? where changes() = 1",
+          ).bind(
+            crypto.randomUUID(),
+            order.restaurantId,
+            order.id,
+            JSON.stringify({ type: "order.updated", orderId: order.id, status: order.status, at: now }),
+          ),
         ])
         if (update?.meta.changes === 1) {
           return {

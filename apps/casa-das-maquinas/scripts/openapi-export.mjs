@@ -8,7 +8,7 @@ import { URL, fileURLToPath, pathToFileURL } from "node:url"
 
 register("./openapi-loader.mjs", pathToFileURL(fileURLToPath(import.meta.url)))
 
-const { default: app } = await import("../src/index.ts")
+const { app } = await import("../src/index.ts")
 const response = await app.request("/v1/openapi.json")
 if (!response.ok) {
   process.stderr.write(`Falha ao gerar o OpenAPI: HTTP ${response.status}\n`)

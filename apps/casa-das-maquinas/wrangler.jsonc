@@ -17,6 +17,8 @@
       "migrations_dir": "migrations",
     },
   ],
+  // A cada minuto: reenvia eventos pendentes da caixa de saída (outbox_jobs).
+  "triggers": { "crons": ["* * * * *"] },
   "durable_objects": {
     "bindings": [{ "name": "RESTAURANT_ROOM", "class_name": "RestaurantRoom" }],
   },

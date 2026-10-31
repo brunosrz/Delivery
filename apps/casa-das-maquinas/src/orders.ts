@@ -164,9 +164,12 @@ export function createOrdersService(env: Env) {
       }
 
       const orderId = crypto.randomUUID()
+      const now = new Date().toISOString()
       try {
         await db.batch([
           db.insert(ordersSchema.orders).values({
+            createdAt: now,
+            updatedAt: now,
             id: orderId,
             restaurantId: request.restaurantId,
             customerId: user.id,
@@ -186,6 +189,14 @@ export function createOrdersService(env: Env) {
             status: "pending",
             actorRole: "customer",
             actorId: user.id,
+            at: now,
+          }),
+          // Mesma transação do pedido: o evento de tempo real nunca se perde entre o D1 e o Durable Object.
+          db.insert(ordersSchema.outboxJobs).values({
+            id: crypto.randomUUID(),
+            restaurantId: request.restaurantId,
+            orderId,
+            payload: JSON.stringify({ type: "order.created", orderId, status: "pending", at: now }),
           }),
         ])
       } catch (error) {
@@ -328,6 +339,15 @@ export function createOrdersService(env: Env) {
           "insert into order_events (id, order_id, restaurant_id, status, actor_role, actor_id, reason, at) " +
             "select ?, ?, ?, ?, ?, ?, ?, ? where changes() = 1",
         ).bind(crypto.randomUUID(), orderId, row.restaurantId, request.to, actor, user.id, request.reason ?? null, now),
+        // changes() = 1 só se o evento acima foi gravado, ou seja, se a transição venceu a corrida.
+        env.DB.prepare(
+          "insert into outbox_jobs (id, restaurant_id, order_id, payload) select ?, ?, ?, ? where changes() = 1",
+        ).bind(
+          crypto.randomUUID(),
+          row.restaurantId,
+          orderId,
+          JSON.stringify({ type: "order.updated", orderId, status: request.to, at: now }),
+        ),
       ])
 
       if (update?.meta.changes !== 1) {

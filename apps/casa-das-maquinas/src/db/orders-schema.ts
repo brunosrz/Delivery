@@ -107,3 +107,34 @@ export const paymentWebhookEvents = sqliteTable("payment_webhook_events", {
   providerChargeId: text("provider_charge_id"),
   receivedAt: text("received_at").notNull().default(isoNow),
 })
+
+/**
+ * Caixa de saída: cada mudança de pedido grava, na MESMA transação, o evento de tempo real a publicar.
+ * A publicação imediata marca o job como `done`; se o Durable Object falhar depois do commit, o cron reenvia
+ * (entrega at-least-once; a sala descarta repetição do mesmo evento).
+ */
+export const outboxJobs = sqliteTable(
+  "outbox_jobs",
+  {
+    id: text("id").primaryKey(),
+    kind: text("kind", { enum: ["live.publish"] })
+      .notNull()
+      .default("live.publish"),
+    restaurantId: text("restaurant_id").notNull(),
+    orderId: text("order_id").notNull(),
+    /** JSON do evento: { type, orderId, status, at }. */
+    payload: text("payload").notNull(),
+    status: text("status", { enum: ["pending", "done", "dead"] })
+      .notNull()
+      .default("pending"),
+    attempts: integer("attempts").notNull().default(0),
+    lastError: text("last_error"),
+    createdAt: text("created_at").notNull().default(isoNow),
+    updatedAt: text("updated_at").notNull().default(isoNow),
+  },
+  (table) => [
+    index("outbox_jobs_status_created_idx").on(table.status, table.createdAt),
+    index("outbox_jobs_order_idx").on(table.orderId),
+    check("outbox_jobs_attempts_non_negative", sql`${table.attempts} >= 0`),
+  ],
+)

@@ -20,6 +20,7 @@ import { createMiddleware } from "hono/factory"
 import { canManageRestaurant, createAuth, getSessionUser } from "./auth.js"
 import { type AppEnv, accessLog, created, fail, logError, ok, requestId } from "./http.js"
 import { type LiveScope, signTicket, verifyTicket } from "./live-ticket.js"
+import { markPublished, runOutbox } from "./jobs.js"
 import { createOrdersService } from "./orders.js"
 import { createPaymentsService } from "./payments.js"
 import type { LiveEvent } from "./restaurant-room.js"
@@ -39,6 +40,8 @@ async function publishOrderEvent(
       status: order.status,
       at: order.updatedAt,
     })
+    // Publicou: encerra o job da caixa de saída. Se falhar aqui, o cron reenvia e a sala descarta o repetido.
+    await markPublished(env, order.id, order.updatedAt)
   } catch (error) {
     console.error(
       JSON.stringify({ level: "error", event: "live_publish_failed", orderId: order.id, message: String(error) }),
@@ -470,4 +473,12 @@ app.doc31("/v1/openapi.json", {
   info: { title: "Casa das Máquinas", version: API_VERSION, description: "API v1 do ecossistema Delivery Express" },
 })
 
-export default app
+export { app }
+
+export default {
+  fetch: app.fetch,
+  /** Cron: reenvia eventos de tempo real que ficaram na caixa de saída (ver jobs.ts). */
+  async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext) {
+    ctx.waitUntil(runOutbox(env))
+  },
+} satisfies ExportedHandler<Env>

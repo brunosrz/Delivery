@@ -49,7 +49,7 @@ describe("scripts compensatórios das migrações D1", () => {
 
     applyAll(db)
     const created = userObjects(db)
-    assert.ok(created.includes("orders") && created.includes("payment_charges") && created.includes("restaurants"))
+    assert.ok(["orders", "payment_charges", "outbox_jobs", "restaurants"].every((table) => created.includes(table)))
 
     for (const name of [...migrations].reverse()) db.exec(read(`migrations-rollback/${name}`))
     assert.deepEqual(userObjects(db), [], "o rollback deixou objetos para trás")
@@ -66,8 +66,8 @@ describe("scripts compensatórios das migrações D1", () => {
     const last = migrations.at(-1) ?? ""
     db.exec(read(`migrations-rollback/${last}`))
     const left = userObjects(db)
-    assert.ok(left.includes("orders"))
-    assert.ok(!left.includes("payment_charges"))
+    assert.ok(left.includes("orders") && left.includes("payment_charges"))
+    assert.ok(!left.includes("outbox_jobs"))
     db.close()
   })
 
