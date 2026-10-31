@@ -1,0 +1,37 @@
+name: Bug
+description: Algo não funciona como esperado
+labels: [bug]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área
+      options:
+        - Web (apps/web)
+        - Casa das Máquinas (API)
+        - Contratos / domínio
+        - CI / automação
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: O que acontece
+      description: Descreva o comportamento atual e o esperado.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Como reproduzir
+      placeholder: |
+        1. Abra ...
+        2. Clique em ...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs ou capturas de tela
+      description: Remova tokens, cookies e dados pessoais antes de colar.
+      render: shell

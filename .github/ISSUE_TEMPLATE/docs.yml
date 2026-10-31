@@ -1,0 +1,21 @@
+name: Documentação
+description: Algo está faltando, incorreto ou confuso na documentação
+labels: [documentation]
+body:
+  - type: input
+    id: page
+    attributes:
+      label: Arquivo ou seção
+      placeholder: docs/guia-desenvolvimento.md
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: O que está errado ou faltando
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Sugestão de texto
