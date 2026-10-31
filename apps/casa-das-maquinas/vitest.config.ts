@@ -28,6 +28,8 @@ export default defineConfig(async () => {
         miniflare: {
           bindings: {
             TEST_MIGRATIONS: [...migrations, seed],
+            // Snapshot versionado do OpenAPI (pnpm openapi:export); o teste confere que o documento servido é igual.
+            OPENAPI_SNAPSHOT: readFileSync(fromHere("../../packages/contracts/openapi/v1.json"), "utf8"),
             // Segredo apenas de teste; produção usa `wrangler secret put`.
             BETTER_AUTH_SECRET: "test-secret-with-at-least-32-characters!!",
             // Asaas: só valores de teste; a chamada real é substituída por um fetch simulado.
