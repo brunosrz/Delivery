@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { GET, POST, isAllowed } from "@/app/api/v1/[...path]/route"
+import { GET, POST } from "@/app/api/v1/[...path]/route"
+import { isAllowed } from "@/lib/api-proxy-rules"
 
 const params = (...path: string[]) => ({ params: Promise.resolve({ path }) })
 
