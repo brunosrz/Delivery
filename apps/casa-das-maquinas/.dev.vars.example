@@ -3,3 +3,9 @@ BETTER_AUTH_SECRET=troque-por-um-segredo-local-com-32-caracteres
 # Opcional: login com Google
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
+# Pagamento online (Asaas). Use SEMPRE a chave de sandbox ($aact_hmlg_...) fora de produção.
+ASAAS_API_KEY=
+# Token do webhook: de 32 a 255 caracteres, sem espaços; o mesmo valor é cadastrado no Asaas (header asaas-access-token).
+ASAAS_WEBHOOK_TOKEN=
+# Opcional: segredo do Turnstile para o formulário de contato (sem ele, só honeypot e limite por IP).
+TURNSTILE_SECRET=

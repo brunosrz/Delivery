@@ -1,25 +1,35 @@
 import {
   API_VERSION,
+  ContactReceipt,
+  ContactRequest,
+  CreateMkitMaterial,
   CreateOrderRequest,
   Id,
+  MkitMaterial,
   IdempotencyKey,
   Menu,
   Order,
+  Payer,
   Quote,
   QuoteRequest,
   Restaurant,
   SessionUser,
   Slug,
   StatusTransitionRequest,
+  UpdateMkitMaterial,
   envelope,
 } from "@delivery/contracts"
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi"
 import { cors } from "hono/cors"
 import { createMiddleware } from "hono/factory"
 import { canManageRestaurant, createAuth, getSessionUser } from "./auth.js"
-import { type AppEnv, created, fail, logError, ok, requestId } from "./http.js"
+import { type AppEnv, accessLog, created, fail, logError, ok, requestId } from "./http.js"
 import { type LiveScope, signTicket, verifyTicket } from "./live-ticket.js"
+import { receiveContact } from "./contact.js"
+import { markPublished, runOutbox } from "./jobs.js"
+import { createMkitService } from "./mkit.js"
 import { createOrdersService } from "./orders.js"
+import { createPaymentsService } from "./payments.js"
 import type { LiveEvent } from "./restaurant-room.js"
 
 export { RestaurantRoom } from "./restaurant-room.js"
@@ -37,6 +47,8 @@ async function publishOrderEvent(
       status: order.status,
       at: order.updatedAt,
     })
+    // Publicou: encerra o job da caixa de saída. Se falhar aqui, o cron reenvia e a sala descarta o repetido.
+    await markPublished(env, order.id, order.updatedAt)
   } catch (error) {
     console.error(
       JSON.stringify({ level: "error", event: "live_publish_failed", orderId: order.id, message: String(error) }),
@@ -61,6 +73,7 @@ const app = new OpenAPIHono<AppEnv>({
 })
 
 app.use("*", requestId)
+app.use("*", accessLog)
 // Leituras públicas do catálogo aceitam qualquer origem; rotas com sessão passam pelo proxy do app web.
 app.use(
   "/v1/restaurants/*",
@@ -80,6 +93,7 @@ const withSession = createMiddleware<AppEnv>(async (c, next) => {
 })
 app.use("/v1/me", withSession)
 app.use("/v1/manage/*", withSession)
+app.use("/v1/courier/*", withSession)
 app.use("/v1/orders", withSession)
 app.use("/v1/orders/*", withSession)
 app.use("/v1/live/tickets", withSession)
@@ -308,6 +322,60 @@ app.openapi(
 
 app.openapi(
   createRoute({
+    method: "post",
+    path: "/v1/orders/{orderId}/payment",
+    request: { params: z.object({ orderId: Id }), body: json(z.object({ payer: Payer.optional() }).strict()) },
+    responses: {
+      200: {
+        content: { "application/json": { schema: envelope(Order) } },
+        description: "Pedido com a cobrança online",
+      },
+      400: errorResponse,
+      401: errorResponse,
+      404: errorResponse,
+      409: errorResponse,
+      429: errorResponse,
+      500: errorResponse,
+      503: errorResponse,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const result = await createOrdersService(c.env).ensurePayment(
+      user,
+      c.req.valid("param").orderId,
+      c.req.valid("json").payer,
+    )
+    if (!result.ok) {
+      const code = result.error.code as
+        "bad_request" | "not_found" | "conflict" | "rate_limited" | "unavailable" | "internal"
+      return fail(c, code, result.error.message)
+    }
+    return ok(c, result.value)
+  },
+)
+
+// Webhook do Asaas: sem sessão; a autenticação é o token do cadastro do webhook (header asaas-access-token).
+// O corpo é do provedor (campos desconhecidos são ignorados), então a rota fica fora do OpenAPI.
+app.post("/v1/webhooks/asaas", async (c) => {
+  const result = await createPaymentsService(c.env).handleWebhook(
+    c.req.header("asaas-access-token") ?? null,
+    await c.req.text(),
+  )
+  if (!result.ok) {
+    const code = result.error.code as "unauthenticated" | "bad_request" | "conflict"
+    return fail(c, code, result.error.message)
+  }
+  if (result.value.kind === "applied") {
+    const { orderId, restaurantId, orderStatus, updatedAt } = result.value.applied
+    await publishOrderEvent(c.env, "order.updated", { id: orderId, restaurantId, status: orderStatus, updatedAt })
+  }
+  return ok(c, { received: true })
+})
+
+app.openapi(
+  createRoute({
     method: "get",
     path: "/v1/manage/restaurants/{restaurantId}/orders",
     request: { params: z.object({ restaurantId: Id }) },
@@ -326,6 +394,161 @@ app.openapi(
     const { restaurantId } = c.req.valid("param")
     if (!canManageRestaurant(user, restaurantId)) return fail(c, "forbidden", "sem acesso a este restaurante")
     return ok(c, await createOrdersService(c.env).listForRestaurant(restaurantId))
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "get",
+    path: "/v1/courier/orders",
+    responses: {
+      200: {
+        content: { "application/json": { schema: envelope(z.array(Order)) } },
+        description: "Entregas disponíveis e em curso do entregador",
+      },
+      401: errorResponse,
+      403: errorResponse,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const result = await createOrdersService(c.env).listForCourier(user)
+    if (!result.ok) return fail(c, "forbidden", result.error.message)
+    return ok(c, result.value)
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "post",
+    path: "/v1/contact",
+    request: { body: json(ContactRequest) },
+    responses: {
+      200: { content: { "application/json": { schema: envelope(ContactReceipt) } }, description: "Mensagem recebida" },
+      400: errorResponse,
+      429: errorResponse,
+    },
+  }),
+  async (c) => {
+    // O IP real vem do cabeçalho da Cloudflare; sem ele (testes, dev local) cai num valor fixo.
+    const ip = c.req.header("cf-connecting-ip") ?? "local"
+    const result = await receiveContact(c.env, c.req.valid("json"), ip)
+    if (!result.ok) return fail(c, result.code as "bad_request" | "rate_limited", result.message)
+    return ok(c, { received: true as const })
+  },
+)
+
+const MaterialParams = z.object({ restaurantId: Id, materialId: Id })
+const MKIT_PATH = "/v1/manage/restaurants/{restaurantId}/mkit/materials"
+const mkitErrors = {
+  400: errorResponse,
+  401: errorResponse,
+  403: errorResponse,
+  404: errorResponse,
+  409: errorResponse,
+}
+type MkitFailure = { code: "forbidden" | "not_found" | "conflict"; message: string }
+const mkitFail = (c: Parameters<typeof fail>[0], failure: MkitFailure) => fail(c, failure.code, failure.message)
+
+app.openapi(
+  createRoute({
+    method: "get",
+    path: MKIT_PATH,
+    request: { params: z.object({ restaurantId: Id }) },
+    responses: {
+      200: { content: { "application/json": { schema: envelope(z.array(MkitMaterial)) } }, description: "Materiais" },
+      ...mkitErrors,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const result = await createMkitService(c.env).list(user, c.req.valid("param").restaurantId)
+    return result.ok ? ok(c, result.value) : mkitFail(c, result)
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "post",
+    path: MKIT_PATH,
+    request: { params: z.object({ restaurantId: Id }), body: json(CreateMkitMaterial) },
+    responses: {
+      201: { content: { "application/json": { schema: envelope(MkitMaterial) } }, description: "Material criado" },
+      ...mkitErrors,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const result = await createMkitService(c.env).create(user, c.req.valid("param").restaurantId, c.req.valid("json"))
+    return result.ok ? created(c, result.value) : mkitFail(c, result)
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "patch",
+    path: `${MKIT_PATH}/{materialId}`,
+    request: { params: MaterialParams, body: json(UpdateMkitMaterial) },
+    responses: {
+      200: { content: { "application/json": { schema: envelope(MkitMaterial) } }, description: "Material atualizado" },
+      ...mkitErrors,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const { restaurantId, materialId } = c.req.valid("param")
+    const result = await createMkitService(c.env).update(user, restaurantId, materialId, c.req.valid("json"))
+    return result.ok ? ok(c, result.value) : mkitFail(c, result)
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "delete",
+    path: `${MKIT_PATH}/{materialId}`,
+    request: { params: MaterialParams },
+    responses: {
+      200: {
+        content: { "application/json": { schema: envelope(z.object({ deleted: z.literal(true) })) } },
+        description: "Removido",
+      },
+      ...mkitErrors,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const { restaurantId, materialId } = c.req.valid("param")
+    const result = await createMkitService(c.env).remove(user, restaurantId, materialId)
+    return result.ok ? ok(c, { deleted: true as const }) : mkitFail(c, result)
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "get",
+    path: `${MKIT_PATH}/{materialId}/export`,
+    request: { params: MaterialParams },
+    responses: {
+      200: { content: { "text/plain": { schema: z.string() } }, description: "Texto do material para download" },
+      ...mkitErrors,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const { restaurantId, materialId } = c.req.valid("param")
+    const result = await createMkitService(c.env).exportText(user, restaurantId, materialId)
+    if (!result.ok) return mkitFail(c, result)
+    return c.text(result.value.text, 200, {
+      "content-type": "text/plain; charset=utf-8",
+      "content-disposition": `attachment; filename="${result.value.filename}"`,
+      "x-content-type-options": "nosniff",
+    })
   },
 )
 
@@ -390,4 +613,12 @@ app.doc31("/v1/openapi.json", {
   info: { title: "Casa das Máquinas", version: API_VERSION, description: "API v1 do ecossistema Delivery Express" },
 })
 
-export default app
+export { app }
+
+export default {
+  fetch: app.fetch,
+  /** Cron: reenvia eventos de tempo real que ficaram na caixa de saída (ver jobs.ts). */
+  async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext) {
+    ctx.waitUntil(runOutbox(env))
+  },
+} satisfies ExportedHandler<Env>

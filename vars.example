@@ -1,0 +1,8 @@
+# Valores não secretos para apps/casa-das-maquinas/wrangler.jsonc [vars].
+# Configure em Workers & Pages > casa-das-maquinas > Settings > Variables.
+# Secrets (Better Auth, Google OAuth, Asaas e Turnstile) não devem ficar aqui.
+
+API_VERSION=v1
+ASAAS_ENV=sandbox
+BETTER_AUTH_URL=https://SEU-DOMINIO-VERCEL
+TRUSTED_ORIGINS=https://SEU-DOMINIO-VERCEL,https://SEU-ALIAS-VERCEL.vercel.app

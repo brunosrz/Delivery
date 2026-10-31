@@ -46,6 +46,11 @@ export const AddonGroup = z
     message: "minSelections não pode ser maior que maxSelections",
     path: ["minSelections"],
   })
+  // Impossibilidade estrutural; a disponibilidade momentânea das opções é tratada pelo catálogo.
+  .refine((group) => group.minSelections <= group.options.length, {
+    message: "minSelections não pode ser maior que o número de opções",
+    path: ["minSelections"],
+  })
 export type AddonGroup = z.infer<typeof AddonGroup>
 
 export const Product = z.object({

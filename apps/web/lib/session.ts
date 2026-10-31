@@ -13,7 +13,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
 
   try {
     const response = await fetch(new URL("/v1/me", baseUrl), {
-      headers: { cookie, accept: "application/json" },
+      headers: { cookie, accept: "application/json", "x-request-id": crypto.randomUUID() },
       cache: "no-store",
       signal: AbortSignal.timeout(4000),
     })

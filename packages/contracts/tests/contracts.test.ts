@@ -3,14 +3,17 @@ import { z } from "zod"
 import {
   AddonGroup,
   Cents,
+  CreateMkitMaterial,
   CreateOrderRequest,
   IdempotencyKey,
   Menu,
+  Order,
   OrderStatus,
   QuoteRequest,
   SessionUser,
   Slug,
   StatusTransitionRequest,
+  UpdateMkitMaterial,
   envelope,
 } from "../src/index.js"
 
@@ -149,6 +152,61 @@ describe("cotação e pedido", () => {
     ).toBe(true)
   })
 
+  it("rejeita preço injetado dentro de um item e campo extra no endereço", () => {
+    const base = { restaurantId: "rest_1", fulfillment: "pickup", items: [item] }
+    expect(QuoteRequest.safeParse({ ...base, items: [{ ...item, priceCents: 1 }] }).success).toBe(false)
+    expect(
+      CreateOrderRequest.safeParse({
+        ...base,
+        fulfillment: "delivery",
+        paymentMethod: "cash",
+        expectedTotalCents: 100,
+        address: { ...address, country: "BR" },
+      }).success,
+    ).toBe(false)
+  })
+
+  describe("Order", () => {
+    const order = {
+      id: "ord_1",
+      restaurantId: "rest_1",
+      customerId: "usr_1",
+      fulfillment: "delivery",
+      status: "pending",
+      payment: { method: "cash", status: "pending" },
+      quote: {
+        restaurantId: "rest_1",
+        lines: [
+          {
+            productId: "prod_1",
+            name: "Pizza",
+            quantity: 1,
+            unitPriceCents: 4000,
+            addonsCents: 0,
+            lineTotalCents: 4000,
+          },
+        ],
+        subtotalCents: 4000,
+        deliveryCents: 500,
+        discountCents: 0,
+        totalCents: 4500,
+      },
+      address,
+      timeline: [{ status: "pending", at: "2026-10-31T12:00:00Z", actorRole: "customer" }],
+      createdAt: "2026-10-31T12:00:00Z",
+      updatedAt: "2026-10-31T12:00:00Z",
+    }
+
+    it("exige endereço em pedido de entrega", () => {
+      expect(Order.safeParse(order).success).toBe(true)
+      expect(Order.safeParse({ ...order, address: null }).success).toBe(false)
+    })
+
+    it("aceita retirada sem endereço", () => {
+      expect(Order.safeParse({ ...order, fulfillment: "pickup", address: null }).success).toBe(true)
+    })
+  })
+
   it("rejeita status desconhecido na transição", () => {
     expect(StatusTransitionRequest.safeParse({ to: "shipped" }).success).toBe(false)
     expect(OrderStatus.options).toContain("dispatched")
@@ -182,5 +240,44 @@ describe("envelope", () => {
     expect(Response.safeParse({ data: { ok: true }, error: null, meta: { ...meta, apiVersion: "v2" } }).success).toBe(
       false,
     )
+  })
+})
+
+describe("grupos de complementos inviáveis", () => {
+  const option = { id: "opt_1", name: "Borda", priceCents: 500, available: true }
+  const group = { id: "grp_1", name: "Extras", minSelections: 2, maxSelections: 2, options: [option] }
+
+  it("rejeita mínimo maior que o número de opções", () => {
+    expect(AddonGroup.safeParse(group).success).toBe(false)
+  })
+
+  it("aceita mínimo igual ao número de opções", () => {
+    expect(
+      AddonGroup.safeParse({ ...group, options: [option, { ...option, id: "opt_2", name: "Cheddar" }] }).success,
+    ).toBe(true)
+  })
+})
+
+describe("materiais do MKit", () => {
+  it("limpa HTML do título e do corpo na entrada", () => {
+    const parsed = CreateMkitMaterial.parse({
+      title: "Promo <b>2 por 1</b>",
+      kind: "post",
+      body: "Venha!<script>alert(1)</script> Hoje.",
+    })
+    expect(parsed).toEqual({ title: "Promo 2 por 1", kind: "post", body: "Venha! Hoje." })
+  })
+
+  it("recusa conteúdo vazio depois da limpeza, tipo desconhecido e campos extras", () => {
+    expect(CreateMkitMaterial.safeParse({ title: "Ok", kind: "post", body: "<script>x</script>" }).success).toBe(false)
+    expect(CreateMkitMaterial.safeParse({ title: "Ok", kind: "banner", body: "texto" }).success).toBe(false)
+    expect(CreateMkitMaterial.safeParse({ title: "Ok", kind: "post", body: "x", restaurantId: "r" }).success).toBe(
+      false,
+    )
+  })
+
+  it("a atualização exige ao menos um campo", () => {
+    expect(UpdateMkitMaterial.safeParse({}).success).toBe(false)
+    expect(UpdateMkitMaterial.safeParse({ status: "published" }).success).toBe(true)
   })
 })

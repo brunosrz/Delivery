@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
+    "openapi:export": "node --experimental-transform-types scripts/openapi-export.mjs",
     "cf-typegen": "wrangler types --strict-vars=false src/worker-configuration.d.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",

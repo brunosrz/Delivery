@@ -49,9 +49,14 @@ export class RestaurantRoom extends DurableObject<Env> {
    */
   async publish(event: Omit<LiveEvent, "seq">): Promise<LiveEvent | null> {
     const last = this.ctx.storage.sql
-      .exec<{ at: string }>("select at from events where order_id = ? order by seq desc limit 1", event.orderId)
+      .exec<{ at: string; status: string }>(
+        "select at, status from events where order_id = ? order by seq desc limit 1",
+        event.orderId,
+      )
       .toArray()[0]
     if (last && last.at > event.at) return null
+    // Reenvio da caixa de saída (at-least-once): o mesmo evento não é gravado nem distribuído duas vezes.
+    if (last && last.at === event.at && last.status === event.status) return null
 
     const { seq } = this.ctx.storage.sql
       .exec<{ seq: number }>(

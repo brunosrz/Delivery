@@ -44,7 +44,24 @@ test.describe("jornada do catálogo contra a Casa das Máquinas", () => {
     await expect(ponto).toContainText("Obrigatório, escolha 1")
     await expect(ponto.getByRole("radio")).toHaveCount(2)
     await expect(page.getByRole("group", { name: "Adicionais" }).getByRole("checkbox")).toHaveCount(2)
-    await expect(page.getByRole("button", { name: "Adicionar à sacola" })).toBeDisabled()
+    await expect(page.getByRole("button", { name: "Adicionar à sacola" })).toBeEnabled()
+  })
+
+  test("exige o ponto da carne e leva o item à sacola com o preço calculado pelo servidor", async ({ page }) => {
+    await page.goto("/delivery-express/restaurant/burger-do-bairro")
+    await page.getByRole("link", { name: /Burger clássico/ }).click()
+
+    await page.getByRole("button", { name: "Adicionar à sacola" }).click()
+    await expect(page.getByRole("alert").filter({ hasText: "Escolha uma opção em Ponto da carne" })).toBeVisible()
+
+    await page.getByRole("group", { name: "Ponto da carne" }).getByRole("radio").first().check()
+    await page.getByRole("button", { name: "Adicionar à sacola" }).click()
+    await expect(page.getByRole("status").filter({ hasText: "Adicionado à sacola" })).toBeVisible()
+
+    await page.getByRole("link", { name: "Ver sacola" }).click()
+    await expect(page.getByRole("heading", { level: 1, name: "Sua sacola" })).toBeVisible()
+    await expect(page.getByText("Burger clássico")).toBeVisible()
+    await expect(page.getByText("Total", { exact: true })).toBeVisible()
   })
 
   test("restaurante e produto inexistentes respondem 404", async ({ page }) => {

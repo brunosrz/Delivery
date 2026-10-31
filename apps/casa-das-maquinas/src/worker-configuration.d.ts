@@ -9,6 +9,10 @@ interface __BaseEnv_Env {
   BETTER_AUTH_SECRET: string
   GOOGLE_CLIENT_ID: string
   GOOGLE_CLIENT_SECRET: string
+  ASAAS_ENV: string
+  ASAAS_API_KEY?: string
+  ASAAS_WEBHOOK_TOKEN?: string
+  TURNSTILE_SECRET?: string
   RESTAURANT_ROOM: DurableObjectNamespace<import("./index").RestaurantRoom>
 }
 declare namespace Cloudflare {
@@ -32,6 +36,7 @@ declare namespace NodeJS {
       | "BETTER_AUTH_SECRET"
       | "GOOGLE_CLIENT_ID"
       | "GOOGLE_CLIENT_SECRET"
+      | "ASAAS_ENV"
     >
   > {}
 }

@@ -1,5 +1,7 @@
 # Planejamento do Monorepo Futuro
 
+> **Documento de proposta.** O que existe hoje é um workspace pnpm com `apps/web`, `apps/casa-das-maquinas`, `packages/domain` e `packages/contracts` (ver [`estrutura-atual.md`](./estrutura-atual.md)). Turborepo, `packages/ui` e `packages/config` **não** estão implementados; ficam adiados até haver dois consumidores e medição de ganho (issue #39). Menções a tRPC, Prisma e NextAuth são históricas: o backend é a Casa das Máquinas (Hono, Drizzle, Better Auth).
+
 Este documento detalha o planejamento e a estrutura do futuro monorepo para o projeto Ecossistema Delivery Express, utilizando Turborepo como ferramenta de gerenciamento.
 
 ## Visão Geral
@@ -8,7 +10,7 @@ O monorepo será estruturado para permitir o desenvolvimento e deploy independen
 
 ## Estrutura de Pastas
 
-\`\`\`
+```
 /
 ├── apps/ # Aplicações independentes
 │ ├── site-institucional/ # Site institucional do ecossistema
@@ -33,7 +35,7 @@ O monorepo será estruturado para permitir o desenvolvimento e deploy independen
 ├── turbo.json # Configuração do Turborepo
 ├── package.json # Dependências do monorepo
 └── pnpm-workspace.yaml # Configuração do workspace PNPM
-\`\`\`
+```
 
 ## Detalhamento dos Componentes
 
@@ -45,7 +47,7 @@ O monorepo será estruturado para permitir o desenvolvimento e deploy independen
 - **Propósito**: Site institucional do ecossistema parceiros
 - **Funcionalidades**: Páginas de apresentação, cardápios, calculadora de ROI
 - **Estrutura**:
-  \`\`\`
+  ```
   /apps/site-institucional/
   ├── app/ # App Router do Next.js
   ├── public/ # Arquivos estáticos
@@ -54,7 +56,7 @@ O monorepo será estruturado para permitir o desenvolvimento e deploy independen
   ├── next.config.js # Configuração do Next.js
   ├── package.json # Dependências específicas
   └── tsconfig.json # Configuração TypeScript
-  \`\`\`
+  ```
 
 #### 2. Delivery Express
 
@@ -90,7 +92,7 @@ O monorepo será estruturado para permitir o desenvolvimento e deploy independen
 - **Propósito**: Backend centralizado com APIs
 - **Funcionalidades**: APIs, autenticação, integração com serviços externos
 - **Estrutura**:
-  \`\`\`
+  ```
   /apps/casa-das-maquinas/
   ├── app/ # App Router do Next.js
   │ └── api/ # Rotas de API
@@ -103,7 +105,7 @@ O monorepo será estruturado para permitir o desenvolvimento e deploy independen
   ├── next.config.js # Configuração do Next.js
   ├── package.json # Dependências específicas
   └── tsconfig.json # Configuração TypeScript
-  \`\`\`
+  ```
 
 ### Packages
 
@@ -113,7 +115,7 @@ O monorepo será estruturado para permitir o desenvolvimento e deploy independen
 - **Propósito**: Biblioteca de componentes compartilhados
 - **Componentes**: Botões, formulários, modais, cards, tabelas, etc.
 - **Estrutura**:
-  \`\`\`
+  ```
   /packages/ui/
   ├── src/
   │ ├── components/ # Componentes UI
@@ -122,14 +124,14 @@ O monorepo será estruturado para permitir o desenvolvimento e deploy independen
   │ └── index.ts # Exportações
   ├── package.json # Dependências
   └── tsconfig.json # Configuração TypeScript
-  \`\`\`
+  ```
 
 #### 2. Config
 
 - **Propósito**: Configurações compartilhadas
 - **Conteúdo**: Configurações de build, ambiente, etc.
 - **Estrutura**:
-  \`\`\`
+  ```
   /packages/config/
   ├── src/
   │ ├── env.ts # Validação de variáveis de ambiente
@@ -137,40 +139,40 @@ O monorepo será estruturado para permitir o desenvolvimento e deploy independen
   │ └── index.ts # Exportações
   ├── package.json # Dependências
   └── tsconfig.json # Configuração TypeScript
-  \`\`\`
+  ```
 
 #### 3. TSConfig
 
 - **Propósito**: Configurações TypeScript compartilhadas
 - **Conteúdo**: Configurações base para diferentes tipos de projetos
 - **Estrutura**:
-  \`\`\`
+  ```
   /packages/tsconfig/
   ├── base.json # Configuração base
   ├── nextjs.json # Configuração para Next.js
   ├── react-library.json # Configuração para bibliotecas React
   └── package.json # Metadados
-  \`\`\`
+  ```
 
 #### 4. ESLint Config
 
 - **Propósito**: Configurações ESLint compartilhadas
 - **Conteúdo**: Regras e plugins para diferentes tipos de projetos
 - **Estrutura**:
-  \`\`\`
+  ```
   /packages/eslint-config/
   ├── base.js # Configuração base
   ├── nextjs.js # Configuração para Next.js
   ├── react.js # Configuração para React
   └── package.json # Dependências e metadados
-  \`\`\`
+  ```
 
 #### 5. Utils
 
 - **Propósito**: Utilitários compartilhados
 - **Conteúdo**: Funções de formatação, validação, etc.
 - **Estrutura**:
-  \`\`\`
+  ```
   /packages/utils/
   ├── src/
   │ ├── formatting/ # Funções de formatação
@@ -179,7 +181,7 @@ O monorepo será estruturado para permitir o desenvolvimento e deploy independen
   │ └── index.ts # Exportações
   ├── package.json # Dependências
   └── tsconfig.json # Configuração TypeScript
-  \`\`\`
+  ```
 
 #### 6. API Client
 
@@ -187,7 +189,7 @@ O monorepo será estruturado para permitir o desenvolvimento e deploy independen
 - **Propósito**: Cliente para consumir as APIs da Casa das Máquinas
 - **Conteúdo**: Hooks e funções para interagir com as APIs
 - **Estrutura**:
-  \`\`\`
+  ```
   /packages/api-client/
   ├── src/
   │ ├── client.ts # Configuração do cliente tRPC
@@ -195,7 +197,7 @@ O monorepo será estruturado para permitir o desenvolvimento e deploy independen
   │ └── index.ts # Exportações
   ├── package.json # Dependências
   └── tsconfig.json # Configuração TypeScript
-  \`\`\`
+  ```
 
 #### 7. Auth
 
@@ -203,7 +205,7 @@ O monorepo será estruturado para permitir o desenvolvimento e deploy independen
 - **Propósito**: Lógica de autenticação compartilhada
 - **Conteúdo**: Configuração de autenticação, hooks, componentes
 - **Estrutura**:
-  \`\`\`
+  ```
   /packages/auth/
   ├── src/
   │ ├── config.ts # Configuração de autenticação
@@ -212,14 +214,14 @@ O monorepo será estruturado para permitir o desenvolvimento e deploy independen
   │ └── index.ts # Exportações
   ├── package.json # Dependências
   └── tsconfig.json # Configuração TypeScript
-  \`\`\`
+  ```
 
 #### 8. Types
 
 - **Propósito**: Tipos TypeScript compartilhados
 - **Conteúdo**: Interfaces, tipos, enums
 - **Estrutura**:
-  \`\`\`
+  ```
   /packages/types/
   ├── src/
   │ ├── models/ # Tipos de modelos de dados
@@ -228,48 +230,42 @@ O monorepo será estruturado para permitir o desenvolvimento e deploy independen
   │ └── index.ts # Exportações
   ├── package.json # Metadados
   └── tsconfig.json # Configuração TypeScript
-  \`\`\`
+  ```
 
 ## Configuração do Turborepo
 
 ### turbo.json
 
-\`\`\`json
+Exemplo para o Turborepo 2 (a chave é `tasks`, não `pipeline`). Versão de referência: `turbo@^2`.
+
+```json
 {
-"$schema": "https://turbo.build/schema.json",
-"globalDependencies": ["**/.env.\*local"],
-"pipeline": {
-"build": {
-"dependsOn": ["^build"],
-"outputs": [".next/**", "!.next/cache/**", "dist/**"]
-},
-"lint": {
-"outputs": []
-},
-"dev": {
-"cache": false,
-"persistent": true
-},
-"clean": {
-"cache": false
-},
-"test": {
-"dependsOn": ["build"],
-"outputs": ["coverage/**"],
-"inputs": ["src/**/_.tsx", "src/\**/_.ts", "test/**/\*.ts", "test/**/*.tsx"]
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["**/.env.*local"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+    },
+    "lint": {
+      "outputs": []
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "clean": {
+      "cache": false
+    },
+    "test": {
+      "outputs": ["coverage/**"],
+      "inputs": ["src/**/*.ts", "src/**/*.tsx", "test/**/*.ts", "test/**/*.tsx"]
+    }
+  }
 }
-}
-}
-\`\`\`
+```
 
-### pnpm-workspace.yaml
-
-\`\`\`yaml
-packages:
-
-- 'apps/*'
-- 'packages/*'
-  \`\`\`
+`test` não depende de `build`: nem todo pacote tem `build` (os pacotes do workspace são consumidos como TypeScript), e os testes do Vitest compilam o que precisam.
 
 ## Estratégia de Migração
 
