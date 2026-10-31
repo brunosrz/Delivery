@@ -25,3 +25,4 @@ export {
   type PaymentStatus,
   type PaymentTransitionCheck,
 } from "./payment-status.js"
+export { sanitizeText } from "./sanitize-text.js"

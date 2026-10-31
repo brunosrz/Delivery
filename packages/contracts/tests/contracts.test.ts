@@ -3,6 +3,7 @@ import { z } from "zod"
 import {
   AddonGroup,
   Cents,
+  CreateMkitMaterial,
   CreateOrderRequest,
   IdempotencyKey,
   Menu,
@@ -12,6 +13,7 @@ import {
   SessionUser,
   Slug,
   StatusTransitionRequest,
+  UpdateMkitMaterial,
   envelope,
 } from "../src/index.js"
 
@@ -253,5 +255,29 @@ describe("grupos de complementos inviáveis", () => {
     expect(
       AddonGroup.safeParse({ ...group, options: [option, { ...option, id: "opt_2", name: "Cheddar" }] }).success,
     ).toBe(true)
+  })
+})
+
+describe("materiais do MKit", () => {
+  it("limpa HTML do título e do corpo na entrada", () => {
+    const parsed = CreateMkitMaterial.parse({
+      title: "Promo <b>2 por 1</b>",
+      kind: "post",
+      body: "Venha!<script>alert(1)</script> Hoje.",
+    })
+    expect(parsed).toEqual({ title: "Promo 2 por 1", kind: "post", body: "Venha! Hoje." })
+  })
+
+  it("recusa conteúdo vazio depois da limpeza, tipo desconhecido e campos extras", () => {
+    expect(CreateMkitMaterial.safeParse({ title: "Ok", kind: "post", body: "<script>x</script>" }).success).toBe(false)
+    expect(CreateMkitMaterial.safeParse({ title: "Ok", kind: "banner", body: "texto" }).success).toBe(false)
+    expect(CreateMkitMaterial.safeParse({ title: "Ok", kind: "post", body: "x", restaurantId: "r" }).success).toBe(
+      false,
+    )
+  })
+
+  it("a atualização exige ao menos um campo", () => {
+    expect(UpdateMkitMaterial.safeParse({}).success).toBe(false)
+    expect(UpdateMkitMaterial.safeParse({ status: "published" }).success).toBe(true)
   })
 })

@@ -152,3 +152,24 @@ export const contactMessages = sqliteTable(
   },
   (table) => [index("contact_messages_ip_created_idx").on(table.ipHash, table.createdAt)],
 )
+
+/** Materiais de marketing (MKit) de um restaurante. O texto já chega limpo (ver sanitizeText nos contratos). */
+export const mkitMaterials = sqliteTable(
+  "mkit_materials",
+  {
+    id: text("id").primaryKey(),
+    restaurantId: text("restaurant_id")
+      .notNull()
+      .references(() => restaurants.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    kind: text("kind", { enum: ["post", "cartaz", "promocao"] }).notNull(),
+    body: text("body").notNull(),
+    status: text("status", { enum: ["draft", "published"] })
+      .notNull()
+      .default("draft"),
+    exportCount: integer("export_count").notNull().default(0),
+    createdAt: text("created_at").notNull().default(isoNow),
+    updatedAt: text("updated_at").notNull().default(isoNow),
+  },
+  (table) => [index("mkit_materials_restaurant_idx").on(table.restaurantId, table.updatedAt)],
+)
