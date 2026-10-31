@@ -3,7 +3,14 @@ import { type PaymentStatus, checkPaymentTransition } from "@delivery/domain"
 import { eq } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/d1"
 import { z } from "zod"
-import { type AsaasBillingType, type AsaasClient, AsaasError, asaasConfigFrom, createAsaasClient } from "./asaas.js"
+import {
+  type AsaasBillingType,
+  type AsaasClient,
+  AsaasError,
+  asaasConfigFrom,
+  asaasDateTimeToIso,
+  createAsaasClient,
+} from "./asaas.js"
 import * as schema from "./db/orders-schema.js"
 
 type ChargeRow = typeof schema.paymentCharges.$inferSelect
@@ -43,7 +50,7 @@ export function toCharge(row: ChargeRow): Charge {
     invoiceUrl: row.invoiceUrl,
     pix:
       row.pixPayload && row.pixQrImage
-        ? { payload: row.pixPayload, qrCodeImage: row.pixQrImage, expiresAt: row.pixExpiresAt }
+        ? { payload: row.pixPayload, qrCodeImage: row.pixQrImage, expiresAt: asaasDateTimeToIso(row.pixExpiresAt) }
         : null,
   }
 }

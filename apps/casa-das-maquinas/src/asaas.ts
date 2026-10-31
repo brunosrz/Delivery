@@ -24,6 +24,17 @@ export type AsaasPayment = {
 export type AsaasPixQrCode = { payload: string; encodedImage: string; expirationDate: string | null }
 
 /** `rate_limited` não deve ser repetido na hora (a doc do Asaas pede intervalos progressivos). */
+/**
+ * O Asaas devolve datas como "2026-12-31 23:59:59" (horário de Brasília, sem fuso). O contrato da API usa ISO 8601
+ * com fuso; um valor que não reconhecemos vira null em vez de quebrar a resposta do pedido.
+ */
+export function asaasDateTimeToIso(value: string | null | undefined): string | null {
+  if (!value) return null
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(value)) return value
+  const match = /^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}:\d{2})$/.exec(value)
+  return match ? `${match[1]}T${match[2]}-03:00` : null
+}
+
 export type AsaasErrorKind = "unavailable" | "rate_limited" | "rejected" | "unauthorized"
 
 export class AsaasError extends Error {

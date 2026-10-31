@@ -1,6 +1,7 @@
 import { Hono } from "hono"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { type AppEnv, logError, requestId } from "../src/http"
+import { asaasDateTimeToIso } from "../src/asaas"
 import { redact } from "../src/redact"
 import { call } from "./helpers"
 
@@ -82,5 +83,17 @@ describe("log de acesso", () => {
     for (const secret of ["token-no-erro-123", "outro-segredo", "ticket-na-query"]) {
       expect(lines.join(" ")).not.toContain(secret)
     }
+  })
+})
+
+describe("asaasDateTimeToIso", () => {
+  it("converte o formato do Asaas (horário de Brasília) para ISO com fuso", () => {
+    expect(asaasDateTimeToIso("2026-12-31 23:59:59")).toBe("2026-12-31T23:59:59-03:00")
+  })
+
+  it("mantém ISO e devolve null para o que não reconhece", () => {
+    expect(asaasDateTimeToIso("2026-12-31T23:59:59Z")).toBe("2026-12-31T23:59:59Z")
+    expect(asaasDateTimeToIso(null)).toBeNull()
+    expect(asaasDateTimeToIso("amanhã")).toBeNull()
   })
 })

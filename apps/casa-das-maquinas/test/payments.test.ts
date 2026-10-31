@@ -28,6 +28,8 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } })
 
 type FetchFn = (input: string | URL | Request, init?: RequestInit) => Promise<Response>
+// O D1 é compartilhado entre os testes do arquivo e o id da cobrança é único: o contador nunca reinicia.
+let paymentSeq = 0
 let asaas: ReturnType<typeof vi.fn<FetchFn>>
 
 /** Asaas simulado: guarda as cobranças criadas para que a busca por externalReference as encontre. */
@@ -46,10 +48,11 @@ function installAsaas(options: { down?: boolean } = {}) {
     }
     if (method === "POST" && url.pathname === "/v3/payments") {
       const body = JSON.parse(init?.body as string) as { externalReference: string; billingType: string; value: number }
+      paymentSeq += 1
       const payment = {
-        id: `pay_${payments.size + 1}`,
+        id: `pay_${paymentSeq}`,
         status: "PENDING",
-        invoiceUrl: `https://www.asaas.com/i/${payments.size + 1}`,
+        invoiceUrl: `https://www.asaas.com/i/${paymentSeq}`,
         externalReference: body.externalReference,
         value: body.value,
         billingType: body.billingType,
@@ -111,8 +114,8 @@ describe("pedido com Pix", () => {
     expect(order.payment).toEqual({ method: "pix", status: "pending" })
     expect(order.charge).toMatchObject({
       provider: "asaas",
-      chargeId: "pay_1",
-      pix: { payload: "00020126pix-copia-e-cola", qrCodeImage: "iVBORw0KGgo=" },
+      chargeId: expect.stringMatching(/^pay_\d+$/),
+      pix: { payload: "00020126pix-copia-e-cola", qrCodeImage: "iVBORw0KGgo=", expiresAt: "2026-12-31T23:59:59-03:00" },
     })
 
     const [customer] = asaasCalls((method, path) => method === "POST" && path === "/v3/customers")
@@ -169,7 +172,11 @@ describe("pedido com cartão (crédito ou débito)", () => {
     const { cookie } = await newUser()
     const response = await createOrder(cookie, orderBody("card"))
     const order = await parseOrder(response)
-    expect(order.charge).toMatchObject({ chargeId: "pay_1", invoiceUrl: "https://www.asaas.com/i/1", pix: null })
+    expect(order.charge).toMatchObject({
+      chargeId: expect.stringMatching(/^pay_\d+$/),
+      invoiceUrl: expect.stringMatching(/^https:\/\/www\.asaas\.com\/i\/\d+$/),
+      pix: null,
+    })
 
     const [paymentCall] = asaasCalls((method, path) => method === "POST" && path === "/v3/payments")
     const body = JSON.parse((paymentCall?.[1] as RequestInit).body as string)
