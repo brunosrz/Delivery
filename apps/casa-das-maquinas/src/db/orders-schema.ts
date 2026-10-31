@@ -19,7 +19,9 @@ export const orders = sqliteTable(
     status: text("status", {
       enum: ["pending", "accepted", "preparing", "ready", "dispatched", "delivered", "cancelled"],
     }).notNull(),
-    paymentMethod: text("payment_method", { enum: ["cash", "pix_on_delivery", "card_on_delivery"] }).notNull(),
+    paymentMethod: text("payment_method", {
+      enum: ["cash", "pix_on_delivery", "card_on_delivery", "pix", "card"],
+    }).notNull(),
     paymentStatus: text("payment_status", { enum: ["pending", "paid", "failed", "refunded"] })
       .notNull()
       .default("pending"),
@@ -59,3 +61,49 @@ export const orderEvents = sqliteTable(
   },
   (table) => [index("order_events_order_idx").on(table.orderId, table.at)],
 )
+
+/** Cobrança online emitida no Asaas para um pedido (uma por pedido). */
+export const paymentCharges = sqliteTable(
+  "payment_charges",
+  {
+    id: text("id").primaryKey(),
+    orderId: text("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    restaurantId: text("restaurant_id")
+      .notNull()
+      .references(() => restaurants.id),
+    provider: text("provider", { enum: ["asaas"] })
+      .notNull()
+      .default("asaas"),
+    /** Identificador `pay_…` no Asaas; é por ele que o webhook encontra o pedido. */
+    providerChargeId: text("provider_charge_id").notNull(),
+    billingType: text("billing_type", { enum: ["PIX", "UNDEFINED"] }).notNull(),
+    invoiceUrl: text("invoice_url"),
+    pixPayload: text("pix_payload"),
+    pixQrImage: text("pix_qr_image"),
+    pixExpiresAt: text("pix_expires_at"),
+    createdAt: text("created_at").notNull().default(isoNow),
+  },
+  (table) => [
+    uniqueIndex("payment_charges_order_unique").on(table.orderId),
+    uniqueIndex("payment_charges_provider_charge_unique").on(table.provider, table.providerChargeId),
+  ],
+)
+
+/** Vínculo entre o usuário e o cliente `cus_…` no Asaas, para não recriar clientes duplicados. */
+export const asaasCustomers = sqliteTable("asaas_customers", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => user.id, { onDelete: "cascade" }),
+  asaasCustomerId: text("asaas_customer_id").notNull(),
+  createdAt: text("created_at").notNull().default(isoNow),
+})
+
+/** Eventos de webhook já recebidos; o `id` do evento é a chave de deduplicação (entrega at least once). */
+export const paymentWebhookEvents = sqliteTable("payment_webhook_events", {
+  eventId: text("event_id").primaryKey(),
+  event: text("event").notNull(),
+  providerChargeId: text("provider_charge_id"),
+  receivedAt: text("received_at").notNull().default(isoNow),
+})

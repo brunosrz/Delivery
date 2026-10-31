@@ -5,6 +5,7 @@ import {
   IdempotencyKey,
   Menu,
   Order,
+  Payer,
   Quote,
   QuoteRequest,
   Restaurant,
@@ -20,6 +21,7 @@ import { canManageRestaurant, createAuth, getSessionUser } from "./auth.js"
 import { type AppEnv, created, fail, logError, ok, requestId } from "./http.js"
 import { type LiveScope, signTicket, verifyTicket } from "./live-ticket.js"
 import { createOrdersService } from "./orders.js"
+import { createPaymentsService } from "./payments.js"
 import type { LiveEvent } from "./restaurant-room.js"
 
 export { RestaurantRoom } from "./restaurant-room.js"
@@ -305,6 +307,60 @@ app.openapi(
     return ok(c, result.value)
   },
 )
+
+app.openapi(
+  createRoute({
+    method: "post",
+    path: "/v1/orders/{orderId}/payment",
+    request: { params: z.object({ orderId: Id }), body: json(z.object({ payer: Payer.optional() }).strict()) },
+    responses: {
+      200: {
+        content: { "application/json": { schema: envelope(Order) } },
+        description: "Pedido com a cobrança online",
+      },
+      400: errorResponse,
+      401: errorResponse,
+      404: errorResponse,
+      409: errorResponse,
+      429: errorResponse,
+      500: errorResponse,
+      503: errorResponse,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const result = await createOrdersService(c.env).ensurePayment(
+      user,
+      c.req.valid("param").orderId,
+      c.req.valid("json").payer,
+    )
+    if (!result.ok) {
+      const code = result.error.code as
+        "bad_request" | "not_found" | "conflict" | "rate_limited" | "unavailable" | "internal"
+      return fail(c, code, result.error.message)
+    }
+    return ok(c, result.value)
+  },
+)
+
+// Webhook do Asaas: sem sessão; a autenticação é o token do cadastro do webhook (header asaas-access-token).
+// O corpo é do provedor (campos desconhecidos são ignorados), então a rota fica fora do OpenAPI.
+app.post("/v1/webhooks/asaas", async (c) => {
+  const result = await createPaymentsService(c.env).handleWebhook(
+    c.req.header("asaas-access-token") ?? null,
+    await c.req.text(),
+  )
+  if (!result.ok) {
+    const code = result.error.code as "unauthenticated" | "bad_request" | "conflict"
+    return fail(c, code, result.error.message)
+  }
+  if (result.value.kind === "applied") {
+    const { orderId, restaurantId, orderStatus, updatedAt } = result.value.applied
+    await publishOrderEvent(c.env, "order.updated", { id: orderId, restaurantId, status: orderStatus, updatedAt })
+  }
+  return ok(c, { received: true })
+})
 
 app.openapi(
   createRoute({
