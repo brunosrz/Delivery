@@ -1,111 +1,42 @@
-# Estrutura Atual do Projeto
+# Inventário da aplicação existente
 
-## Visão Geral
+Mapa verificável do que existe no repositório hoje. O estado de cada produto vem de [`apps/web/lib/ecosystem-status.ts`](../apps/web/lib/ecosystem-status.ts). Esse mesmo arquivo alimenta a página inicial, e o teste `apps/web/tests/unit/ecosystem-status.test.ts` falha se uma rota listada deixar de existir.
 
-O ecossistema Delivery Express está atualmente estruturado usando o App Router do Next.js, onde cada módulo do sistema é implementado como uma rota dentro da pasta `app/`. Esta abordagem permite um desenvolvimento rápido e integrado, enquanto prepara o terreno para uma futura migração para uma arquitetura de monorepo.
+Legenda: **implementado** (funciona de ponta a ponta), **parcial** (funciona com limitações declaradas), **demonstração** (conteúdo estático), **em construção** (só a casca da página) e **planejado** (apenas desenho).
 
-## Estrutura de Diretórios
+## Páginas
 
-\`\`\`
-/
-├── app/                      # Diretório principal do App Router
-│   ├── page.tsx              # Página inicial com navegação para os módulos
-│   ├── layout.tsx            # Layout compartilhado por todas as páginas
-│   ├── globals.css           # Estilos globais
-│   │
-│   ├── site-institucional/              # Site institucional do ecossistema
-│   │   ├── page.tsx
-│   │   ├── components/
-│   │   └── ...
-│   │
-│   ├── delivery-express/     # Delivery Express - App para clientes
-│   │   ├── page.tsx
-│   │   ├── components/
-│   │   └── ...
-│   │
-│   ├── pedidos-na-mao/       # Pedidos na Mão - Painel para restaurantes
-│   │   ├── page.tsx
-│   │   ├── components/
-│   │   └── ...
-│   │
-│   ├── ta-na-entrega/        # Tá na Entrega - App para entregadores
-│   │   ├── page.tsx
-│   │   ├── components/
-│   │   └── ...
-│   │
-│   ├── observabilidade/       # Integrações com Grafana, métricas e logs
-│   │   ├── page.tsx
-│   │   ├── components/
-│   │   └── ...
-│   │
-│   └── casa-das-maquinas/    # Backend/API
-│       ├── page.tsx
-│       ├── api/              # Rotas de API
-│       │   ├── auth/
-│       │   ├── restaurants/
-│       │   ├── orders/
-│       │   └── ...
-│       └── ...
-│
-├── components/               # Componentes compartilhados
-│   ├── ui/                   # Componentes de UI base (shadcn/ui)
-│   └── ...
-│
-├── lib/                      # Utilitários e funções compartilhadas
-│   ├── utils.ts
-│   ├── api-client.ts         # Cliente para comunicação com a API
-│   └── ...
-│
-├── public/                   # Arquivos estáticos
-│
-├── docs/                     # Documentação do projeto
-│
-└── ... (outros arquivos de configuração)
-\`\`\`
+| Rota                                                        | Estado        | Fonte de dados                                          | Limitações e dono dos dados                                                                           |
+| ----------------------------------------------------------- | ------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `/`                                                         | implementado  | `lib/ecosystem-status.ts`                               | Hub com o estado real de cada produto                                                                 |
+| `/delivery-express`                                         | parcial       | Casa das Máquinas (`GET /v1/restaurants`)               | Renderizada por requisição; mostra "Catálogo indisponível" se a API falhar ou não estiver configurada |
+| `/delivery-express/restaurant/[slug]`                       | parcial       | Casa das Máquinas (`GET /v1/restaurants/{slug}/menu`)   | 404 real para restaurante inexistente                                                                 |
+| `/delivery-express/restaurant/[slug]/product/[productSlug]` | parcial       | Cardápio da Casa das Máquinas                           | Adicionais com regra de seleção; sacola desabilitada até a #18                                        |
+| `/pedidos-na-mao`                                           | em construção | Sessão via Casa das Máquinas                            | Exige login e papel de equipe ou administração; lista funcionalidades planejadas                      |
+| `/ta-na-entrega`                                            | em construção | Sessão via Casa das Máquinas                            | Exige login e papel de entregador ou administração; lista funcionalidades planejadas                  |
+| `/site-institucional`                                       | em construção | —                                                       | Sem contato nem conteúdo comercial                                                                    |
+| `/mkit`                                                     | demonstração  | —                                                       | Conceito estático (#12)                                                                               |
+| `/casa-das-maquinas`                                        | parcial       | —                                                       | Página da arquitetura; a API de catálogo vive em `apps/casa-das-maquinas`                             |
+| `/auth/login`, `/auth/register`                             | implementado  | Better Auth na Casa das Máquinas, via proxy `/api/auth` | E-mail e senha; recuperação de senha depende de envio de e-mail (planejado)                           |
 
-## Módulos do Sistema
+## Rotas de API
 
-### 1. Site institucional (Site institucional)
-- **Diretório:** `app/site-institucional/`
-- **Descrição:** Site institucional que apresenta o ecossistema Delivery Express para restaurantes interessados.
-- **Tema Principal:** Laranja (#FF7A00)
+O catálogo é servido pela Casa das Máquinas (`apps/casa-das-maquinas`, rotas `/v1`). No app web resta apenas o proxy `GET/POST /api/auth/*`, que repassa login, cadastro e sessão ao Better Auth da Casa das Máquinas para manter o cookie no domínio do site.
 
-### 2. Delivery Express (Delivery Express)
-- **Diretório:** `app/delivery-express/`
-- **Descrição:** Aplicativo para clientes finais realizarem pedidos de delivery.
-- **Tema Principal:** Vermelho (#E11D48)
+## Removido na Fase 0
 
-### 3. Pedidos na Mão (Pedidos na Mão)
-- **Diretório:** `app/pedidos-na-mao/`
-- **Descrição:** Sistema para restaurantes gerenciarem seus pedidos e cardápios.
-- **Tema Principal:** Azul (#2563EB)
+Removido porque estava quebrado, simulado ou sem nenhum uso:
 
-### 4. Tá na Entrega (Tá na Entrega)
-- **Diretório:** `app/ta-na-entrega/`
-- **Descrição:** Aplicativo para entregadores gerenciarem suas entregas.
-- **Tema Principal:** Verde (#10B981)
+- rotas mock da Casa das Máquinas e o NextAuth de admin com senha via env;
+- a rota `delivery-express/[food]`;
+- o wrapper de cache Redis que não fazia cache;
+- `packages/` sem `package.json`;
+- 39 componentes shadcn sem uso;
+- as rotas `/api/restaurants` e `/api/products` do Next, que duplicavam o catálogo da Casa das Máquinas;
+- NextAuth, o adapter e o cliente Supabase, e as páginas de recuperação de senha que dependiam do Supabase Auth;
+- links para `/cart`, `/orders`, `/profile` e `/site-institucional/contato`, páginas que não existem.
 
-### 5. Observabilidade externa (Observabilidade externa)
-- **Diretório:** `stack de observabilidade externa/`
-- **Descrição:** Não há um painel administrativo próprio; operações e observabilidade serão atendidas por Grafana, métricas e logs.
-- **Tema Principal:** Roxo (#8B5CF6)
+## Prova automatizada
 
-### 6. Casa das Máquinas (Backend)
-- **Diretório:** `app/casa-das-maquinas/`
-- **Descrição:** Backend centralizado que fornece APIs para todos os módulos.
-- **Tema Principal:** Cinza (#64748B)
-
-## Personalização Visual
-
-Cada módulo possui seu próprio tema visual, definido em arquivos de tema específicos:
-
-\`\`\`
-app/site-institucional/components/ui/theme.ts
-app/delivery-express/components/ui/theme.ts
-app/pedidos-na-mao/components/ui/theme.ts
-app/ta-na-entrega/components/ui/theme.ts
-stack de observabilidade externa/components/ui/theme.ts
-\`\`\`
-
-Estes temas são integrados ao Tailwind CSS através do arquivo `tailwind.config.js`, permitindo uma personalização consistente em cada módulo.
-\`\`\`
+- `pnpm test`: unidades de preço, middleware de autenticação e catálogo de estado.
+- `pnpm e2e`: Playwright em desktop e mobile contra a Casa das Máquinas real (`wrangler dev` com D1 local e seed sintético). Cobrem o hub, cada produto sem erro 5xx, o estado de catálogo indisponível, a resposta 404 e o redirecionamento de rota protegida para o login.

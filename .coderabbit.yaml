@@ -21,7 +21,7 @@ reviews:
         idempotência, concorrência, autorização e falhas de rede.
         Não trate build, teste ignorado ou resultado relatado como prova de runtime.
         Exija assertions observáveis, limites de entrada e evidência reproduzível.
-    - path: "tests/**/*"
+    - path: "**/tests/**/*"
       instructions: |
         Confira se a suíte cobre comportamento normal, entrada inválida, falha de
         dependência e regressão. Prefira testes determinísticos e independentes;

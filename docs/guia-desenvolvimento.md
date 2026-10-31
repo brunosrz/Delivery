@@ -28,7 +28,9 @@ Este guia fornece instruções para desenvolvedores que trabalham no ecossistema
 3. Configure as variáveis de ambiente:
    \`\`\`bash
    cp .env.example .env.local
+
    # Edite .env.local com suas configurações
+
    \`\`\`
 
 4. Inicie o servidor de desenvolvimento:
@@ -193,15 +195,20 @@ Consulte o documento [Comunicação Entre Módulos](./comunicacao-entre-modulos.
 ### Executando Testes
 
 \`\`\`bash
+
 # Executar todos os testes
+
 pnpm test
 
 # Executar testes de um módulo específico
+
 pnpm test:site-institucional
 pnpm test:delivery
+
 # etc.
 
 # Executar testes em modo watch
+
 pnpm test:watch
 \`\`\`
 
@@ -221,6 +228,12 @@ pnpm test:watch
 4. Após aprovação, deploy para staging
 5. Após aprovação final, deploy para produção
 
+## Releases
+
+O workflow `Release` usa o Release Please para abrir o PR de versão a cada push na `main`. Esse PR é criado com o `GITHUB_TOKEN`, e o GitHub não dispara workflows automaticamente para PRs abertos por esse token.
+
+**Critério de merge:** o PR de release só pode ser mergeado quando o gate `Quality` tiver concluído com sucesso no commit atual do PR. Aprovar manualmente a execução na aba Actions (ou fechar e reabrir o PR) apenas inicia o gate; não substitui o resultado verde. A alternativa definitiva é usar um token de GitHub App, registrada como melhoria futura.
+
 ## Recursos Adicionais
 
 - [Documentação do Next.js](https://nextjs.org/docs)
@@ -228,4 +241,4 @@ pnpm test:watch
 - [Documentação do shadcn/ui](https://ui.shadcn.com)
 - [Conventional Commits](https://www.conventionalcommits.org/)
 - [Turborepo](https://turbo.build/repo) (para referência futura)
-\`\`\`
+  \`\`\`
