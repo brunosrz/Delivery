@@ -12,7 +12,7 @@ import type {
 } from "@delivery/contracts"
 import { isOnlinePayment } from "@delivery/contracts"
 import { type TransitionActor, checkTransition, quoteCart } from "@delivery/domain"
-import { and, desc, eq } from "drizzle-orm"
+import { and, desc, eq, inArray } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/d1"
 import { canManageRestaurant } from "./auth.js"
 import * as ordersSchema from "./db/orders-schema.js"
@@ -240,6 +240,35 @@ export function createOrdersService(env: Env) {
         .orderBy(desc(ordersSchema.orders.createdAt))
         .limit(100)
       return Promise.all(rows.map((row) => present(row)))
+    },
+
+    /**
+     * Entregas para o entregador: pedidos de entrega prontos para sair (qualquer restaurante) e as entregas em curso
+     * que ele mesmo despachou. Só entregadores e administração.
+     */
+    async listForCourier(user: SessionUser): Promise<ServiceResult<Order[]>> {
+      if (user.role !== "courier" && user.role !== "admin") return failure("forbidden", "apenas entregadores")
+      const { results } = await env.DB.prepare(
+        "select o.id from orders o where " +
+          "(o.status = 'ready' and o.fulfillment = 'delivery') or " +
+          "(o.status = 'dispatched' and exists (select 1 from order_events e where e.order_id = o.id and e.status = 'dispatched' and e.actor_id = ?)) " +
+          "order by o.updated_at asc limit 50",
+      )
+        .bind(user.id)
+        .all<{ id: string }>()
+      if (results.length === 0) return { ok: true, value: [] }
+      const rows = await db
+        .select()
+        .from(ordersSchema.orders)
+        .where(
+          inArray(
+            ordersSchema.orders.id,
+            results.map((row) => row.id),
+          ),
+        )
+      const byId = new Map(rows.map((row) => [row.id, row]))
+      const ordered = results.flatMap((row) => byId.get(row.id) ?? [])
+      return { ok: true, value: await Promise.all(ordered.map((row) => present(row))) }
     },
 
     /** Emite (ou devolve) a cobrança online de um pedido do próprio cliente que ainda não foi paga. */

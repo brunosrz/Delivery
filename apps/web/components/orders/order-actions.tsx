@@ -7,6 +7,7 @@ const LABEL: Record<string, string> = {
   accepted: "Aceitar",
   preparing: "Iniciar preparo",
   ready: "Marcar como pronto",
+  dispatched: "Peguei a entrega",
   delivered: "Marcar como entregue",
   cancelled: "Cancelar",
 }

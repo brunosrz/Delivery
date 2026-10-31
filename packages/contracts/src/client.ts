@@ -171,6 +171,15 @@ export function createApiClient(options: ApiClientOptions) {
         headers: call.headers,
         retryable: true,
       }),
+    /** Entregas prontas para sair e as em curso do entregador (só entregador ou admin). */
+    listCourierOrders: (call: CallOptions = {}) =>
+      request({
+        method: "GET",
+        path: "/v1/courier/orders",
+        data: z.array(Order),
+        headers: call.headers,
+        retryable: true,
+      }),
     /** Muda o status do pedido. Sem retry: o servidor recusa transições repetidas, então repetir só gera erro. */
     transitionOrder: (orderId: string, transition: StatusTransitionRequest, call: CallOptions = {}) =>
       request({

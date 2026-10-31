@@ -83,6 +83,7 @@ const withSession = createMiddleware<AppEnv>(async (c, next) => {
 })
 app.use("/v1/me", withSession)
 app.use("/v1/manage/*", withSession)
+app.use("/v1/courier/*", withSession)
 app.use("/v1/orders", withSession)
 app.use("/v1/orders/*", withSession)
 app.use("/v1/live/tickets", withSession)
@@ -383,6 +384,28 @@ app.openapi(
     const { restaurantId } = c.req.valid("param")
     if (!canManageRestaurant(user, restaurantId)) return fail(c, "forbidden", "sem acesso a este restaurante")
     return ok(c, await createOrdersService(c.env).listForRestaurant(restaurantId))
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "get",
+    path: "/v1/courier/orders",
+    responses: {
+      200: {
+        content: { "application/json": { schema: envelope(z.array(Order)) } },
+        description: "Entregas disponíveis e em curso do entregador",
+      },
+      401: errorResponse,
+      403: errorResponse,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const result = await createOrdersService(c.env).listForCourier(user)
+    if (!result.ok) return fail(c, "forbidden", result.error.message)
+    return ok(c, result.value)
   },
 )
 

@@ -5,8 +5,8 @@ import { getApiClient } from "@/lib/api"
 import { QUEUE_COLUMNS, groupByStatus, nextActions } from "@/lib/restaurant-queue"
 import { getSessionUser } from "@/lib/session"
 import { formatCents } from "@/lib/utils"
-import { AutoRefresh } from "./auto-refresh"
-import { OrderActions } from "./order-actions"
+import { AutoRefresh } from "@/components/orders/auto-refresh"
+import { OrderActions } from "@/components/orders/order-actions"
 
 export const dynamic = "force-dynamic"
 export const metadata = { title: "Pedidos na Mão" }
