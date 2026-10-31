@@ -1,27 +1,46 @@
-name: Release
+name: Release Please
+
+# Cada linha de release tem seu próprio manifesto e configuração:
+# - main: linha de desenvolvimento (release-please-config.development.json)
+# - release/**: linha de manutenção (release-please-config.maintenance.json)
+# O push que mescla a PR de release é ignorado para não abrir outra PR.
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - "release/**"
+
+concurrency:
+  group: release-please-${{ github.repository }}-${{ github.ref_name }}
+  cancel-in-progress: false
 
 permissions:
   contents: write
   pull-requests: write
 
-concurrency:
-  group: release-please
-  cancel-in-progress: false
-
 jobs:
-  release:
+  release-please:
+    if: "${{ !startsWith(github.event.head_commit.message, 'chore(main): release') }}"
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      # PRs abertos com GITHUB_TOKEN não disparam workflows automaticamente:
-      # o gate Quality do PR de release precisa ser aprovado manualmente
-      # (ver docs/guia-desenvolvimento.md, seção Releases).
+      - name: Select release line
+        id: line
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF_NAME" == "main" ]]; then
+            echo "config=release-please-config.development.json" >> "$GITHUB_OUTPUT"
+            echo "manifest=.release-please-manifest.development.json" >> "$GITHUB_OUTPUT"
+          else
+            echo "config=release-please-config.maintenance.json" >> "$GITHUB_OUTPUT"
+            echo "manifest=.release-please-manifest.maintenance.json" >> "$GITHUB_OUTPUT"
+          fi
+      # PRs de release criadas com GITHUB_TOKEN não disparam workflows: o gate Quality
+      # dessas PRs precisa ser aprovado manualmente (ver docs/guia-desenvolvimento.md).
       - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          config-file: release-please-config.json
-          manifest-file: .release-please-manifest.json
+          config-file: ${{ steps.line.outputs.config }}
+          manifest-file: ${{ steps.line.outputs.manifest }}
