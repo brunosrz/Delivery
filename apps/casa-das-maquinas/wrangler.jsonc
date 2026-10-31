@@ -1,0 +1,30 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "casa-das-maquinas",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-29",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "casa-das-maquinas",
+      // Substituído pelo id real no deploy (ver README do pacote); o desenvolvimento local usa um banco do Miniflare.
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations",
+    },
+  ],
+  "durable_objects": {
+    "bindings": [{ "name": "RESTAURANT_ROOM", "class_name": "RestaurantRoom" }],
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["RestaurantRoom"] }],
+  "vars": {
+    "API_VERSION": "v1",
+    // Origem pública do app web: o login passa pelo proxy /api/auth do Next, então os cookies são do próprio site.
+    "BETTER_AUTH_URL": "http://localhost:3000",
+    "TRUSTED_ORIGINS": "http://localhost:3000,http://127.0.0.1:3000,http://127.0.0.1:3100",
+  },
+}

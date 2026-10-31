@@ -36,43 +36,43 @@ Um middleware especializado intercepta todas as requisições para:
 \`\`\`typescript
 // Exemplo simplificado do middleware de tenant
 export async function middleware(request: NextRequest) {
-  // 1. Extrair informações da URL
-  const { hostname, pathname } = request.nextUrl;
+// 1. Extrair informações da URL
+const { hostname, pathname } = request.nextUrl;
 
-  // 2. Identificar o tenant
-  let tenantId: string | null = null;
+// 2. Identificar o tenant
+let tenantId: string | null = null;
 
-  // Verificar domínio personalizado
-  const customDomain = await db.customDomains.findUnique({
-    where: { domain: hostname },
-  });
+// Verificar domínio personalizado
+const customDomain = await db.customDomains.findUnique({
+where: { domain: hostname },
+});
 
-  if (customDomain) {
-    tenantId = customDomain.tenantId;
-  }
-  // Verificar subdomínio
-  else if (hostname.includes('.delivery-express.example')) {
-    const subdomain = hostname.split('.')[0];
-    if (subdomain !== 'www') {
-      const tenant = await db.tenants.findUnique({
-        where: { slug: subdomain },
-      });
-      if (tenant) tenantId = tenant.id;
-    }
-  }
-  // Verificar path
-  else if (pathname.startsWith('/r/')) {
-    const slug = pathname.split('/')[2];
-    const tenant = await db.tenants.findUnique({
-      where: { slug },
-    });
-    if (tenant) tenantId = tenant.id;
-  }
+if (customDomain) {
+tenantId = customDomain.tenantId;
+}
+// Verificar subdomínio
+else if (hostname.includes('.delivery-express.example')) {
+const subdomain = hostname.split('.')[0];
+if (subdomain !== 'www') {
+const tenant = await db.tenants.findUnique({
+where: { slug: subdomain },
+});
+if (tenant) tenantId = tenant.id;
+}
+}
+// Verificar path
+else if (pathname.startsWith('/r/')) {
+const slug = pathname.split('/')[2];
+const tenant = await db.tenants.findUnique({
+where: { slug },
+});
+if (tenant) tenantId = tenant.id;
+}
 
-  // 3. Configurar o contexto de tenant
-  if (tenantId) {
-    // Carregar configurações do tenant
-    const tenantConfig = await loadTenantConfig(tenantId);
+// 3. Configurar o contexto de tenant
+if (tenantId) {
+// Carregar configurações do tenant
+const tenantConfig = await loadTenantConfig(tenantId);
 
     // Adicionar headers com informações do tenant
     const response = NextResponse.next();
@@ -80,9 +80,10 @@ export async function middleware(request: NextRequest) {
     response.headers.set('x-tenant-config', JSON.stringify(tenantConfig));
 
     return response;
-  }
 
-  return NextResponse.next();
+}
+
+return NextResponse.next();
 }
 \`\`\`
 
@@ -117,14 +118,14 @@ const prismaBase = new PrismaClient();
 
 // Função para obter cliente Prisma específico para um tenant
 export function getTenantPrisma(tenantId: string) {
-  return prismaBase.$extends({
-    query: {
-      $allModels: {
-        async $allOperations({ args, query, model }) {
-          // Modelos globais não precisam de schema específico
-          if (['User', 'Tenant', 'TenantUser'].includes(model)) {
-            return query(args);
-          }
+return prismaBase.$extends({
+query: {
+$allModels: {
+async $allOperations({ args, query, model }) {
+// Modelos globais não precisam de schema específico
+if (['User', 'Tenant', 'TenantUser'].includes(model)) {
+return query(args);
+}
 
           // Para modelos específicos de tenant, use o schema do tenant
           const result = await prismaBase.$queryRawUnsafe(
@@ -135,13 +136,14 @@ export function getTenantPrisma(tenantId: string) {
         },
       },
     },
-  });
+
+});
 }
 
 // Exemplo de uso
 async function getRestaurantProducts(tenantId: string) {
-  const tenantPrisma = getTenantPrisma(tenantId);
-  return tenantPrisma.product.findMany();
+const tenantPrisma = getTenantPrisma(tenantId);
+return tenantPrisma.product.findMany();
 }
 \`\`\`
 
@@ -157,24 +159,24 @@ Quando um novo restaurante se cadastra na plataforma:
 \`\`\`typescript
 // Exemplo de criação de novo tenant
 async function createNewTenant(tenantData: TenantCreateInput) {
-  // 1. Criar registro na tabela tenants
-  const tenant = await prisma.tenant.create({
-    data: tenantData,
-  });
+// 1. Criar registro na tabela tenants
+const tenant = await prisma.tenant.create({
+data: tenantData,
+});
 
-  // 2. Criar novo schema no banco de dados
-  await prisma.$executeRawUnsafe(
-    `CREATE SCHEMA IF NOT EXISTS tenant_${tenant.id}`
-  );
+// 2. Criar novo schema no banco de dados
+await prisma.$executeRawUnsafe(
+`CREATE SCHEMA IF NOT EXISTS tenant_${tenant.id}`
+);
 
-  // 3. Aplicar migrações no novo schema
-  await applyMigrationsToSchema(`tenant_${tenant.id}`);
+// 3. Aplicar migrações no novo schema
+await applyMigrationsToSchema(`tenant_${tenant.id}`);
 
-  // 4. Criar dados iniciais
-  const tenantPrisma = getTenantPrisma(tenant.id);
-  await createInitialData(tenantPrisma);
+// 4. Criar dados iniciais
+const tenantPrisma = getTenantPrisma(tenant.id);
+await createInitialData(tenantPrisma);
 
-  return tenant;
+return tenant;
 }
 \`\`\`
 
@@ -198,9 +200,8 @@ Estas personalizações são aplicadas através de:
 \`\`\`typescript
 // Exemplo de aplicação de tema personalizado
 function TenantThemeProvider({ children, tenant }) {
-  // Gerar CSS com variáveis personalizadas
-  const customCss = `
-    :root {
+// Gerar CSS com variáveis personalizadas
+const customCss = `     :root {
       --primary: ${tenant.theme.primaryColor};
       --secondary: ${tenant.theme.secondaryColor};
       --background: ${tenant.theme.backgroundColor};
@@ -210,12 +211,12 @@ function TenantThemeProvider({ children, tenant }) {
     }
   `;
 
-  return (
-    <>
-      <style jsx global>{customCss}</style>
-      <div className="tenant-theme">{children}</div>
-    </>
-  );
+return (
+<>
+<style jsx global>{customCss}</style>
+<div className="tenant-theme">{children}</div>
+</>
+);
 }
 \`\`\`
 
@@ -258,38 +259,38 @@ Utilizamos CASL para implementar autorização baseada em habilidades:
 \`\`\`typescript
 // Exemplo de definição de habilidades por tenant
 function defineAbilitiesForUser(user: User, tenantId: string | null) {
-  const { can, cannot, build } = new AbilityBuilder(Ability);
+const { can, cannot, build } = new AbilityBuilder(Ability);
 
-  // Verificar relação do usuário com o tenant
-  const tenantUser = user.tenantUsers.find(tu => tu.tenantId === tenantId);
+// Verificar relação do usuário com o tenant
+const tenantUser = user.tenantUsers.find(tu => tu.tenantId === tenantId);
 
-  if (!tenantId) {
-    // Habilidades globais (sem contexto de tenant)
-    can('read', 'Restaurant');
-    can('create', 'Order');
-  } else if (tenantUser) {
-    // Habilidades baseadas no papel do usuário no tenant
-    switch (tenantUser.role) {
-      case 'OWNER':
-        can('manage', 'all');
-        break;
-      case 'MANAGER':
-        can('manage', ['Product', 'Category', 'Order']);
-        cannot('delete', 'Restaurant');
-        break;
-      case 'STAFF':
-        can('read', ['Product', 'Category']);
-        can('update', 'Order');
-        break;
-      case 'CUSTOMER':
-        can('read', ['Product', 'Category']);
-        can('create', 'Order');
-        can('read', 'Order', { userId: user.id });
-        break;
-    }
-  }
+if (!tenantId) {
+// Habilidades globais (sem contexto de tenant)
+can('read', 'Restaurant');
+can('create', 'Order');
+} else if (tenantUser) {
+// Habilidades baseadas no papel do usuário no tenant
+switch (tenantUser.role) {
+case 'OWNER':
+can('manage', 'all');
+break;
+case 'MANAGER':
+can('manage', ['Product', 'Category', 'Order']);
+cannot('delete', 'Restaurant');
+break;
+case 'STAFF':
+can('read', ['Product', 'Category']);
+can('update', 'Order');
+break;
+case 'CUSTOMER':
+can('read', ['Product', 'Category']);
+can('create', 'Order');
+can('read', 'Order', { userId: user.id });
+break;
+}
+}
 
-  return build();
+return build();
 }
 \`\`\`
 
@@ -353,4 +354,4 @@ function defineAbilitiesForUser(user: User, tenantId: string | null) {
 1. **LGPD**: Garantir conformidade com a Lei Geral de Proteção de Dados
 2. **Exportação de Dados**: Permitir que tenants exportem seus dados
 3. **Exclusão de Dados**: Processo seguro para exclusão de dados de tenant
-\`\`\`
+   \`\`\`

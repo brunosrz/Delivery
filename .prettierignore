@@ -5,6 +5,11 @@ node_modules/
 public/
 .vectora/
 CHANGELOG.md
+test-results/
+playwright-report/
+.wrangler/
+apps/casa-das-maquinas/src/worker-configuration.d.ts
+apps/casa-das-maquinas/migrations/meta/
 
 # Markdown fica fora da verificação de formatação nesta metade (tratado na documentação).
 *.md

@@ -1,105 +1,50 @@
-# Sugestões para Aprimoramento da Casa das Máquinas
+# Casa das Máquinas: backlog priorizado de melhorias (#5)
 
-Este documento apresenta recomendações técnicas e estratégicas para aprimorar o backend "Casa das Máquinas", visando melhorar performance, segurança, escalabilidade e experiência de desenvolvimento.
+Este documento substitui a lista histórica de sugestões. Cada item foi classificado por **risco** e **valor** frente à arquitetura adotada: Cloudflare Workers + D1 + Durable Objects, contratos zod v1 e Better Auth (issues #4, #1, #14). Um item só entra em produção com benchmark comparável quando afetar desempenho, teste negativo e evidência de que o gate falha quando a propriedade é violada.
 
-## 1. Arquitetura e Organização
+Legenda de estado: **feito** (com evidência no repositório), **próximo** (já tem fase no plano da #17), **backlog** (aceito, sem data), **rejeitado** (com o motivo registrado).
 
-- **Adoção de Domain-Driven Design (DDD)**: Estruturar o código em domínios de negócio bem definidos (pedidos, pagamentos, entregas, etc.) para melhorar a manutenibilidade e escalabilidade.
+## Já entregue
 
-- **Microsserviços Graduais**: Considerar uma migração gradual para microsserviços em áreas críticas como processamento de pagamentos e sistema de entregas, mantendo o monolito para funcionalidades menos críticas.
+| Sugestão original                             | Estado | Evidência                                                                                                                         |
+| --------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| Ambiente de desenvolvimento local             | feito  | `wrangler dev` com D1 local, migrações e seed sintético; nenhum serviço externo é necessário (`apps/casa-das-maquinas/README.md`) |
+| Documentação viva                             | feito  | OpenAPI 3.1 gerada dos schemas em `GET /v1/openapi.json`; os contratos em `packages/contracts` são a fonte de verdade             |
+| Análise de segurança contínua                 | feito  | CodeQL em todo PR, actions fixadas por SHA, review automatizado com perfil assertivo                                              |
+| Autenticação e auditoria de acesso por tenant | feito  | Better Auth, papéis e `restaurant_members`, com testes negativos de acesso cruzado                                                |
+| Organização por domínio (DDD leve)            | feito  | Regras puras em `packages/domain` (preço e máquina de estados), sem dependência de infraestrutura                                 |
 
-- **API Gateway Dedicado**: Implementar um gateway de API para gerenciar roteamento, rate limiting, caching e autenticação de forma centralizada.
+## Próximos (com fase na #17)
 
-## 2. Performance e Escalabilidade
+| Item                                                                      | Valor                                           | Risco                         | Custo | Aceite                                                                                                                                     |
+| ------------------------------------------------------------------------- | ----------------------------------------------- | ----------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Pedido idempotente e máquina de estados no Durable Object por restaurante | Alto: é a jornada do produto (#18)              | Alto: dinheiro e concorrência | Médio | Repetir a mesma `Idempotency-Key` não duplica pedido; payload diferente com a mesma chave responde 422; transições inválidas respondem 409 |
+| Tempo real por WebSocket Hibernation                                      | Alto: painel do restaurante e app do entregador | Médio                         | Médio | Reconexão retoma pelo último evento; conexões ociosas não consomem duração                                                                 |
+| Webhooks de saída para restaurantes                                       | Médio                                           | Médio: reentrega e assinatura | Médio | Assinatura HMAC, reentrega com backoff via Queues e deduplicação no destino                                                                |
+| Rate limiting por IP e por usuário                                        | Alto: protege a cota do plano gratuito          | Baixo                         | Baixo | Limite excedido responde 429 no envelope, com teste                                                                                        |
+| Canary e rollback                                                         | Alto                                            | Baixo                         | Baixo | Gradual deployments do Workers usados no serviço Rust (#15), com rollback exercitado                                                       |
+| Telemetria                                                                | Médio                                           | Baixo                         | Baixo | Workers Observability habilitado; logs JSON com `requestId` em todas as rotas                                                              |
 
-- **Implementação de Cache Distribuído**: Utilizar Redis para cache distribuído de dados frequentemente acessados (cardápios, configurações de restaurantes).
+## Backlog (aceito, sem data)
 
-- **Edge Functions para Geolocalização**: Usar Edge Functions para processamento de localização e cálculos de distância, reduzindo latência para usuários finais.
+| Item                                                       | Motivo para esperar                                                               |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Integração com marketplaces (iFood e afins)                | Depende de contrato comercial e de acesso às APIs dos parceiros                   |
+| Login sem senha (magic link)                               | Depende de envio de e-mail transacional; entra junto com a recuperação de senha   |
+| Dashboards por tenant                                      | Depende de haver pedidos reais para medir                                         |
+| Internacionalização                                        | O foco é o Brasil; strings ficam centralizadas para não bloquear a mudança depois |
+| Recomendações, previsão de demanda e análise de sentimento | Exigem volume de dados que a demo não tem; avaliar com dados de produção          |
 
-- **Banco de Dados Híbrido**: Considerar um modelo híbrido com PostgreSQL para dados transacionais e MongoDB para dados analíticos e logs.
+## Rejeitado
 
-- **Sharding Geográfico**: Implementar sharding baseado em localização geográfica para melhorar performance em diferentes regiões.
-
-## 3. Segurança Avançada
-
-- **Análise de Segurança Contínua**: Implementar ferramentas como Snyk ou SonarQube no pipeline CI/CD para análise contínua de vulnerabilidades.
-
-- **Proteção contra Fraudes**: Sistema de detecção de fraudes baseado em machine learning para identificar padrões suspeitos em pedidos e pagamentos.
-
-- **Autenticação Passwordless**: Priorizar métodos de autenticação sem senha (magic links, biometria) para melhorar segurança e experiência do usuário.
-
-- **Auditoria Avançada**: Implementar um sistema de auditoria que registre todas as alterações em dados sensíveis, com capacidade de rollback.
-
-## 4. Integrações e Extensibilidade
-
-- **Sistema de Plugins**: Criar uma arquitetura de plugins que permita extensões de terceiros e personalizações específicas por restaurante.
-
-- **Webhooks Bidirecionais**: Além de receber webhooks, oferecer webhooks para que os restaurantes possam integrar seus sistemas existentes.
-
-- **Integração com Marketplaces**: Desenvolver conectores para iFood, Uber Eats e outros marketplaces, permitindo gerenciamento centralizado de pedidos.
-
-- **API GraphQL Complementar**: Oferecer GraphQL além do tRPC para casos de uso específicos onde a flexibilidade de consulta é importante.
-
-## 5. Observabilidade e DevOps
-
-- **Telemetria Avançada**: Implementar OpenTelemetry para coleta unificada de métricas, logs e traces.
-
-- **Canary Deployments**: Implementar estratégia de canary releases para testar novas funcionalidades com um subconjunto de usuários antes de lançamento geral.
-
-- **Chaos Engineering**: Praticar engenharia do caos para testar resiliência do sistema em cenários de falha.
-
-- **Dashboards por Tenant**: Criar dashboards específicos por restaurante para monitoramento de performance e métricas de negócio.
-
-## 6. Experiência do Desenvolvedor
-
-- **Geração de Código**: Implementar ferramentas de geração de código para acelerar o desenvolvimento de novos endpoints e modelos.
-
-- **Ambiente de Desenvolvimento Local**: Criar um ambiente de desenvolvimento local com Docker Compose que simule todos os serviços necessários.
-
-- **Documentação Viva**: Manter documentação gerada automaticamente a partir do código e testes, garantindo que esteja sempre atualizada.
-
-- **Playground de API**: Oferecer um playground interativo para que desenvolvedores possam testar APIs em tempo real.
-
-## 7. Recursos Inovadores
-
-- **IA para Previsão de Demanda**: Implementar algoritmos de machine learning para prever picos de demanda e otimizar recursos.
-
-- **Análise de Sentimento**: Processar automaticamente avaliações e feedback de clientes para extrair insights acionáveis.
-
-- **Recomendações Personalizadas**: Sistema de recomendação para sugerir produtos com base no histórico de pedidos e preferências.
-
-- **Gamificação**: Implementar elementos de gamificação para fidelização de clientes e incentivo a entregadores.
-
-## 8. Sustentabilidade e Crescimento
-
-- **Métricas de Negócio**: Implementar coleta e análise de métricas de negócio (CAC, LTV, churn) para orientar decisões estratégicas.
-
-- **Modelo de Precificação Dinâmica**: Infraestrutura para suportar preços dinâmicos baseados em demanda, horário e outros fatores.
-
-- **Internacionalização desde o Início**: Projetar o sistema pensando em internacionalização, mesmo que o foco inicial seja o Brasil.
-
-- **Estratégia de Migração de Dados**: Desenvolver ferramentas para facilitar a migração de dados de outros sistemas para a plataforma.
-
-## Priorização de Implementação
-
-Recomenda-se implementar estas sugestões em fases, priorizando:
-
-1. **Fase Inicial (1-3 meses)**:
-   - Ambiente de desenvolvimento local
-   - Documentação viva
-   - Análise de segurança contínua
-   - Cache distribuído básico
-
-2. **Fase Intermediária (3-6 meses)**:
-   - API Gateway
-   - Telemetria avançada
-   - Sistema de plugins (fundação)
-   - Webhooks bidirecionais
-
-3. **Fase Avançada (6-12 meses)**:
-   - Microsserviços para áreas críticas
-   - IA para previsão de demanda
-   - Integração com marketplaces
-   - Sharding geográfico
-
-Esta abordagem gradual permite entregar valor continuamente enquanto evolui a arquitetura para suportar o crescimento futuro da plataforma.
+| Sugestão                                          | Decisão           | Motivo                                                                                                                                                                                           |
+| ------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| tRPC                                              | rejeitado         | O backend é consumido por três apps e, no futuro, por integrações de terceiros. REST com OpenAPI gerada dos mesmos schemas zod dá tipagem ponta a ponta sem acoplar clientes ao TypeScript       |
+| GraphQL complementar                              | rejeitado         | Uma segunda superfície de API duplica autorização e testes sem demanda real de consultas flexíveis                                                                                               |
+| Microsserviços graduais                           | rejeitado por ora | Um Worker com Durable Objects já isola o estado por restaurante. Separar serviços só se justifica com medição, e o primeiro caso será o serviço de preço em Rust (#15), atrás de service binding |
+| API Gateway dedicado                              | rejeitado         | Roteamento, CORS, rate limiting e autenticação já ficam no Worker e na borda da Cloudflare                                                                                                       |
+| Redis / cache distribuído                         | rejeitado por ora | D1 e o cache da borda atendem o volume atual; sem medição de gargalo, cache é estado extra para invalidar                                                                                        |
+| Banco híbrido com MongoDB e sharding geográfico   | rejeitado         | D1 replica leitura e o Durable Object por restaurante já particiona a escrita; não há volume que justifique outro banco                                                                          |
+| Sistema de plugins                                | rejeitado         | Webhooks de saída cobrem a extensibilidade com muito menos superfície de ataque                                                                                                                  |
+| Detecção de fraude por ML e precificação dinâmica | rejeitado por ora | Sem histórico de pedidos, o modelo não teria com o que aprender; regras explícitas vêm primeiro                                                                                                  |
+| Chaos engineering e gamificação                   | rejeitado por ora | Fora do escopo do MVP; os testes de falha da #19 cobrem a resiliência necessária                                                                                                                 |

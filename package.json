@@ -2,52 +2,21 @@
   "name": "delivery",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint . --max-warnings 0",
-    "format:check": "prettier --check .",
-    "typecheck": "tsc --noEmit --incremental false -p tsconfig.json",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "format": "prettier --write ."
-  },
-  "dependencies": {
-    "@auth/supabase-adapter": "1.11.3",
-    "@radix-ui/react-avatar": "1.3.1",
-    "@radix-ui/react-dropdown-menu": "2.2.1",
-    "@radix-ui/react-label": "2.1.17",
-    "@radix-ui/react-slot": "1.5.0",
-    "@radix-ui/react-tabs": "1.2.1",
-    "@supabase/supabase-js": "2.118.0",
-    "class-variance-authority": "0.7.1",
-    "clsx": "2.1.1",
-    "lucide-react": "0.454.0",
-    "next": "15.2.9",
-    "next-auth": "4.24.15",
-    "next-themes": "0.4.6",
-    "react": "19.0.9",
-    "react-dom": "19.0.9",
-    "tailwind-merge": "2.5.5",
-    "tailwindcss-animate": "1.0.7"
-  },
-  "devDependencies": {
-    "@eslint/eslintrc": "3.3.7",
-    "@types/node": "22.20.5",
-    "@types/react": "19.0.14",
-    "@types/react-dom": "19.0.6",
-    "@vitest/coverage-v8": "3.2.7",
-    "eslint": "9.39.5",
-    "eslint-config-next": "15.2.9",
-    "postcss": "8.5.32",
-    "prettier": "3.9.10",
-    "tailwindcss": "3.4.17",
-    "typescript": "5.9.3",
-    "vitest": "3.2.7"
-  },
   "engines": {
     "node": ">=22 <25"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @delivery/web dev",
+    "build": "pnpm --filter @delivery/web build",
+    "lint": "pnpm -r lint",
+    "format:check": "prettier --check .",
+    "format": "prettier --write .",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "test:coverage": "pnpm -r test:coverage",
+    "e2e": "pnpm --filter @delivery/web e2e"
+  },
+  "devDependencies": {
+    "prettier": "3.9.10"
   }
 }

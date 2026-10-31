@@ -19,6 +19,7 @@ O MKit é um conjunto completo de recursos de marketing digital e físico oferec
 O MKit oferece templates específicos para diferentes tipos de culinária, garantindo que os materiais sejam relevantes e adequados para cada restaurante:
 
 #### Categorias Disponíveis:
+
 - **Pizzarias**: Foco em combinações, promoções de rodízio e delivery rápido
 - **Hamburguerias**: Destaque para ingredientes premium e combos
 - **Culinária Japonesa**: Ênfase em frescor, apresentação visual e combinações
@@ -34,6 +35,7 @@ Cada categoria inclui elementos visuais específicos, paletas de cores recomenda
 Materiais temáticos para datas comemorativas e sazonalidades, permitindo que os restaurantes se mantenham relevantes ao longo do ano:
 
 #### Datas Principais:
+
 - **Janeiro**: Ano Novo, Férias de Verão
 - **Fevereiro**: Carnaval, Dia dos Namorados (14/02)
 - **Março**: Dia da Mulher, Início do Outono
@@ -48,6 +50,7 @@ Materiais temáticos para datas comemorativas e sazonalidades, permitindo que os
 - **Dezembro**: Natal, Ano Novo, Férias de Verão
 
 Para cada data, o MKit oferece:
+
 - Templates para posts em redes sociais
 - Banners para site e aplicativo
 - Modelos de e-mail marketing
@@ -59,12 +62,14 @@ Para cada data, o MKit oferece:
 Recursos educacionais para garantir que os restaurantes aproveitem ao máximo o MKit:
 
 #### Formatos Disponíveis:
+
 - **Vídeos tutoriais**: Passo a passo para personalização dos templates
 - **Guias em PDF**: Documentação detalhada com melhores práticas
 - **Webinars mensais**: Sessões ao vivo com especialistas em marketing
 - **Base de conhecimento**: Artigos e FAQs sobre estratégias de marketing
 
 #### Tópicos Cobertos:
+
 - Como personalizar templates no Canva e Figma
 - Estratégias eficazes para redes sociais
 - Como implementar QR codes nas embalagens
@@ -121,18 +126,21 @@ Recursos educacionais para garantir que os restaurantes aproveitem ao máximo o 
 ## Implementação Técnica
 
 ### Plataforma de Distribuição
+
 - Seção dedicada no painel administrativo do restaurante
 - Organização por categorias e tipos de material
 - Sistema de busca e filtragem
 - Visualização prévia dos templates
 
 ### Integração com Ferramentas
+
 - Links diretos para edição no Canva
 - Arquivos Figma para personalização avançada
 - Exportação em múltiplos formatos (PNG, JPG, PDF, SVG)
 - Integração com serviços de impressão parceiros
 
 ### Personalização Automática
+
 - Aplicação automática de logo e cores do restaurante
 - Substituição inteligente de textos
 - Geração de QR codes específicos para cada restaurante
@@ -141,11 +149,13 @@ Recursos educacionais para garantir que os restaurantes aproveitem ao máximo o 
 ## Parcerias Estratégicas
 
 ### Agências de Marketing Digital
+
 - Diretório de agências parceiras verificadas
 - Benefícios especiais para restaurantes da plataforma
 - Acesso a recursos exclusivos do MKit
 
 ### Gráficas e Serviços de Impressão
+
 - Rede de gráficas parceiras em diferentes regiões
 - Preços especiais para restaurantes da plataforma
 - Integração para orçamentos e pedidos diretos
@@ -154,6 +164,7 @@ Recursos educacionais para garantir que os restaurantes aproveitem ao máximo o 
 ## Métricas de Sucesso
 
 O sucesso do MKit será medido através de:
+
 - Taxa de utilização dos materiais pelos restaurantes
 - Conversão de clientes de marketplaces para o canal próprio
 - Feedback dos restaurantes sobre facilidade de uso
@@ -163,17 +174,20 @@ O sucesso do MKit será medido através de:
 ## Roadmap de Evolução
 
 ### Fase 1: Lançamento Inicial
+
 - Templates básicos para principais categorias
 - Guias fundamentais de implementação
 - Parcerias iniciais com agências e gráficas
 
 ### Fase 2: Expansão
+
 - Ampliação do número de templates
 - Adição de novas categorias culinárias
 - Implementação do calendário sazonal completo
 - Expansão da rede de parceiros
 
 ### Fase 3: Personalização Avançada
+
 - IA para geração de conteúdo personalizado
 - Análise de desempenho dos materiais
 - Recomendações baseadas em dados

@@ -7,23 +7,23 @@ Embora atualmente todos os módulos estejam no mesmo projeto Next.js, a comunica
 ## Arquitetura de Comunicação
 
 \`\`\`
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  Delivery Express │     │ Pedidos na Mão  │     │   Tá na Entrega   │
-└──────┬──────┘     └──────┬──────┘     └──────┬──────┘
-       │                   │                   │
-       │                   │                   │
-       │                   ▼                   │
-       │           ┌─────────────┐             │
-       └──────────►│  Casa das   │◄────────────┘
-                   │  Máquinas   │
-       ┌──────────►│    (API)    │◄────────────┐
-       │           └─────────────┘             │
-       │                   ▲                   │
-       │                   │                   │
-       │                   │                   │
-┌──────┴──────┐     ┌──────┴──────┐     ┌──────┴──────┐
-│  Site institucional   │     │  Observabilidade externa   │     │    Outros   │
-└─────────────┘     └─────────────┘     └─────────────┘
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+│ Delivery Express │ │ Pedidos na Mão │ │ Tá na Entrega │
+└──────┬──────┘ └──────┬──────┘ └──────┬──────┘
+│ │ │
+│ │ │
+│ ▼ │
+│ ┌─────────────┐ │
+└──────────►│ Casa das │◄────────────┘
+│ Máquinas │
+┌──────────►│ (API) │◄────────────┐
+│ └─────────────┘ │
+│ ▲ │
+│ │ │
+│ │ │
+┌──────┴──────┐ ┌──────┴──────┐ ┌──────┴──────┐
+│ Site institucional │ │ Observabilidade externa │ │ Outros │
+└─────────────┘ └─────────────┘ └─────────────┘
 \`\`\`
 
 ## Cliente de API Centralizado
@@ -48,9 +48,9 @@ const restaurant = await apiClient.restaurants.get(restaurantId);
 
 // Criar um novo pedido
 const order = await apiClient.orders.create({
-  restaurantId,
-  items: cartItems,
-  deliveryAddress,
+restaurantId,
+items: cartItems,
+deliveryAddress,
 });
 \`\`\`
 
@@ -125,11 +125,11 @@ Cada erro retorna um objeto JSON com:
 
 \`\`\`json
 {
-  "error": {
-    "code": "ERROR_CODE",
-    "message": "Mensagem de erro amigável",
-    "details": { ... }
-  }
+"error": {
+"code": "ERROR_CODE",
+"message": "Mensagem de erro amigável",
+"details": { ... }
+}
 }
 \`\`\`
 
@@ -147,12 +147,12 @@ Exemplo de uso:
 // No cliente
 const channel = pusher.subscribe(`order-${orderId}`);
 channel.bind('status-update', (data) => {
-  updateOrderStatus(data.status);
+updateOrderStatus(data.status);
 });
 
 // No servidor
 pusher.trigger(`order-${orderId}`, 'status-update', {
-  status: 'preparing',
-  updatedAt: new Date(),
+status: 'preparing',
+updatedAt: new Date(),
 });
 \`\`\`

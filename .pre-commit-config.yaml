@@ -1,3 +1,5 @@
+# Arquivos gerados (wrangler types, drizzle-kit) não são reformatados à mão.
+exclude: ^apps/casa-das-maquinas/(src/worker-configuration.d.ts|migrations/meta/)
 default_language_version:
   node: system
 repos:
@@ -19,9 +21,10 @@ repos:
         types: [text]
       - id: eslint
         name: eslint
-        entry: pnpm exec eslint --max-warnings 0
+        entry: pnpm lint
         language: system
         files: \.(ts|tsx|js|mjs)$
+        pass_filenames: false
       - id: typecheck
         name: typescript typecheck
         entry: pnpm typecheck
