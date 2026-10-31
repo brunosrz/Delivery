@@ -38,3 +38,10 @@ playwright-report/
 .wrangler/
 .dev.vars*
 !.dev.vars.example
+
+# SCons
+.scons-logs/
+.sconsign.dblite
+.sconsign.*
+.sconf_temp/
+__pycache__/
