@@ -1,0 +1,10 @@
+pnpm-lock.yaml
+.next/
+coverage/
+node_modules/
+public/
+.vectora/
+CHANGELOG.md
+
+# Markdown fica fora da verificação de formatação nesta metade (tratado na documentação).
+*.md
