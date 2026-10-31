@@ -1,7 +1,7 @@
 import { z } from "zod"
 import { Menu, Restaurant } from "./catalog.js"
 import { type ApiError, envelope } from "./common.js"
-import { CreateOrderRequest, Order, Quote, QuoteRequest } from "./orders.js"
+import { CreateOrderRequest, Order, Quote, QuoteRequest, StatusTransitionRequest } from "./orders.js"
 
 export type ApiResult<T> =
   | { ok: true; data: T; requestId: string | null }
@@ -161,6 +161,25 @@ export function createApiClient(options: ApiClientOptions) {
         body: order,
         headers: { ...call.headers, "idempotency-key": idempotencyKey },
         retryable: true,
+      }),
+    /** Fila do restaurante (equipe ou admin); o servidor aplica as permissões. */
+    listRestaurantOrders: (restaurantId: string, call: CallOptions = {}) =>
+      request({
+        method: "GET",
+        path: `/v1/manage/restaurants/${encodeURIComponent(restaurantId)}/orders`,
+        data: z.array(Order),
+        headers: call.headers,
+        retryable: true,
+      }),
+    /** Muda o status do pedido. Sem retry: o servidor recusa transições repetidas, então repetir só gera erro. */
+    transitionOrder: (orderId: string, transition: StatusTransitionRequest, call: CallOptions = {}) =>
+      request({
+        method: "POST",
+        path: `/v1/orders/${encodeURIComponent(orderId)}/transitions`,
+        data: Order,
+        body: transition,
+        headers: call.headers,
+        retryable: false,
       }),
     getOrder: (orderId: string, call: CallOptions = {}) =>
       request({

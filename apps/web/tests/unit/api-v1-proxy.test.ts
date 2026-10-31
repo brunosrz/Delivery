@@ -10,10 +10,11 @@ describe("isAllowed", () => {
     ["GET", ["orders"]],
     ["GET", ["orders", "ord_123"]],
     ["POST", ["orders", "ord_123", "payment"]],
+    ["POST", ["orders", "ord_123", "transitions"]],
   ])("permite %s %j", (method, path) => expect(isAllowed(method, path)).toBe(true))
 
   it.each([
-    ["POST", ["orders", "ord_1", "transitions"]],
+    ["GET", ["orders", "ord_1", "transitions"]],
     ["GET", ["manage", "restaurants", "r1", "orders"]],
     ["POST", ["webhooks", "asaas"]],
     ["GET", ["me"]],
@@ -67,8 +68,8 @@ describe("proxy /api/v1", () => {
 
   it("não chama o backend em rota fora da lista", async () => {
     const response = await POST(
-      new Request("http://web.test/api/v1/orders/o1/transitions", { method: "POST", body: "{}" }),
-      params("orders", "o1", "transitions"),
+      new Request("http://web.test/api/v1/webhooks/asaas", { method: "POST", body: "{}" }),
+      params("webhooks", "asaas"),
     )
     expect(response.status).toBe(404)
     expect(fetchMock).not.toHaveBeenCalled()

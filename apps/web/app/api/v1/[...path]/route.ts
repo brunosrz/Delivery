@@ -6,13 +6,15 @@ const REQUEST_ID_PATTERN = /^[A-Za-z0-9_-]{8,128}$/
 
 type Allowed = { methods: readonly string[]; pattern: RegExp }
 
-/** Lista fechada: qualquer outro caminho (inclusive /v1/manage e /v1/orders/{id}/transitions) é recusado. */
+/** Lista fechada: qualquer outro caminho (inclusive /v1/manage, /v1/me e o webhook) é recusado. */
 const ALLOWED: readonly Allowed[] = [
   { methods: ["POST"], pattern: /^quotes$/ },
   { methods: ["POST"], pattern: /^orders$/ },
   { methods: ["GET"], pattern: /^orders$/ },
   { methods: ["GET"], pattern: /^orders\/[A-Za-z0-9_-]{1,64}$/ },
   { methods: ["POST"], pattern: /^orders\/[A-Za-z0-9_-]{1,64}\/payment$/ },
+  // Equipe do restaurante e entregadores; o backend valida papel e vínculo com o restaurante.
+  { methods: ["POST"], pattern: /^orders\/[A-Za-z0-9_-]{1,64}\/transitions$/ },
 ]
 
 export function isAllowed(method: string, path: readonly string[]): boolean {
