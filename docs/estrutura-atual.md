@@ -1,47 +1,117 @@
-# Inventário da aplicação existente
+# Estrutura Atual do Projeto
 
-Mapa verificável do que existe no repositório hoje. O estado de cada produto vem de [`lib/ecosystem-status.ts`](../lib/ecosystem-status.ts). Esse mesmo arquivo alimenta a página inicial, e o teste `tests/unit/ecosystem-status.test.ts` falha se uma rota listada deixar de existir.
+## Visão Geral
 
-Legenda: **implementado** (funciona de ponta a ponta), **parcial** (funciona com limitações declaradas), **demonstração** (conteúdo estático), **em construção** (só a casca da página) e **planejado** (apenas desenho).
+O ecossistema Delivery Express está atualmente estruturado usando o App Router do Next.js, onde cada módulo do sistema é implementado como uma rota dentro da pasta `app/`. Esta abordagem permite um desenvolvimento rápido e integrado, enquanto prepara o terreno para uma futura migração para uma arquitetura de monorepo.
 
-## Páginas
+## Estrutura de Diretórios
 
-| Rota                                                              | Estado        | Fonte de dados                                        | Limitações e dono dos dados                                                  |
-| ----------------------------------------------------------------- | ------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `/`                                                               | implementado  | `lib/ecosystem-status.ts`                             | Hub com o estado real de cada produto                                        |
-| `/delivery-express`                                               | parcial       | Supabase (`restaurants`)                              | Renderizada por requisição; mostra "Catálogo indisponível" se o banco falhar |
-| `/delivery-express/restaurant/[slug]`                             | parcial       | Supabase (`restaurants`, `menu_sections`, `products`) | 404 quando o restaurante não existe ou o banco falha                         |
-| `/delivery-express/restaurant/[slug]/product/[productSlug]`       | parcial       | Supabase (`products`, `addon_groups`, `addons`)       | `addToCart` só valida a entrada; não há carrinho persistido (#18)            |
-| `/pedidos-na-mao`                                                 | em construção | —                                                     | Exige login; lista funcionalidades planejadas                                |
-| `/ta-na-entrega`                                                  | em construção | —                                                     | Exige login; lista funcionalidades planejadas                                |
-| `/site-institucional`                                             | em construção | —                                                     | Sem contato nem conteúdo comercial                                           |
-| `/mkit`                                                           | demonstração  | —                                                     | Conceito estático (#12)                                                      |
-| `/casa-das-maquinas`                                              | planejado     | —                                                     | Descreve a arquitetura alvo em Cloudflare (#4)                               |
-| `/auth/login`                                                     | parcial       | NextAuth + Supabase Auth                              | O botão Google só aparece com o provider configurado                         |
-| `/auth/register`, `/auth/forgot-password`, `/auth/reset-password` | parcial       | Supabase Auth no navegador                            | Sessão separada da do NextAuth; a unificação é a Fase 2                      |
-| `/auth/error`, `/auth/verify-request`                             | implementado  | —                                                     | Páginas estáticas                                                            |
+\`\`\`
+/
+├── app/ # Diretório principal do App Router
+│ ├── page.tsx # Página inicial com navegação para os módulos
+│ ├── layout.tsx # Layout compartilhado por todas as páginas
+│ ├── globals.css # Estilos globais
+│ │
+│ ├── site-institucional/ # Site institucional do ecossistema
+│ │ ├── page.tsx
+│ │ ├── components/
+│ │ └── ...
+│ │
+│ ├── delivery-express/ # Delivery Express - App para clientes
+│ │ ├── page.tsx
+│ │ ├── components/
+│ │ └── ...
+│ │
+│ ├── pedidos-na-mao/ # Pedidos na Mão - Painel para restaurantes
+│ │ ├── page.tsx
+│ │ ├── components/
+│ │ └── ...
+│ │
+│ ├── ta-na-entrega/ # Tá na Entrega - App para entregadores
+│ │ ├── page.tsx
+│ │ ├── components/
+│ │ └── ...
+│ │
+│ ├── observabilidade/ # Integrações com Grafana, métricas e logs
+│ │ ├── page.tsx
+│ │ ├── components/
+│ │ └── ...
+│ │
+│ └── casa-das-maquinas/ # Backend/API
+│ ├── page.tsx
+│ ├── api/ # Rotas de API
+│ │ ├── auth/
+│ │ ├── restaurants/
+│ │ ├── orders/
+│ │ └── ...
+│ └── ...
+│
+├── components/ # Componentes compartilhados
+│ ├── ui/ # Componentes de UI base (shadcn/ui)
+│ └── ...
+│
+├── lib/ # Utilitários e funções compartilhadas
+│ ├── utils.ts
+│ ├── api-client.ts # Cliente para comunicação com a API
+│ └── ...
+│
+├── public/ # Arquivos estáticos
+│
+├── docs/ # Documentação do projeto
+│
+└── ... (outros arquivos de configuração)
+\`\`\`
 
-## Rotas de API
+## Módulos do Sistema
 
-| Rota                               | Estado       | Observação                                     |
-| ---------------------------------- | ------------ | ---------------------------------------------- |
-| `GET /api/restaurants`             | implementado | Lista restaurantes do Supabase                 |
-| `GET /api/restaurants/[slug]/menu` | implementado | Seções e produtos de um restaurante            |
-| `GET /api/products/[slug]`         | implementado | Produto, adicionais, categorias e relacionados |
-| `GET/POST /api/auth/[...nextauth]` | parcial      | Credenciais via Supabase; Google opcional      |
+### 1. Site institucional (Site institucional)
 
-## Removido na Fase 0
+- **Diretório:** `app/site-institucional/`
+- **Descrição:** Site institucional que apresenta o ecossistema Delivery Express para restaurantes interessados.
+- **Tema Principal:** Laranja (#FF7A00)
 
-Removido porque estava quebrado, simulado ou sem nenhum uso:
+### 2. Delivery Express (Delivery Express)
 
-- rotas mock da Casa das Máquinas e o NextAuth de admin com senha via env;
-- a rota `delivery-express/[food]`;
-- o wrapper de cache Redis que não fazia cache;
-- `packages/` sem `package.json`;
-- 39 componentes shadcn sem uso;
-- links para `/cart`, `/orders`, `/profile` e `/site-institucional/contato`, páginas que não existem.
+- **Diretório:** `app/delivery-express/`
+- **Descrição:** Aplicativo para clientes finais realizarem pedidos de delivery.
+- **Tema Principal:** Vermelho (#E11D48)
 
-## Prova automatizada
+### 3. Pedidos na Mão (Pedidos na Mão)
 
-- `pnpm test`: unidades de preço, middleware de autenticação e catálogo de estado.
-- `pnpm e2e`: smoke tests Playwright em desktop e mobile. Cobrem o hub, cada produto sem erro 5xx, o estado de catálogo indisponível, a resposta 404 e o redirecionamento de rota protegida para o login.
+- **Diretório:** `app/pedidos-na-mao/`
+- **Descrição:** Sistema para restaurantes gerenciarem seus pedidos e cardápios.
+- **Tema Principal:** Azul (#2563EB)
+
+### 4. Tá na Entrega (Tá na Entrega)
+
+- **Diretório:** `app/ta-na-entrega/`
+- **Descrição:** Aplicativo para entregadores gerenciarem suas entregas.
+- **Tema Principal:** Verde (#10B981)
+
+### 5. Observabilidade externa (Observabilidade externa)
+
+- **Diretório:** `stack de observabilidade externa/`
+- **Descrição:** Não há um painel administrativo próprio; operações e observabilidade serão atendidas por Grafana, métricas e logs.
+- **Tema Principal:** Roxo (#8B5CF6)
+
+### 6. Casa das Máquinas (Backend)
+
+- **Diretório:** `app/casa-das-maquinas/`
+- **Descrição:** Backend centralizado que fornece APIs para todos os módulos.
+- **Tema Principal:** Cinza (#64748B)
+
+## Personalização Visual
+
+Cada módulo possui seu próprio tema visual, definido em arquivos de tema específicos:
+
+\`\`\`
+app/site-institucional/components/ui/theme.ts
+app/delivery-express/components/ui/theme.ts
+app/pedidos-na-mao/components/ui/theme.ts
+app/ta-na-entrega/components/ui/theme.ts
+stack de observabilidade externa/components/ui/theme.ts
+\`\`\`
+
+Estes temas são integrados ao Tailwind CSS através do arquivo `tailwind.config.js`, permitindo uma personalização consistente em cada módulo.
+\`\`\`
