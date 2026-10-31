@@ -129,3 +129,37 @@ describe("contrato do envelope", () => {
     expect(fetch).toHaveBeenCalledTimes(2)
   })
 })
+
+describe("fila do restaurante, entregas e transição", () => {
+  const list = (data: unknown) => vi.fn(async () => jsonResponse({ data, error: null, meta }))
+
+  it("lista a fila do restaurante com o id codificado e os headers da chamada", async () => {
+    const fetch = list([order])
+    const result = await createApiClient({ baseUrl: "https://api.test", fetch }).listRestaurantOrders("rest/1", {
+      headers: { cookie: "sessao=1" },
+    })
+    expect(result).toMatchObject({ ok: true, data: [{ id: "ord_1" }] })
+    const [url, init] = fetch.mock.calls[0] as unknown as [string, Init]
+    expect(url).toBe("https://api.test/v1/manage/restaurants/rest%2F1/orders")
+    expect(init.headers.cookie).toBe("sessao=1")
+  })
+
+  it("lista as entregas do entregador", async () => {
+    const fetch = list([order])
+    await createApiClient({ baseUrl: "https://api.test", fetch }).listCourierOrders()
+    expect(fetch).toHaveBeenCalledWith("https://api.test/v1/courier/orders", expect.anything())
+  })
+
+  it("transiciona o pedido sem repetir em caso de falha", async () => {
+    const fetch = vi.fn(async () =>
+      jsonResponse({ data: null, error: { code: "unavailable", message: "x" }, meta }, 503),
+    )
+    await createApiClient({ baseUrl: "https://api.test", fetch, retries: 3 }).transitionOrder("ord_1", {
+      to: "accepted",
+    })
+    expect(fetch).toHaveBeenCalledTimes(1)
+    const [url, init] = fetch.mock.calls[0] as unknown as [string, Init]
+    expect(url).toBe("https://api.test/v1/orders/ord_1/transitions")
+    expect(JSON.parse(init.body as string)).toEqual({ to: "accepted" })
+  })
+})
