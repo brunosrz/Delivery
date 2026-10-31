@@ -6,6 +6,7 @@ const params = (...path: string[]) => ({ params: Promise.resolve({ path }) })
 describe("isAllowed", () => {
   it.each([
     ["POST", ["quotes"]],
+    ["POST", ["contact"]],
     ["POST", ["orders"]],
     ["GET", ["orders"]],
     ["GET", ["orders", "ord_123"]],

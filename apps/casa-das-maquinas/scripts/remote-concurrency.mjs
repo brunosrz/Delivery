@@ -10,7 +10,7 @@
 // Os cookies vêm de contas de TESTE; nunca registre o valor deles em logs ou no repositório.
 
 import process from "node:process"
-import { pathToFileURL } from "node:url"
+import { URL, pathToFileURL } from "node:url"
 
 const call = async (baseUrl, path, { cookie, key, body, method = "POST" }) => {
   const response = await globalThis.fetch(`${baseUrl}${path}`, {

@@ -1,5 +1,7 @@
 import {
   API_VERSION,
+  ContactReceipt,
+  ContactRequest,
   CreateOrderRequest,
   Id,
   IdempotencyKey,
@@ -20,6 +22,7 @@ import { createMiddleware } from "hono/factory"
 import { canManageRestaurant, createAuth, getSessionUser } from "./auth.js"
 import { type AppEnv, accessLog, created, fail, logError, ok, requestId } from "./http.js"
 import { type LiveScope, signTicket, verifyTicket } from "./live-ticket.js"
+import { receiveContact } from "./contact.js"
 import { markPublished, runOutbox } from "./jobs.js"
 import { createOrdersService } from "./orders.js"
 import { createPaymentsService } from "./payments.js"
@@ -409,6 +412,26 @@ app.openapi(
     const result = await createOrdersService(c.env).listForCourier(user)
     if (!result.ok) return fail(c, "forbidden", result.error.message)
     return ok(c, result.value)
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "post",
+    path: "/v1/contact",
+    request: { body: json(ContactRequest) },
+    responses: {
+      200: { content: { "application/json": { schema: envelope(ContactReceipt) } }, description: "Mensagem recebida" },
+      400: errorResponse,
+      429: errorResponse,
+    },
+  }),
+  async (c) => {
+    // O IP real vem do cabeçalho da Cloudflare; sem ele (testes, dev local) cai num valor fixo.
+    const ip = c.req.header("cf-connecting-ip") ?? "local"
+    const result = await receiveContact(c.env, c.req.valid("json"), ip)
+    if (!result.ok) return fail(c, result.code as "bad_request" | "rate_limited", result.message)
+    return ok(c, { received: true as const })
   },
 )
 

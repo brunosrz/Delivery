@@ -1,3 +1,5 @@
+import Link from "next/link"
+
 export default function InstitutionalSitePage() {
   return (
     <div className="container mx-auto py-10">
@@ -12,7 +14,11 @@ export default function InstitutionalSitePage() {
           <li>Páginas de apresentação dos restaurantes</li>
           <li>Cardápios digitais</li>
           <li>Calculadora de ROI</li>
-          <li>Formulários de contato</li>
+          <li>
+            <Link href="/site-institucional/contato" className="underline">
+              Formulário de contato
+            </Link>
+          </li>
           <li>Blog com conteúdo sobre gastronomia e delivery</li>
         </ul>
       </div>

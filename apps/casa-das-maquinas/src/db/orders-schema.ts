@@ -138,3 +138,17 @@ export const outboxJobs = sqliteTable(
     check("outbox_jobs_attempts_non_negative", sql`${table.attempts} >= 0`),
   ],
 )
+
+/** Mensagens do formulário de contato. O IP nunca é gravado: só um hash salgado, para limitar abuso. */
+export const contactMessages = sqliteTable(
+  "contact_messages",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    email: text("email").notNull(),
+    message: text("message").notNull(),
+    ipHash: text("ip_hash").notNull(),
+    createdAt: text("created_at").notNull().default(isoNow),
+  },
+  (table) => [index("contact_messages_ip_created_idx").on(table.ipHash, table.createdAt)],
+)

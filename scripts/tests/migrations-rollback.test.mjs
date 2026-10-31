@@ -49,7 +49,11 @@ describe("scripts compensatórios das migrações D1", () => {
 
     applyAll(db)
     const created = userObjects(db)
-    assert.ok(["orders", "payment_charges", "outbox_jobs", "restaurants"].every((table) => created.includes(table)))
+    assert.ok(
+      ["orders", "payment_charges", "outbox_jobs", "contact_messages", "restaurants"].every((table) =>
+        created.includes(table),
+      ),
+    )
 
     for (const name of [...migrations].reverse()) db.exec(read(`migrations-rollback/${name}`))
     assert.deepEqual(userObjects(db), [], "o rollback deixou objetos para trás")
@@ -60,14 +64,17 @@ describe("scripts compensatórios das migrações D1", () => {
     db.close()
   })
 
-  it("reverter a última migração mantém as anteriores", () => {
+  it("reverter a última migração remove só os objetos dela e mantém as anteriores", () => {
     const db = newDatabase()
     applyAll(db)
     const last = migrations.at(-1) ?? ""
-    db.exec(read(`migrations-rollback/${last}`))
+    const script = read(`migrations-rollback/${last}`)
+    const dropped = [...script.matchAll(/DROP TABLE IF EXISTS `([a-z_0-9]+)`/g)].map((match) => match[1])
+    assert.ok(dropped.length > 0)
+    db.exec(script)
     const left = userObjects(db)
+    for (const table of dropped) assert.ok(!left.includes(table), `${table} deveria ter sido removida`)
     assert.ok(left.includes("orders") && left.includes("payment_charges"))
-    assert.ok(!left.includes("outbox_jobs"))
     db.close()
   })
 

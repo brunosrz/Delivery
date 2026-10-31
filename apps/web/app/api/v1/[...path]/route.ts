@@ -9,6 +9,8 @@ type Allowed = { methods: readonly string[]; pattern: RegExp }
 /** Lista fechada: qualquer outro caminho (inclusive /v1/manage, /v1/me e o webhook) é recusado. */
 const ALLOWED: readonly Allowed[] = [
   { methods: ["POST"], pattern: /^quotes$/ },
+  // Formulário de contato do site institucional (público; o backend limita por IP e usa armadilha anti-robô).
+  { methods: ["POST"], pattern: /^contact$/ },
   { methods: ["POST"], pattern: /^orders$/ },
   { methods: ["GET"], pattern: /^orders$/ },
   { methods: ["GET"], pattern: /^orders\/[A-Za-z0-9_-]{1,64}$/ },
@@ -35,6 +37,9 @@ async function proxy(request: Request, { params }: { params: Promise<{ path: str
     const value = request.headers.get(name)
     if (value) headers.set(name, value)
   }
+  // O limite por IP do formulário de contato depende do IP do visitante, não do servidor do Next.
+  const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+  if (clientIp) headers.set("cf-connecting-ip", clientIp)
   const incomingId = request.headers.get("x-request-id")
   const requestId = incomingId && REQUEST_ID_PATTERN.test(incomingId) ? incomingId : crypto.randomUUID()
   headers.set("x-request-id", requestId)

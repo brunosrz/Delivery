@@ -12,6 +12,7 @@ interface __BaseEnv_Env {
   ASAAS_ENV: string
   ASAAS_API_KEY?: string
   ASAAS_WEBHOOK_TOKEN?: string
+  TURNSTILE_SECRET?: string
   RESTAURANT_ROOM: DurableObjectNamespace<import("./index").RestaurantRoom>
 }
 declare namespace Cloudflare {
