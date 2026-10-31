@@ -39,4 +39,8 @@ Removido porque estava quebrado, simulado ou sem nenhum uso:
 ## Prova automatizada
 
 - `pnpm test`: unidades de preço, middleware de autenticação e catálogo de estado.
-- `pnpm e2e`: Playwright em desktop e mobile contra a Casa das Máquinas real (`wrangler dev` com D1 local e seed sintético). Cobrem o hub, cada produto sem erro 5xx, o estado de catálogo indisponível, a resposta 404 e o redirecionamento de rota protegida para o login.
+- `pnpm e2e`: Playwright em desktop e mobile contra a Casa das Máquinas real (`wrangler dev` com D1 local e seed sintético). Cobrem o hub, cada produto sem erro 5xx, a resposta 404 e o redirecionamento de rota protegida para o login. O estado de catálogo indisponível é coberto só por teste unitário (`apps/web/tests/unit/menu.test.ts`), não por E2E.
+
+## Backend e itens adiados
+
+A Casa das Máquinas já implementa catálogo, autenticação, cotação, pedidos idempotentes, transições de status, tempo real por Durable Object e pagamento online com Asaas ([`pagamentos-asaas.md`](./pagamentos-asaas.md)). O checkout no web ainda não existe (issue #39). `packages/ui` e `packages/config` ficam adiados até existirem dois consumidores (ver [`monorepo.md`](./monorepo.md)).
