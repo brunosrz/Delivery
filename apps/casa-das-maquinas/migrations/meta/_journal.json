@@ -78,6 +78,13 @@
       "when": 1793558849760,
       "tag": "0010_mkit_editorial",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1793559771351,
+      "tag": "0011_tenant_deletion",
+      "breakpoints": true
     }
   ]
 }

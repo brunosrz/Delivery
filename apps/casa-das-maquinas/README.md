@@ -82,3 +82,7 @@ Rotas sob `/v1/manage/restaurants/:id/mkit` (equipe do restaurante ou admin): `c
 ## MKit: métricas
 
 `GET /v1/manage/restaurants/:id/mkit/metrics` (equipe do restaurante ou admin) devolve o total de materiais, publicados e rascunhos, a divisão por tipo, o total de exportações e os cinco materiais mais exportados. Cada exportação (`.txt`, imagem ou PDF) soma 1 em `exportCount` pelo endpoint de exportação; imagem e PDF são gerados no navegador (`apps/web/lib/mkit-render.ts`), sem dependência nova.
+
+## Exclusão recuperável de restaurante
+
+Só a administração (`POST /v1/admin/restaurants/:id/suspend` e `/restore`). Suspender esconde o restaurante do catálogo, recusa cotação e pedido novo, tira a equipe da gestão, dos pedidos e do tempo real (403) e cancela os jobs pendentes da caixa de saída; a administração continua enxergando para poder resolver o que ficou aberto ou restaurar. Em até 30 dias `restore` desfaz tudo (menos os jobs já cancelados). Depois disso o cron (`purgeSuspendedTenants`) remove cardápio, horários, MKit e vínculos da equipe, limpa o histórico do objeto durável e grava `purged_at`; os **pedidos ficam** (obrigação fiscal e financeira) e restaurar passa a dar 409. Cada etapa pode ser repetida: se o objeto durável falhar, o próximo ciclo tenta de novo.

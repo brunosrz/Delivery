@@ -27,19 +27,32 @@ type Attachment = { sub: string; restaurantId: string }
 export class RestaurantRoom extends DurableObject<Env> {
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env)
-    ctx.blockConcurrencyWhile(async () => {
-      this.ctx.storage.sql.exec(`
-        create table if not exists events (
-          seq integer primary key autoincrement,
-          type text not null,
-          order_id text not null,
-          status text not null,
-          at text not null
-        )
-      `)
-    })
+    ctx.blockConcurrencyWhile(async () => this.createSchema())
     // Responde ping sem acordar o objeto.
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair("ping", "pong"))
+  }
+
+  private createSchema(): void {
+    this.ctx.storage.sql.exec(`
+      create table if not exists events (
+        seq integer primary key autoincrement,
+        type text not null,
+        order_id text not null,
+        status text not null,
+        at text not null
+      )
+    `)
+  }
+
+  /**
+   * Exclusão do restaurante: fecha as conexões e apaga o histórico de eventos do objeto. Pode ser chamado de novo
+   * sem efeito colateral (o objeto volta vazio na próxima requisição).
+   */
+  async destroy(): Promise<void> {
+    for (const socket of this.ctx.getWebSockets()) socket.close(1001, "restaurante removido")
+    await this.ctx.storage.deleteAll()
+    // A instância continua viva até ser descartada: recria a tabela vazia para o próximo evento.
+    this.createSchema()
   }
 
   /**
