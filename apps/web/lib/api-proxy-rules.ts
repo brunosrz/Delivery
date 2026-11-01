@@ -8,6 +8,12 @@ const ALLOWED: readonly Allowed[] = [
   { methods: ["POST"], pattern: /^quotes$/ },
   // Formulário de contato do site institucional (público; o backend limita por IP e usa armadilha anti-robô).
   { methods: ["POST"], pattern: /^contact$/ },
+  // Banner de cookies (público) e aceite dos termos (exige sessão no backend).
+  { methods: ["POST"], pattern: /^consents$/ },
+  { methods: ["POST"], pattern: /^legal\/acceptances$/ },
+  // Privacidade (LGPD): o titular baixa os próprios dados e exclui a própria conta; o backend usa só a sessão.
+  { methods: ["GET"], pattern: /^me\/export$/ },
+  { methods: ["DELETE"], pattern: /^me$/ },
   { methods: ["POST"], pattern: /^orders$/ },
   { methods: ["GET"], pattern: /^orders$/ },
   { methods: ["GET"], pattern: /^orders\/[A-Za-z0-9_-]{1,64}$/ },

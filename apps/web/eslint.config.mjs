@@ -9,6 +9,7 @@ const compat = new FlatCompat({
   baseDirectory: __dirname,
 })
 
-const eslintConfig = [...compat.extends("next/core-web-vitals", "next/typescript")]
+// lib/paraglide é código gerado pelo compilador do Paraglide (bun run i18n): não é revisado nem formatado.
+const eslintConfig = [{ ignores: ["lib/paraglide/**"] }, ...compat.extends("next/core-web-vitals", "next/typescript")]
 
 export default eslintConfig

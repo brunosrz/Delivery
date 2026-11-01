@@ -8,7 +8,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useLocale } from "@/components/locale-provider"
+import { acceptLegalDocuments } from "@/lib/legal-client"
 import { authClient } from "@/lib/auth-client"
+import { m } from "@/lib/paraglide/messages.js"
 import { safeRedirectPath } from "@/lib/safe-redirect"
 
 const MIN_PASSWORD_LENGTH = 8
@@ -19,6 +22,8 @@ function RegisterForm() {
   const callbackUrl = safeRedirectPath(searchParams.get("callbackUrl"))
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const locale = useLocale()
+  const options = { locale }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -29,6 +34,12 @@ function RegisterForm() {
       return
     }
 
+    // Aceite explícito dos termos e da política (GDPR art. 7; LGPD art. 8º), com declaração de maioridade.
+    if (form.get("acceptLegal") !== "on" || form.get("adult") !== "on") {
+      setError(m.signup_accept_required({}, options))
+      return
+    }
+
     setIsLoading(true)
     setError("")
     const { error: signUpError } = await authClient.signUp.email({
@@ -36,9 +47,9 @@ function RegisterForm() {
       email: String(form.get("email")),
       password,
     })
-    setIsLoading(false)
 
     if (signUpError) {
+      setIsLoading(false)
       setError(
         signUpError.status === 422 || signUpError.code === "USER_ALREADY_EXISTS"
           ? "Já existe uma conta com este e-mail."
@@ -46,6 +57,9 @@ function RegisterForm() {
       )
       return
     }
+    // O aceite fica registrado no servidor com a versão vigente. Se falhar, o próximo acesso pede de novo.
+    await acceptLegalDocuments()
+    setIsLoading(false)
     router.push(callbackUrl)
     router.refresh()
   }
@@ -96,6 +110,26 @@ function RegisterForm() {
               minLength={MIN_PASSWORD_LENGTH}
               required
             />
+          </div>
+          <div className="space-y-2 text-sm">
+            <label className="flex items-start gap-2">
+              <input type="checkbox" name="acceptLegal" required className="mt-1 h-4 w-4" />
+              <span>
+                {m.signup_accept_before({}, options)}{" "}
+                <Link href="/legal/termos" target="_blank" className="underline">
+                  {m.legal_terms({}, options)}
+                </Link>{" "}
+                {m.signup_accept_and({}, options)}{" "}
+                <Link href="/legal/privacidade" target="_blank" className="underline">
+                  {m.legal_privacy({}, options)}
+                </Link>
+                {m.signup_accept_after({}, options)}
+              </span>
+            </label>
+            <label className="flex items-start gap-2">
+              <input type="checkbox" name="adult" required className="mt-1 h-4 w-4" />
+              <span>{m.signup_adult({}, options)}</span>
+            </label>
           </div>
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? "Criando conta..." : "Criar conta"}

@@ -82,3 +82,40 @@ export const accessLog: MiddlewareHandler<AppEnv> = async (c, next) => {
     }),
   )
 }
+
+/** Respostas da API são JSON: nada de embutir em frame, nada de adivinhar tipo, nada de enviar referer. */
+const API_SECURITY_HEADERS = {
+  "x-content-type-options": "nosniff",
+  "x-frame-options": "DENY",
+  "referrer-policy": "no-referrer",
+  "strict-transport-security": "max-age=63072000; includeSubDomains",
+  "cross-origin-opener-policy": "same-origin",
+  "content-security-policy": "default-src 'none'; frame-ancestors 'none'",
+  "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=()",
+} as const
+
+/** Rotas com dado pessoal ou de sessão: nunca ficam em cache de navegador, proxy ou CDN. */
+const PRIVATE_PREFIXES = [
+  "/v1/me",
+  "/v1/orders",
+  "/v1/manage",
+  "/v1/courier",
+  "/v1/live",
+  "/v1/consents",
+  "/v1/legal",
+  "/api/auth",
+]
+
+export const isPrivatePath = (path: string) =>
+  PRIVATE_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`))
+
+export const securityHeaders: MiddlewareHandler<AppEnv> = async (c, next) => {
+  await next()
+  // Respostas 101 (upgrade para WebSocket) têm headers imutáveis.
+  if (c.res.status === 101) return
+  for (const [name, value] of Object.entries(API_SECURITY_HEADERS)) c.res.headers.set(name, value)
+  if (isPrivatePath(c.req.path)) {
+    c.res.headers.set("cache-control", "no-store")
+    c.res.headers.set("pragma", "no-cache")
+  }
+}

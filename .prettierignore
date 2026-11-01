@@ -15,3 +15,6 @@ apps/casa-das-maquinas/migrations/meta/
 *.md
 # Snapshot gerado por `bun run openapi:export` (formato fixo do gerador).
 packages/contracts/openapi/
+
+# Código gerado pelo compilador do Paraglide (bun run i18n).
+apps/web/lib/paraglide/

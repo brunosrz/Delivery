@@ -206,3 +206,61 @@ export const rateLimitBuckets = sqliteTable(
     index("rate_limit_window_idx").on(table.windowStart),
   ],
 )
+
+/**
+ * Prova do consentimento de cookies (GDPR art. 7(1), LGPD art. 8 §2). Só guarda o identificador aleatório do navegador
+ * e um hash do IP; `user_id` é preenchido quando havia sessão e é desfeito na exclusão da conta.
+ */
+export const consentRecords = sqliteTable(
+  "consent_records",
+  {
+    id: text("id").primaryKey(),
+    consentId: text("consent_id").notNull(),
+    userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+    version: integer("version").notNull(),
+    analytics: integer("analytics", { mode: "boolean" }).notNull(),
+    marketing: integer("marketing", { mode: "boolean" }).notNull(),
+    source: text("source", { enum: ["banner", "preferences", "gpc"] }).notNull(),
+    locale: text("locale").notNull(),
+    ipHash: text("ip_hash"),
+    createdAt: text("created_at").notNull().default(isoNow),
+  },
+  (table) => [
+    index("consent_records_consent_idx").on(table.consentId, table.createdAt),
+    index("consent_records_user_idx").on(table.userId),
+    index("consent_records_created_idx").on(table.createdAt),
+  ],
+)
+
+/** Aceite dos Termos de Uso e da Política de Privacidade, por versão do documento. */
+export const legalAcceptances = sqliteTable(
+  "legal_acceptances",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    document: text("document", { enum: ["terms", "privacy"] }).notNull(),
+    version: text("version").notNull(),
+    ipHash: text("ip_hash"),
+    acceptedAt: text("accepted_at").notNull().default(isoNow),
+  },
+  (table) => [uniqueIndex("legal_acceptances_unique").on(table.userId, table.document, table.version)],
+)
+
+/**
+ * Registro das solicitações do titular (exportação e exclusão), para demonstrar atendimento (LGPD art. 37, GDPR art. 5(2)).
+ * Não tem chave estrangeira nem dado pessoal: o titular aparece só como hash, e o registro sobrevive à exclusão.
+ */
+export const dataRequests = sqliteTable(
+  "data_requests",
+  {
+    id: text("id").primaryKey(),
+    subjectHash: text("subject_hash").notNull(),
+    type: text("type", { enum: ["export", "delete"] }).notNull(),
+    status: text("status", { enum: ["completed", "refused"] }).notNull(),
+    reason: text("reason"),
+    createdAt: text("created_at").notNull().default(isoNow),
+  },
+  (table) => [index("data_requests_subject_idx").on(table.subjectHash, table.createdAt)],
+)
