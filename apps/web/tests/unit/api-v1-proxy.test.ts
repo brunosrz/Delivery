@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { GET, POST } from "@/app/api/v1/[...path]/route"
+import { DELETE, GET, POST } from "@/app/api/v1/[...path]/route"
 import { isAllowed } from "@/lib/api-proxy-rules"
 
 const params = (...path: string[]) => ({ params: Promise.resolve({ path }) })
@@ -8,9 +8,13 @@ describe("isAllowed", () => {
   it.each([
     ["POST", ["quotes"]],
     ["POST", ["contact"]],
+    ["POST", ["consents"]],
+    ["POST", ["legal", "acceptances"]],
     ["POST", ["orders"]],
     ["GET", ["orders"]],
     ["GET", ["orders", "ord_123"]],
+    ["GET", ["me", "export"]],
+    ["DELETE", ["me"]],
     ["POST", ["orders", "ord_123", "payment"]],
     ["POST", ["orders", "ord_123", "transitions"]],
     ["GET", ["manage", "restaurants", "rest_1", "mkit", "materials"]],
@@ -30,6 +34,14 @@ describe("isAllowed", () => {
     ["PUT", ["manage", "restaurants", "r1", "mkit", "materials", "m1"]],
     ["POST", ["webhooks", "asaas"]],
     ["GET", ["me"]],
+    ["GET", ["consents"]],
+    ["POST", ["legal"]],
+    ["GET", ["legal", "acceptances"]],
+    ["POST", ["me"]],
+    ["PATCH", ["me"]],
+    ["POST", ["me", "export"]],
+    ["DELETE", ["me", "export"]],
+    ["DELETE", ["me", "other"]],
     ["GET", ["quotes"]],
     ["POST", ["orders", "..", "me"]],
     ["GET", ["orders", "a/b"]],
@@ -76,6 +88,56 @@ describe("proxy /api/v1", () => {
     expect(response.status).toBe(200)
     expect(response.headers.get("idempotent-replayed")).toBe("true")
     expect(response.headers.get("set-cookie")).toBeNull()
+  })
+
+  it("repassa o corpo do DELETE (exclusão de conta exige a frase de confirmação)", async () => {
+    fetchMock.mockResolvedValueOnce(new Response('{"data":{"deleted":true}}', { status: 200 }))
+    await DELETE(
+      new Request("http://web.test/api/v1/me", {
+        method: "DELETE",
+        headers: { "content-type": "application/json", cookie: "better-auth.session_token=abc" },
+        body: '{"confirm":"EXCLUIR MINHA CONTA"}',
+      }),
+      params("me"),
+    )
+    const [url, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
+    expect(String(url)).toBe("http://api.test/v1/me")
+    expect(init.method).toBe("DELETE")
+    expect(new TextDecoder().decode(init.body as ArrayBuffer)).toBe('{"confirm":"EXCLUIR MINHA CONTA"}')
+  })
+
+  it("recusa escrita vinda de outro site, mesmo com cookie, sem chamar o backend", async () => {
+    const response = await POST(
+      new Request("http://web.test/api/v1/orders", {
+        method: "POST",
+        headers: {
+          origin: "https://evil.example",
+          cookie: "better-auth.session_token=abc",
+          "sec-fetch-site": "cross-site",
+        },
+        body: "{}",
+      }),
+      params("orders"),
+    )
+    expect(response.status).toBe(403)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it("encaminha o sinal Global Privacy Control e marca as respostas como no-store", async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response('{"data":{}}', { status: 200, headers: { "content-type": "application/json" } }),
+    )
+    const response = await POST(
+      new Request("http://web.test/api/v1/consents", {
+        method: "POST",
+        headers: { "content-type": "application/json", "sec-gpc": "1", origin: "http://web.test" },
+        body: "{}",
+      }),
+      params("consents"),
+    )
+    const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit & { headers: Headers }]
+    expect(init.headers.get("sec-gpc")).toBe("1")
+    expect(response.headers.get("cache-control")).toBe("no-store")
   })
 
   it("não chama o backend em rota fora da lista", async () => {

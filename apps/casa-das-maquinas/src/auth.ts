@@ -33,7 +33,13 @@ export function createAuth(env: Env) {
     ...(googleConfigured
       ? { socialProviders: { google: { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET } } }
       : {}),
-    advanced: { database: { generateId: () => crypto.randomUUID() } },
+    // Sessão de 7 dias; o cookie é HttpOnly, SameSite=Lax e Secure em HTTPS (nunca legível por script).
+    session: { expiresIn: 60 * 60 * 24 * 7, updateAge: 60 * 60 * 24 },
+    advanced: {
+      useSecureCookies: env.BETTER_AUTH_URL.startsWith("https://"),
+      defaultCookieAttributes: { httpOnly: true, sameSite: "lax", path: "/" },
+      database: { generateId: () => crypto.randomUUID() },
+    },
   })
 }
 

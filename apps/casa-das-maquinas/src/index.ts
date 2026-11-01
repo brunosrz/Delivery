@@ -1,6 +1,11 @@
 import {
   API_VERSION,
   AccountExport,
+  ConsentReceipt,
+  ConsentRequest,
+  LegalAcceptanceReceipt,
+  LegalStatus,
+  LegalAcceptanceRequest,
   ContactReceipt,
   ContactRequest,
   CreateMkitMaterial,
@@ -27,9 +32,11 @@ import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi"
 import { cors } from "hono/cors"
 import { createMiddleware } from "hono/factory"
 import { canManageRestaurant, createAuth, getSessionUser } from "./auth.js"
-import { type AppEnv, accessLog, created, fail, logError, ok, requestId } from "./http.js"
+import { type AppEnv, accessLog, created, fail, logError, ok, requestId, securityHeaders } from "./http.js"
 import { type LiveScope, signTicket, verifyTicket } from "./live-ticket.js"
 import { createAccountService } from "./account.js"
+import { createPrivacyService } from "./privacy.js"
+import { purgeExpired } from "./retention.js"
 import { receiveContact } from "./contact.js"
 import { markPublished, runOutbox } from "./jobs.js"
 import { pruneRateLimits, rateLimit } from "./rate-limit.js"
@@ -80,6 +87,7 @@ const app = new OpenAPIHono<AppEnv>({
 
 app.use("*", requestId)
 app.use("*", accessLog)
+app.use("*", securityHeaders)
 // Leituras públicas do catálogo aceitam qualquer origem; rotas com sessão passam pelo proxy do app web.
 app.use(
   "/v1/restaurants/*",
@@ -99,6 +107,9 @@ const withSession = createMiddleware<AppEnv>(async (c, next) => {
 })
 app.use("/v1/me", withSession)
 app.use("/v1/me/*", withSession)
+// Consentimento de cookies é público (a sessão, se houver, só liga o registro à conta); aceite legal exige sessão.
+app.use("/v1/consents", withSession)
+app.use("/v1/legal/*", withSession)
 app.use("/v1/manage/*", withSession)
 app.use("/v1/courier/*", withSession)
 app.use("/v1/orders", withSession)
@@ -112,6 +123,11 @@ app.on("POST", "/v1/orders", rateLimit({ scope: "orders", limit: 15, windowSecon
 app.on("POST", "/v1/orders/:orderId/payment", rateLimit({ scope: "payment", limit: 10, windowSeconds: 60 }))
 app.on("POST", "/v1/orders/:orderId/transitions", rateLimit({ scope: "transitions", limit: 120, windowSeconds: 60 }))
 app.on("POST", "/v1/live/tickets", rateLimit({ scope: "tickets", limit: 30, windowSeconds: 60 }))
+// Privacidade: baixa cota nas operações do titular (exportar e excluir), mais folgada no registro de consentimento.
+app.on("GET", "/v1/me/export", rateLimit({ scope: "export", limit: 10, windowSeconds: 60 }))
+app.on("DELETE", "/v1/me", rateLimit({ scope: "erase", limit: 5, windowSeconds: 60 }))
+app.on("POST", "/v1/consents", rateLimit({ scope: "consents", limit: 30, windowSeconds: 60 }))
+app.on("POST", "/v1/legal/acceptances", rateLimit({ scope: "acceptances", limit: 10, windowSeconds: 60 }))
 
 app.onError((error, c) => {
   logError(c, "unhandled_error", error)
@@ -196,6 +212,74 @@ app.openapi(
 
 app.openapi(
   createRoute({
+    method: "post",
+    path: "/v1/consents",
+    request: { body: { content: { "application/json": { schema: ConsentRequest } }, required: true } },
+    responses: {
+      200: {
+        content: { "application/json": { schema: envelope(ConsentReceipt) } },
+        description: "Consentimento registrado",
+      },
+      400: errorResponse,
+      429: errorResponse,
+    },
+  }),
+  async (c) => {
+    const result = await createPrivacyService(c.env).recordConsent(c.req.valid("json"), {
+      userId: c.get("user")?.id ?? null,
+      ip: c.req.header("cf-connecting-ip") ?? null,
+      // Global Privacy Control: o navegador pediu para não vender nem compartilhar dados (CCPA/CPRA).
+      gpc: c.req.header("sec-gpc") === "1",
+    })
+    return result.ok ? ok(c, result.value) : fail(c, result.code, result.message)
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "get",
+    path: "/v1/legal/acceptances",
+    responses: {
+      200: { content: { "application/json": { schema: envelope(LegalStatus) } }, description: "Situação do aceite" },
+      401: errorResponse,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    return ok(c, await createPrivacyService(c.env).legalStatus(user.id))
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "post",
+    path: "/v1/legal/acceptances",
+    request: { body: { content: { "application/json": { schema: LegalAcceptanceRequest } }, required: true } },
+    responses: {
+      200: {
+        content: { "application/json": { schema: envelope(LegalAcceptanceReceipt) } },
+        description: "Aceite registrado",
+      },
+      400: errorResponse,
+      401: errorResponse,
+      429: errorResponse,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const result = await createPrivacyService(c.env).recordAcceptance(
+      user,
+      c.req.valid("json"),
+      c.req.header("cf-connecting-ip") ?? null,
+    )
+    return result.ok ? ok(c, result.value) : fail(c, result.code, result.message)
+  },
+)
+
+app.openapi(
+  createRoute({
     method: "get",
     path: "/v1/me/export",
     responses: {
@@ -234,7 +318,10 @@ app.openapi(
     const user = c.get("user")
     if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
     c.req.valid("json")
-    const result = await createAccountService(c.env).delete(user)
+    // A sessão recente é exigida pelo serviço; o instante de criação vem do próprio Better Auth.
+    const session = await createAuth(c.env).api.getSession({ headers: c.req.raw.headers })
+    if (!session) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const result = await createAccountService(c.env).delete(user, { createdAt: new Date(session.session.createdAt) })
     if (!result.ok) return fail(c, result.code as "forbidden" | "conflict" | "not_found", result.message)
     return ok(c, result.value)
   },
@@ -696,8 +783,8 @@ export { app }
 
 export default {
   fetch: app.fetch,
-  /** Cron: reenvia eventos de tempo real da caixa de saída (jobs.ts) e apaga janelas antigas do limite de requisições. */
+  /** Cron: reenvia eventos de tempo real da caixa de saída (jobs.ts) apaga janelas antigas do limite de requisições e dados que passaram do prazo de retenção (retention.ts). */
   async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext) {
-    ctx.waitUntil(Promise.all([runOutbox(env), pruneRateLimits(env)]))
+    ctx.waitUntil(Promise.all([runOutbox(env), pruneRateLimits(env), purgeExpired(env)]))
   },
 } satisfies ExportedHandler<Env>
