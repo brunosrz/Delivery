@@ -6,6 +6,7 @@ import {
   CreateOrderRequest,
   Id,
   MkitMaterial,
+  MkitMetrics,
   IdempotencyKey,
   Menu,
   Order,
@@ -558,6 +559,24 @@ app.openapi(
       "content-disposition": `attachment; filename="${result.value.filename}"`,
       "x-content-type-options": "nosniff",
     })
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "get",
+    path: "/v1/manage/restaurants/{restaurantId}/mkit/metrics",
+    request: { params: z.object({ restaurantId: Id }) },
+    responses: {
+      200: { content: { "application/json": { schema: envelope(MkitMetrics) } }, description: "Uso do MKit" },
+      ...mkitErrors,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const result = await createMkitService(c.env).metrics(user, c.req.valid("param").restaurantId)
+    return result.ok ? ok(c, result.value) : mkitFail(c, result)
   },
 )
 

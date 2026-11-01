@@ -18,6 +18,7 @@ describe("isAllowed", () => {
     ["PATCH", ["manage", "restaurants", "rest_1", "mkit", "materials", "m1"]],
     ["DELETE", ["manage", "restaurants", "rest_1", "mkit", "materials", "m1"]],
     ["GET", ["manage", "restaurants", "rest_1", "mkit", "materials", "m1", "export"]],
+    ["GET", ["manage", "restaurants", "rest_1", "mkit", "metrics"]],
   ])("permite %s %j", (method, path) => expect(isAllowed(method, path)).toBe(true))
 
   it.each([
@@ -25,6 +26,7 @@ describe("isAllowed", () => {
     ["GET", ["manage", "restaurants", "r1", "orders"]],
     ["GET", ["manage", "restaurants", "r1"]],
     ["POST", ["manage", "restaurants", "r1", "mkit", "materials", "m1", "export"]],
+    ["POST", ["manage", "restaurants", "r1", "mkit", "metrics"]],
     ["PUT", ["manage", "restaurants", "r1", "mkit", "materials", "m1"]],
     ["POST", ["webhooks", "asaas"]],
     ["GET", ["me"]],

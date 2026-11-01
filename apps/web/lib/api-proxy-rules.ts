@@ -24,6 +24,7 @@ const ALLOWED: readonly Allowed[] = [
     methods: ["GET"],
     pattern: /^manage\/restaurants\/[A-Za-z0-9_-]{1,64}\/mkit\/materials\/[A-Za-z0-9_-]{1,64}\/export$/,
   },
+  { methods: ["GET"], pattern: /^manage\/restaurants\/[A-Za-z0-9_-]{1,64}\/mkit\/metrics$/ },
 ]
 
 export function isAllowed(method: string, path: readonly string[]): boolean {

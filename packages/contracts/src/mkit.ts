@@ -38,3 +38,21 @@ export const MkitMaterial = z.object({
   updatedAt: Timestamp,
 })
 export type MkitMaterial = z.infer<typeof MkitMaterial>
+
+/** Painel de uso do MKit de um restaurante. */
+export const MkitMetrics = z.object({
+  total: z.number().int().nonnegative(),
+  published: z.number().int().nonnegative(),
+  drafts: z.number().int().nonnegative(),
+  totalExports: z.number().int().nonnegative(),
+  byKind: z.object({
+    post: z.number().int().nonnegative(),
+    cartaz: z.number().int().nonnegative(),
+    promocao: z.number().int().nonnegative(),
+  }),
+  /** Os cinco materiais mais exportados (só os que já foram exportados). */
+  top: z
+    .array(z.object({ id: Id, title: z.string(), kind: MkitKind, exportCount: z.number().int().positive() }))
+    .max(5),
+})
+export type MkitMetrics = z.infer<typeof MkitMetrics>

@@ -1,6 +1,16 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
+import { openPrintWindow, printInto, renderMaterialPng } from "@/lib/mkit-render"
+
+type Metrics = {
+  total: number
+  published: number
+  drafts: number
+  totalExports: number
+  byKind: { post: number; cartaz: number; promocao: number }
+  top: { id: string; title: string; exportCount: number }[]
+}
 
 type Material = {
   id: string
@@ -16,11 +26,18 @@ const field = "mt-1 w-full rounded-md border px-3 py-2"
 
 export function MaterialsPanel({ restaurantId }: { restaurantId: string }) {
   const base = `/api/v1/manage/restaurants/${encodeURIComponent(restaurantId)}/mkit/materials`
+  const metricsUrl = `/api/v1/manage/restaurants/${encodeURIComponent(restaurantId)}/mkit/metrics`
   const [materials, setMaterials] = useState<Material[] | null>(null)
+  const [metrics, setMetrics] = useState<Metrics | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
   const load = useCallback(async () => {
+    // O painel de números é secundário: se falhar, a lista continua funcionando.
+    void fetch(metricsUrl)
+      .then((response) => response.json())
+      .then((body: { data: Metrics | null }) => setMetrics(body.data))
+      .catch(() => undefined)
     try {
       const response = await fetch(base)
       const body = (await response.json()) as { data: Material[] | null; error: { message: string } | null }
@@ -29,7 +46,7 @@ export function MaterialsPanel({ restaurantId }: { restaurantId: string }) {
     } catch {
       setMessage("Sem conexão com o servidor.")
     }
-  }, [base])
+  }, [base, metricsUrl])
 
   useEffect(() => {
     void load()
@@ -117,9 +134,79 @@ export function MaterialsPanel({ restaurantId }: { restaurantId: string }) {
     }
   }
 
+  /** Conta a exportação no servidor (mesma métrica do .txt) e só então gera o arquivo no navegador. */
+  async function exportAs(material: Material, format: "png" | "pdf") {
+    // A aba de impressão abre já no clique; depois do fetch o navegador a trataria como pop-up indesejado.
+    const popup = format === "pdf" ? openPrintWindow() : null
+    if (format === "pdf" && !popup) {
+      setMessage("O navegador bloqueou a janela de impressão. Libere pop-ups e tente de novo.")
+      return
+    }
+    setBusy(true)
+    setMessage(null)
+    try {
+      const counted = await fetch(`${base}/${material.id}/export`)
+      if (!counted.ok) {
+        popup?.close()
+        setMessage("Não foi possível exportar.")
+        return
+      }
+      if (popup) {
+        printInto(popup, material)
+      } else {
+        const url = URL.createObjectURL(await renderMaterialPng(material))
+        const link = document.createElement("a")
+        link.href = url
+        link.download = `${material.title.replace(/[^\w-]+/g, "-").slice(0, 60) || "material"}.png`
+        link.click()
+        URL.revokeObjectURL(url)
+      }
+      await load()
+    } catch {
+      setMessage("Não foi possível gerar o arquivo.")
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <div className="container mx-auto max-w-3xl px-4 py-10">
       <h1 className="mb-6 text-3xl font-bold">Materiais do MKit</h1>
+
+      {metrics && (
+        <section aria-labelledby="metricas" className="mb-8 rounded-lg border p-4">
+          <h2 id="metricas" className="mb-3 font-semibold">
+            Uso do MKit
+          </h2>
+          <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {(
+              [
+                ["Materiais", metrics.total],
+                ["Publicados", metrics.published],
+                ["Rascunhos", metrics.drafts],
+                ["Exportações", metrics.totalExports],
+              ] as const
+            ).map(([label, value]) => (
+              <div key={label}>
+                <dt className="text-xs text-gray-600">{label}</dt>
+                <dd className="text-2xl font-bold">{value}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="mt-3 text-sm text-gray-600">
+            Posts {metrics.byKind.post} · Cartazes {metrics.byKind.cartaz} · Promoções {metrics.byKind.promocao}
+          </p>
+          {metrics.top.length > 0 && (
+            <ol className="mt-3 list-decimal pl-5 text-sm">
+              {metrics.top.map((item) => (
+                <li key={item.id}>
+                  {item.title} · {item.exportCount} exportações
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+      )}
 
       <form onSubmit={create} className="mb-8 space-y-3 rounded-lg border p-4">
         <h2 className="font-semibold">Novo material</h2>
@@ -187,6 +274,22 @@ export function MaterialsPanel({ restaurantId }: { restaurantId: string }) {
                   className="rounded-md border px-3 py-1 text-sm"
                 >
                   Exportar (.txt)
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => exportAs(material, "png")}
+                  className="rounded-md border px-3 py-1 text-sm"
+                >
+                  Imagem (.png)
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => exportAs(material, "pdf")}
+                  className="rounded-md border px-3 py-1 text-sm"
+                >
+                  PDF
                 </button>
                 <button
                   type="button"

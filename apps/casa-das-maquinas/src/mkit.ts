@@ -1,4 +1,10 @@
-import type { CreateMkitMaterial, MkitMaterial, SessionUser, UpdateMkitMaterial } from "@delivery/contracts"
+import type {
+  CreateMkitMaterial,
+  MkitMaterial,
+  MkitMetrics,
+  SessionUser,
+  UpdateMkitMaterial,
+} from "@delivery/contracts"
 import { sanitizeText } from "@delivery/domain"
 import { and, desc, eq, sql } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/d1"
@@ -106,6 +112,29 @@ export function createMkitService(env: Env) {
       if (!(await find(restaurantId, id))) return notFound
       await db.delete(t).where(and(eq(t.id, id), eq(t.restaurantId, restaurantId)))
       return { ok: true, value: true }
+    },
+
+    /** Números do painel: totais por status e tipo, exportações e os materiais mais usados. */
+    async metrics(user: SessionUser, restaurantId: string): Promise<MkitResult<MkitMetrics>> {
+      if (!canManageRestaurant(user, restaurantId)) return forbidden
+      const rows = await db.select().from(t).where(eq(t.restaurantId, restaurantId)).limit(MAX_MATERIALS_PER_RESTAURANT)
+      const byKind = { post: 0, cartaz: 0, promocao: 0 }
+      let published = 0
+      let totalExports = 0
+      for (const row of rows) {
+        byKind[row.kind] += 1
+        if (row.status === "published") published += 1
+        totalExports += row.exportCount
+      }
+      const top = rows
+        .filter((row) => row.exportCount > 0)
+        .sort((a, b) => b.exportCount - a.exportCount || a.title.localeCompare(b.title))
+        .slice(0, 5)
+        .map((row) => ({ id: row.id, title: row.title, kind: row.kind, exportCount: row.exportCount }))
+      return {
+        ok: true,
+        value: { total: rows.length, published, drafts: rows.length - published, totalExports, byKind, top },
+      }
     },
 
     /** Texto pronto para copiar ou baixar, e a métrica de uso (cada exportação soma 1). */
