@@ -264,6 +264,16 @@ export function createOrdersService(env: Env) {
       return Promise.all(rows.map((row) => present(row)))
     },
 
+    /** Todos os pedidos do cliente, sem o limite da listagem comum: base da exportação de dados (LGPD). */
+    async listAllForCustomer(user: SessionUser): Promise<Order[]> {
+      const rows = await db
+        .select()
+        .from(ordersSchema.orders)
+        .where(eq(ordersSchema.orders.customerId, user.id))
+        .orderBy(desc(ordersSchema.orders.createdAt))
+      return Promise.all(rows.map((row) => present(row)))
+    },
+
     async listForRestaurant(restaurantId: string): Promise<Order[]> {
       const rows = await db
         .select()
