@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm"
-import { check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core"
+import { check, index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core"
 import { user } from "./auth-schema.js"
 import { restaurants } from "./schema.js"
 
@@ -191,3 +191,18 @@ export const paymentAttempts = sqliteTable("payment_attempts", {
   lastError: text("last_error"),
   updatedAt: text("updated_at").notNull().default(isoNow),
 })
+
+/** Contadores de limite de requisições: uma linha por chave e janela fixa. A chave é um hash, nunca o IP. */
+export const rateLimitBuckets = sqliteTable(
+  "rate_limit_buckets",
+  {
+    key: text("key").notNull(),
+    /** Início da janela, em segundos desde a época. */
+    windowStart: integer("window_start").notNull(),
+    count: integer("count").notNull().default(0),
+  },
+  (table) => [
+    primaryKey({ columns: [table.key, table.windowStart] }),
+    index("rate_limit_window_idx").on(table.windowStart),
+  ],
+)
