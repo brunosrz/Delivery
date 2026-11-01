@@ -20,6 +20,31 @@ const jobsOf = (orderId: string) =>
     .all<{ status: string; attempts: number; lastError: string | null; payload: string }>()
     .then((result) => result.results)
 
+/**
+ * `env` cuja publicação só prossegue depois que `parties` execuções chegaram a ela. Como cada `runOutbox` já leu o job
+ * como pendente antes de publicar, isso força a sobreposição das atualizações; não depende da ordem do agendador.
+ */
+function overlapping(parties: number, outcome: "publish" | "fail") {
+  let arrived = 0
+  let release: () => void = () => undefined
+  const gate = new Promise<void>((resolve) => (release = resolve))
+  const room = {
+    getByName: (name: string) => ({
+      publish: async (event: never) => {
+        arrived += 1
+        if (arrived >= parties) release()
+        await gate
+        if (outcome === "fail") throw new Error("falha simulada")
+        return env.RESTAURANT_ROOM.getByName(name).publish(event)
+      },
+    }),
+  }
+  const wrapped = new Proxy(env, {
+    get: (target, key) => (key === "RESTAURANT_ROOM" ? room : Reflect.get(target, key)),
+  })
+  return { env: wrapped as typeof env, arrived: () => arrived }
+}
+
 async function insertJob(orderId: string, payload: string, createdAt = "2026-01-01T00:00:00.000Z") {
   await env.DB.prepare(
     "insert into outbox_jobs (id, restaurant_id, order_id, payload, created_at, updated_at) values (?, 'rest_burger', ?, ?, ?, ?)",
@@ -126,22 +151,29 @@ describe("caixa de saída de eventos", () => {
   it("duas execuções simultâneas publicam o mesmo job uma única vez", async () => {
     const orderId = `duplo-${crypto.randomUUID()}`
     await insertJob(orderId, JSON.stringify({ type: "order.updated", orderId, status: "ready", at: "2026-01-02" }))
-    const results = await Promise.all([runOutbox(env, { minAgeMs: 0 }), runOutbox(env, { minAgeMs: 0 })])
+    const overlap = overlapping(2, "publish")
+    const results = await Promise.all([
+      runOutbox(overlap.env, { minAgeMs: 0 }),
+      runOutbox(overlap.env, { minAgeMs: 0 }),
+    ])
+    // As duas execuções chegaram a publicar o mesmo job pendente; só uma o encerrou.
+    expect(overlap.arrived()).toBe(2)
     expect(results.reduce((sum, result) => sum + result.published, 0)).toBe(1)
     expect((await jobsOf(orderId))[0]).toMatchObject({ status: "done", attempts: 0 })
   })
 
   it("duas falhas simultâneas somam as duas tentativas, sem perder contagem", async () => {
     const orderId = `falha-dupla-${crypto.randomUUID()}`
-    await insertJob(orderId, "payload inválido")
+    await insertJob(orderId, JSON.stringify({ type: "order.updated", orderId, status: "ready", at: "2026-01-03" }))
+    const overlap = overlapping(2, "fail")
     const results = await Promise.all([
-      runOutbox(env, { minAgeMs: 0, log: () => undefined }),
-      runOutbox(env, { minAgeMs: 0, log: () => undefined }),
+      runOutbox(overlap.env, { minAgeMs: 0, log: () => undefined }),
+      runOutbox(overlap.env, { minAgeMs: 0, log: () => undefined }),
     ])
-    const failed = results.reduce((sum, result) => sum + result.failed, 0)
-    const [job] = await jobsOf(orderId)
-    expect(job).toMatchObject({ status: "pending", attempts: failed })
-    expect(failed).toBeGreaterThanOrEqual(1)
+    // Ambas leram attempts = 0 e falharam ao mesmo tempo: o banco soma as duas, não grava 1 duas vezes.
+    expect(overlap.arrived()).toBe(2)
+    expect(results.reduce((sum, result) => sum + result.failed, 0)).toBe(2)
+    expect((await jobsOf(orderId))[0]).toMatchObject({ status: "pending", attempts: 2 })
   })
 
   it("job fechado durante a execução não vira falha nem entra no log", async () => {

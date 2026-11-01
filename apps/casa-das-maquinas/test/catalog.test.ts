@@ -5,6 +5,15 @@ import { z } from "zod"
 
 const call = (path: string, init?: RequestInit) => exports.default.fetch(new Request(`https://api.test${path}`, init))
 
+const quote = (restaurantId: string, productId: string, addonOptionIds: string[] = []) =>
+  call("/v1/quotes", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ restaurantId, fulfillment: "pickup", items: [{ productId, quantity: 1, addonOptionIds }] }),
+  })
+const quoteFields = async (response: Response) =>
+  ((await response.json()) as { error: { fields: Record<string, string[]> } }).error.fields
+
 describe("GET /v1/health", () => {
   it("responde ok com o banco acessível e devolve o request id", async () => {
     const response = await call("/v1/health", { headers: { "x-request-id": "req-health-0001" } })
@@ -76,6 +85,13 @@ describe("GET /v1/restaurants/:slug/menu", () => {
     expect(product?.available).toBe(false)
     // O grupo inviável não é publicado (quebraria o contrato), mas o produto fica indisponível.
     expect(product?.addonGroups.map((group) => group.id)).not.toContain("grp_obrig_vazio")
+
+    // A cotação segue o mesmo critério: produto com grupo obrigatório inviável é recusado.
+    const refused = await quote("rest_pizzaria", "prod_pz_refri")
+    expect(refused.status).toBe(400)
+    expect(Object.values(await quoteFields(refused)).flat()).toEqual(
+      expect.arrayContaining([expect.stringContaining("indisponível")]),
+    )
   })
 
   it("marca o produto como indisponível quando as opções disponíveis não bastam para o mínimo", async () => {
@@ -91,6 +107,11 @@ describe("GET /v1/restaurants/:slug/menu", () => {
     const product = data?.sections.flatMap((section) => section.products).find((item) => item.id === "prod_pz_frango")
     expect(product?.available).toBe(false)
     expect(product?.addonGroups.map((group) => group.id)).toContain("grp_min2")
+
+    // Mesmo escolhendo a opção disponível, a cotação recusa: o mínimo (2) não pode ser atingido.
+    const refused = await quote("rest_pizzaria", "prod_pz_frango", ["opt_min2_a"])
+    expect(refused.status).toBe(400)
+    expect(await quoteFields(refused)).toMatchObject({ "items.0.productId": ["Pizza de frango indisponível"] })
   })
 
   it("omite o grupo e marca o produto como indisponível quando há menos opções do que o mínimo", async () => {
@@ -112,7 +133,7 @@ describe("GET /v1/restaurants/:slug/menu", () => {
     // Produto próprio: o clássico é usado nos testes de pedido e não pode ganhar um grupo obrigatório.
     await env.DB.batch([
       env.DB.prepare(
-        "insert into products (id, restaurant_id, section_id, slug, name, price_cents) values ('prod_bg_exato', 'rest_burger', 'sec_bg_burgers', 'burger-exato', 'Burger exato', 1000)",
+        "insert into products (id, restaurant_id, section_id, slug, name, price_cents) values ('prod_bg_exato', 'rest_burger', 'sec_bg_burgers', 'burger-exato', 'Burger exato', 5000)",
       ),
       env.DB.prepare(
         "insert into addon_groups (id, restaurant_id, product_id, name, min_selections, max_selections) values ('grp_min_exato', 'rest_burger', 'prod_bg_exato', 'Escolha 2', 2, 2)",
@@ -125,6 +146,13 @@ describe("GET /v1/restaurants/:slug/menu", () => {
     const product = data?.sections.flatMap((section) => section.products).find((item) => item.id === "prod_bg_exato")
     expect(product?.available).toBe(true)
     expect(product?.addonGroups.map((group) => group.id)).toContain("grp_min_exato")
+
+    // No limite exato do mínimo a cotação aceita; com uma opção a menos, recusa.
+    const accepted = await quote("rest_burger", "prod_bg_exato", ["opt_exato_a", "opt_exato_b"])
+    expect(accepted.status).toBe(200)
+    const short = await quote("rest_burger", "prod_bg_exato", ["opt_exato_a"])
+    expect(short.status).toBe(400)
+    expect(await quoteFields(short)).toEqual({ "items.0.addonOptionIds": ["Escolha 2: escolha 2"] })
   })
 
   it("responde 404 no envelope para restaurante inexistente", async () => {

@@ -334,6 +334,45 @@ describe("POST /v1/webhooks/asaas", () => {
     expect(ids).toEqual(expect.arrayContaining(["evt_conc_paid", "evt_conc_over", "evt_conc_paid2"]))
   })
 
+  it("se o INSERT da caixa de saída falha, o lote inteiro é desfeito e a reentrega aplica o pagamento", async () => {
+    const { order, chargeId } = await orderWithCharge()
+    const trigger = `falha_outbox_${order.id.replace(/\W/g, "_")}`
+    const count = async (sql: string, ...binds: unknown[]) =>
+      (
+        await env.DB.prepare(sql)
+          .bind(...binds)
+          .first<{ n: number }>()
+      )?.n ?? -1
+    const outboxJobs = () => count("select count(*) as n from outbox_jobs where order_id = ?", order.id)
+    const eventRows = () =>
+      count("select count(*) as n from payment_webhook_events where event_id = ?", "evt_outbox_falha")
+
+    const jobsBefore = await outboxJobs()
+    expect(await eventRows()).toBe(0)
+
+    // O UPDATE do pedido e o registro do evento já teriam sido executados quando o INSERT da outbox aborta.
+    await env.DB.prepare(
+      `create trigger ${trigger} before insert on outbox_jobs when new.order_id = '${order.id}' begin select raise(abort, 'falha simulada'); end`,
+    ).run()
+    try {
+      const failed = await webhook(event("evt_outbox_falha", "PAYMENT_RECEIVED", { id: chargeId, value: 75.8 }))
+      expect(failed.status).toBeGreaterThanOrEqual(500)
+    } finally {
+      await env.DB.prepare(`drop trigger if exists ${trigger}`).run()
+    }
+
+    expect(await paymentStatusOf(order.id)).toBe("pending")
+    expect(await eventRows()).toBe(0)
+    expect(await outboxJobs()).toBe(jobsBefore)
+
+    expect((await webhook(event("evt_outbox_falha", "PAYMENT_RECEIVED", { id: chargeId, value: 75.8 }))).status).toBe(
+      200,
+    )
+    expect(await paymentStatusOf(order.id)).toBe("paid")
+    expect(await eventRows()).toBe(1)
+    expect(await outboxJobs()).toBe(jobsBefore + 1)
+  })
+
   it("eventos DIFERENTES e simultâneos (pago e vencido) terminam em pago", async () => {
     const { order, chargeId } = await orderWithCharge()
     const responses = await Promise.all([
