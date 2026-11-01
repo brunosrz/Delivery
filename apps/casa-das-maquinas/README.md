@@ -50,3 +50,10 @@ pnpm --filter @delivery/casa-das-maquinas dev
 O workflow `Deploy Casa das Máquinas` publica na `main` quando os secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` e `D1_DATABASE_ID` existem. A ordem é: testes, migrações remotas e deploy. Sem os secrets, o job registra que o deploy foi pulado.
 
 O seed de demonstração não roda automaticamente em produção; aplique-o manualmente com `wrangler d1 execute DB --remote --file seed/demo.sql`.
+
+## Dados pessoais (LGPD)
+
+- `GET /v1/me/export`: cópia dos dados do titular (conta e pedidos). Nunca inclui hash de senha, tokens ou sessões.
+- `DELETE /v1/me` com `{"confirm": "EXCLUIR MINHA CONTA"}`: anonimiza a conta do cliente em um único lote. O pedido é mantido (obrigação fiscal e financeira, art. 16), sem endereço e sem vínculo com dados pessoais; sessões, credenciais, cadastro de cobrança e verificações são apagados e o e-mail vira `excluido-<id>@invalid.local`. Recusa com `409` se houver pedido em andamento e com `403` fora de contas de cliente (equipe, entregador e admin saem pelo administrador).
+
+Ainda não há tela no app web nem exclusão de tenant (restaurante): ficam como roadmap da #39.
