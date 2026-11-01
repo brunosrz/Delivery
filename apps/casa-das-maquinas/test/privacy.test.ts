@@ -97,6 +97,30 @@ describe("POST /v1/legal/acceptances", () => {
   })
 })
 
+describe("GET /v1/legal/acceptances", () => {
+  const status = async (cookie?: string) => call("/v1/legal/acceptances", { headers: cookie ? { cookie } : {} })
+
+  it("exige sessão", async () => {
+    expect((await status()).status).toBe(401)
+  })
+
+  it("só fica em dia depois de aceitar a versão vigente, e volta a ficar pendente se a versão mudar", async () => {
+    const { cookie, userId } = await newUser()
+    const read = async () =>
+      ((await (await status(cookie)).json()) as { data: { upToDate: boolean; required: unknown } }).data
+
+    expect(await read()).toEqual({ upToDate: false, required: LEGAL_VERSIONS })
+    await postJson("/v1/legal/acceptances", LEGAL_VERSIONS, { cookie })
+    expect((await read()).upToDate).toBe(true)
+
+    // Uma versão nova dos termos (aqui simulada trocando a versão aceita) pede novo aceite.
+    await env.DB.prepare("update legal_acceptances set version = '2020-01-01' where user_id = ? and document = 'terms'")
+      .bind(userId)
+      .run()
+    expect((await read()).upToDate).toBe(false)
+  })
+})
+
 describe("dados do titular: exportação e exclusão", () => {
   it("a exportação inclui aceites e consentimentos ligados à conta", async () => {
     const { cookie } = await newUser()

@@ -45,6 +45,13 @@ export type LegalAcceptanceRequest = z.infer<typeof LegalAcceptanceRequest>
 export const LegalAcceptanceReceipt = z.object({ accepted: z.literal(true) })
 export type LegalAcceptanceReceipt = z.infer<typeof LegalAcceptanceReceipt>
 
+/** Situação do aceite do usuário: `upToDate` só quando ele aceitou a versão vigente dos dois documentos. */
+export const LegalStatus = z.object({
+  upToDate: z.boolean(),
+  required: z.object({ terms: z.string(), privacy: z.string() }),
+})
+export type LegalStatus = z.infer<typeof LegalStatus>
+
 /** O que o titular recebe na exportação sobre aceites e consentimentos ligados à conta dele. */
 export const LegalRecords = z.object({
   acceptances: z.array(z.object({ document: LegalDocument, version: z.string(), acceptedAt: Timestamp })),

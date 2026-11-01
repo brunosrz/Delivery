@@ -60,3 +60,9 @@ TURNSTILE_SECRET=
 #   ASAAS_API_KEY=... ASAAS_WEBHOOK_TOKEN=... ASAAS_ENV=sandbox \
 #   node apps/casa-das-maquinas/scripts/asaas-register-webhook.mjs \
 #     https://SEU-WORKER.workers.dev/v1/webhooks/asaas contato@exemplo.com
+
+# Controlador dos dados, exibido nas páginas /legal/* (Termos, Privacidade e Cookies). Sem nome e e-mail válidos, as
+# páginas avisam que o controlador não foi configurado. Valores públicos: vão para o navegador.
+NEXT_PUBLIC_CONTROLLER_NAME=
+NEXT_PUBLIC_CONTROLLER_TAX_ID=
+NEXT_PUBLIC_PRIVACY_EMAIL=

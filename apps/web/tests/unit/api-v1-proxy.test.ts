@@ -8,6 +8,8 @@ describe("isAllowed", () => {
   it.each([
     ["POST", ["quotes"]],
     ["POST", ["contact"]],
+    ["POST", ["consents"]],
+    ["POST", ["legal", "acceptances"]],
     ["POST", ["orders"]],
     ["GET", ["orders"]],
     ["GET", ["orders", "ord_123"]],
@@ -30,6 +32,9 @@ describe("isAllowed", () => {
     ["PUT", ["manage", "restaurants", "r1", "mkit", "materials", "m1"]],
     ["POST", ["webhooks", "asaas"]],
     ["GET", ["me"]],
+    ["GET", ["consents"]],
+    ["POST", ["legal"]],
+    ["GET", ["legal", "acceptances"]],
     ["POST", ["me"]],
     ["PATCH", ["me"]],
     ["POST", ["me", "export"]],
@@ -97,6 +102,40 @@ describe("proxy /api/v1", () => {
     expect(String(url)).toBe("http://api.test/v1/me")
     expect(init.method).toBe("DELETE")
     expect(new TextDecoder().decode(init.body as ArrayBuffer)).toBe('{"confirm":"EXCLUIR MINHA CONTA"}')
+  })
+
+  it("recusa escrita vinda de outro site, mesmo com cookie, sem chamar o backend", async () => {
+    const response = await POST(
+      new Request("http://web.test/api/v1/orders", {
+        method: "POST",
+        headers: {
+          origin: "https://evil.example",
+          cookie: "better-auth.session_token=abc",
+          "sec-fetch-site": "cross-site",
+        },
+        body: "{}",
+      }),
+      params("orders"),
+    )
+    expect(response.status).toBe(403)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it("encaminha o sinal Global Privacy Control e marca as respostas como no-store", async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response('{"data":{}}', { status: 200, headers: { "content-type": "application/json" } }),
+    )
+    const response = await POST(
+      new Request("http://web.test/api/v1/consents", {
+        method: "POST",
+        headers: { "content-type": "application/json", "sec-gpc": "1", origin: "http://web.test" },
+        body: "{}",
+      }),
+      params("consents"),
+    )
+    const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit & { headers: Headers }]
+    expect(init.headers.get("sec-gpc")).toBe("1")
+    expect(response.headers.get("cache-control")).toBe("no-store")
   })
 
   it("não chama o backend em rota fora da lista", async () => {

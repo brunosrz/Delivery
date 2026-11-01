@@ -5,6 +5,7 @@ import {
   LEGAL_VERSIONS,
   type LegalAcceptanceRequest,
   type LegalRecords,
+  type LegalStatus,
   type SessionUser,
 } from "@delivery/contracts"
 import { saltedHash } from "./hash.js"
@@ -73,6 +74,16 @@ export function createPrivacyService(env: Env) {
         ),
       )
       return { ok: true, value: { accepted: true } }
+    },
+
+    /** O usuário já aceitou a versão vigente dos dois documentos? Mudou a versão: a resposta vira falso. */
+    async legalStatus(userId: string): Promise<LegalStatus> {
+      const row = await env.DB.prepare(
+        "select count(*) as n from legal_acceptances where user_id = ? and ((document = 'terms' and version = ?) or (document = 'privacy' and version = ?))",
+      )
+        .bind(userId, LEGAL_VERSIONS.terms, LEGAL_VERSIONS.privacy)
+        .first<{ n: number }>()
+      return { upToDate: (row?.n ?? 0) >= LEGAL_DOCUMENTS.length, required: { ...LEGAL_VERSIONS } }
     },
 
     /** Aceites e consentimentos ligados ao usuário, para a exportação de dados. */

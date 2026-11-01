@@ -4,6 +4,7 @@ import {
   ConsentReceipt,
   ConsentRequest,
   LegalAcceptanceReceipt,
+  LegalStatus,
   LegalAcceptanceRequest,
   ContactReceipt,
   ContactRequest,
@@ -230,6 +231,22 @@ app.openapi(
       gpc: c.req.header("sec-gpc") === "1",
     })
     return result.ok ? ok(c, result.value) : fail(c, result.code, result.message)
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "get",
+    path: "/v1/legal/acceptances",
+    responses: {
+      200: { content: { "application/json": { schema: envelope(LegalStatus) } }, description: "Situação do aceite" },
+      401: errorResponse,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    return ok(c, await createPrivacyService(c.env).legalStatus(user.id))
   },
 )
 

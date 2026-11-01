@@ -3,14 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "bun run i18n && next dev",
+    "build": "bun run i18n && next build",
     "start": "next start",
-    "lint": "eslint . --max-warnings 0",
-    "typecheck": "tsc --noEmit --incremental false -p tsconfig.json",
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
-    "e2e": "playwright test"
+    "lint": "bun run i18n && eslint . --max-warnings 0",
+    "typecheck": "bun run i18n && tsc --noEmit --incremental false -p tsconfig.json",
+    "test": "bun run i18n && vitest run",
+    "test:coverage": "bun run i18n && vitest run --coverage",
+    "e2e": "playwright test",
+    "i18n": "paraglide-js compile --project ./project.inlang --outdir ./lib/paraglide --strategy cookie preferredLanguage baseLocale --emit-ts-declarations --silent"
   },
   "dependencies": {
     "@delivery/contracts": "workspace:*",

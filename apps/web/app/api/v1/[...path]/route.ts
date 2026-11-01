@@ -2,13 +2,16 @@
 // first-party, sem CORS). Só as rotas que a sacola e o checkout usam passam por aqui.
 
 import { isAllowed } from "@/lib/api-proxy-rules"
+import { isSameOriginRequest } from "@/lib/origin"
 
-const FORWARDED_REQUEST_HEADERS = ["accept", "content-type", "cookie", "idempotency-key", "user-agent"]
+const FORWARDED_REQUEST_HEADERS = ["accept", "content-type", "cookie", "idempotency-key", "sec-gpc", "user-agent"]
 const REQUEST_ID_PATTERN = /^[A-Za-z0-9_-]{8,128}$/
 
 async function proxy(request: Request, { params }: { params: Promise<{ path: string[] }> }) {
   const baseUrl = process.env.CASA_DAS_MAQUINAS_URL
   if (!baseUrl) return Response.json({ message: "serviço indisponível" }, { status: 503 })
+
+  if (!isSameOriginRequest(request)) return Response.json({ message: "origem não permitida" }, { status: 403 })
 
   const { path } = await params
   if (!isAllowed(request.method, path)) return Response.json({ message: "rota não permitida" }, { status: 404 })
@@ -39,7 +42,8 @@ async function proxy(request: Request, { params }: { params: Promise<{ path: str
     return Response.json({ message: "serviço indisponível" }, { status: 503, headers: { "x-request-id": requestId } })
   }
 
-  const responseHeaders = new Headers({ "x-request-id": requestId })
+  // Respostas da API trazem dado de conta e de pedido: nunca em cache.
+  const responseHeaders = new Headers({ "x-request-id": requestId, "cache-control": "no-store" })
   const contentType = upstream.headers.get("content-type")
   if (contentType) responseHeaders.set("content-type", contentType)
   const replayed = upstream.headers.get("idempotent-replayed")
