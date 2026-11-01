@@ -33,14 +33,21 @@ export function objectsOf(sql) {
       remaining.delete(table)
     }
   }
-  return { indexes, tables: order }
+  // Colunas acrescentadas a tabelas que já existem (ALTER TABLE ... ADD ...). O SQLite só remove coluna que não esteja
+  // indexada nem em chave estrangeira; por isso as migrações não indexam nem referenciam colunas adicionadas.
+  const columns = [...sql.matchAll(/ALTER TABLE `([a-z_0-9]+)` ADD `([a-z_0-9]+)`/g)].map((match) => ({
+    table: match[1],
+    column: match[2],
+  }))
+  return { indexes, tables: order, columns }
 }
 
 export function rollbackSql(file, sql) {
-  const { indexes, tables } = objectsOf(sql)
+  const { indexes, tables, columns } = objectsOf(sql)
   const lines = [
     `-- Reverte ${file}. Gerado por scripts/generate-rollbacks.mjs; não edite à mão.`,
     ...indexes.map((index) => `DROP INDEX IF EXISTS \`${index}\`;`),
+    ...columns.map(({ table, column }) => `ALTER TABLE \`${table}\` DROP COLUMN \`${column}\`;`),
     ...tables.map((table) => `DROP TABLE IF EXISTS \`${table}\`;`),
     `DELETE FROM d1_migrations WHERE name = '${file}';`,
   ]

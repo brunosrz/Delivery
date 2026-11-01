@@ -2,7 +2,13 @@ import type React from "react"
 import "./globals.css"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
+import { LocaleProvider } from "@/components/locale-provider"
+import { ConsentManager } from "@/components/privacy/consent-manager"
+import { LegalFooter } from "@/components/privacy/legal-footer"
+import { LegalReacceptance } from "@/components/privacy/legal-reacceptance"
 import { ThemeProvider } from "@/components/theme-provider"
+import { isLegalAcceptanceCurrent } from "@/lib/legal-status"
+import { getRequestConsent, getRequestLocale } from "@/lib/locale-server"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -39,12 +45,22 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const [locale, consent, acceptanceCurrent] = await Promise.all([
+    getRequestLocale(),
+    getRequestConsent(),
+    isLegalAcceptanceCurrent(),
+  ])
   return (
-    <html lang="pt-BR">
+    <html lang={locale}>
       <body className={`${inter.className} bg-[#fffaf0]`}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          {children}
+          <LocaleProvider locale={locale}>
+            {children}
+            <LegalFooter locale={locale} />
+            <ConsentManager initial={consent} />
+            {!acceptanceCurrent && <LegalReacceptance />}
+          </LocaleProvider>
         </ThemeProvider>
       </body>
     </html>

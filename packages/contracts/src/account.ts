@@ -2,6 +2,7 @@ import { z } from "zod"
 import { Id, Timestamp } from "./common.js"
 import { Role } from "./identity.js"
 import { Order } from "./orders.js"
+import { LegalRecords } from "./privacy.js"
 
 /** Frase exigida para excluir a conta: evita exclusão por clique acidental ou requisição forjada simples. */
 export const DELETE_ACCOUNT_CONFIRMATION = "EXCLUIR MINHA CONTA"
@@ -19,6 +20,8 @@ export const AccountExport = z.object({
   orders: z.array(Order),
   /** O cliente tem cadastro de cobrança no Asaas (o identificador em si não é exposto). */
   hasPaymentProfile: z.boolean(),
+  /** Aceites dos documentos legais e consentimentos de cookies ligados à conta. */
+  legal: LegalRecords,
 })
 export type AccountExport = z.infer<typeof AccountExport>
 

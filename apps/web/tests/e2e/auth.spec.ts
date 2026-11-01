@@ -12,6 +12,8 @@ test.describe("conta pela Casa das Máquinas", () => {
     await page.getByLabel("E-mail").fill(uniqueEmail("cliente"))
     await page.getByLabel("Senha", { exact: true }).fill("senha-forte-123")
     await page.getByLabel("Confirmar senha").fill("senha-forte-123")
+    await page.getByLabel(/Li e aceito/).check()
+    await page.getByLabel("Declaro ter 18 anos ou mais.").check()
     await page.getByRole("button", { name: "Criar conta" }).click()
 
     await expect(page).toHaveURL(/\/delivery-express$/)
@@ -44,6 +46,8 @@ test.describe("conta pela Casa das Máquinas", () => {
     await page.getByLabel("E-mail").fill(uniqueEmail("confirmacao"))
     await page.getByLabel("Senha", { exact: true }).fill("senha-forte-123")
     await page.getByLabel("Confirmar senha").fill("outra-senha-123")
+    await page.getByLabel(/Li e aceito/).check()
+    await page.getByLabel("Declaro ter 18 anos ou mais.").check()
     await page.getByRole("button", { name: "Criar conta" }).click()
     await expect(page.getByRole("alert").filter({ hasText: "As senhas não coincidem." })).toBeVisible()
   })

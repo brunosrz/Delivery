@@ -1,14 +1,25 @@
 import {
   API_VERSION,
   AccountExport,
+  ConsentReceipt,
+  ConsentRequest,
+  LegalAcceptanceReceipt,
+  LegalStatus,
+  LegalAcceptanceRequest,
   ContactReceipt,
   ContactRequest,
+  CreateMkitCalendarEvent,
+  CreateMkitCategory,
   CreateMkitMaterial,
+  GenerateMkitMaterial,
+  MkitCalendarEvent,
+  MkitCategory,
   CreateOrderRequest,
   DeleteAccountRequest,
   DeleteAccountResult,
   Id,
   MkitMaterial,
+  MkitMetrics,
   IdempotencyKey,
   Menu,
   Order,
@@ -26,9 +37,11 @@ import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi"
 import { cors } from "hono/cors"
 import { createMiddleware } from "hono/factory"
 import { canManageRestaurant, createAuth, getSessionUser } from "./auth.js"
-import { type AppEnv, accessLog, created, fail, logError, ok, requestId } from "./http.js"
+import { type AppEnv, accessLog, created, fail, logError, ok, requestId, securityHeaders } from "./http.js"
 import { type LiveScope, signTicket, verifyTicket } from "./live-ticket.js"
 import { createAccountService } from "./account.js"
+import { createPrivacyService } from "./privacy.js"
+import { purgeExpired } from "./retention.js"
 import { receiveContact } from "./contact.js"
 import { markPublished, runOutbox } from "./jobs.js"
 import { pruneRateLimits, rateLimit } from "./rate-limit.js"
@@ -79,6 +92,7 @@ const app = new OpenAPIHono<AppEnv>({
 
 app.use("*", requestId)
 app.use("*", accessLog)
+app.use("*", securityHeaders)
 // Leituras públicas do catálogo aceitam qualquer origem; rotas com sessão passam pelo proxy do app web.
 app.use(
   "/v1/restaurants/*",
@@ -98,6 +112,9 @@ const withSession = createMiddleware<AppEnv>(async (c, next) => {
 })
 app.use("/v1/me", withSession)
 app.use("/v1/me/*", withSession)
+// Consentimento de cookies é público (a sessão, se houver, só liga o registro à conta); aceite legal exige sessão.
+app.use("/v1/consents", withSession)
+app.use("/v1/legal/*", withSession)
 app.use("/v1/manage/*", withSession)
 app.use("/v1/courier/*", withSession)
 app.use("/v1/orders", withSession)
@@ -111,6 +128,11 @@ app.on("POST", "/v1/orders", rateLimit({ scope: "orders", limit: 15, windowSecon
 app.on("POST", "/v1/orders/:orderId/payment", rateLimit({ scope: "payment", limit: 10, windowSeconds: 60 }))
 app.on("POST", "/v1/orders/:orderId/transitions", rateLimit({ scope: "transitions", limit: 120, windowSeconds: 60 }))
 app.on("POST", "/v1/live/tickets", rateLimit({ scope: "tickets", limit: 30, windowSeconds: 60 }))
+// Privacidade: baixa cota nas operações do titular (exportar e excluir), mais folgada no registro de consentimento.
+app.on("GET", "/v1/me/export", rateLimit({ scope: "export", limit: 10, windowSeconds: 60 }))
+app.on("DELETE", "/v1/me", rateLimit({ scope: "erase", limit: 5, windowSeconds: 60 }))
+app.on("POST", "/v1/consents", rateLimit({ scope: "consents", limit: 30, windowSeconds: 60 }))
+app.on("POST", "/v1/legal/acceptances", rateLimit({ scope: "acceptances", limit: 10, windowSeconds: 60 }))
 
 app.onError((error, c) => {
   logError(c, "unhandled_error", error)
@@ -195,6 +217,74 @@ app.openapi(
 
 app.openapi(
   createRoute({
+    method: "post",
+    path: "/v1/consents",
+    request: { body: { content: { "application/json": { schema: ConsentRequest } }, required: true } },
+    responses: {
+      200: {
+        content: { "application/json": { schema: envelope(ConsentReceipt) } },
+        description: "Consentimento registrado",
+      },
+      400: errorResponse,
+      429: errorResponse,
+    },
+  }),
+  async (c) => {
+    const result = await createPrivacyService(c.env).recordConsent(c.req.valid("json"), {
+      userId: c.get("user")?.id ?? null,
+      ip: c.req.header("cf-connecting-ip") ?? null,
+      // Global Privacy Control: o navegador pediu para não vender nem compartilhar dados (CCPA/CPRA).
+      gpc: c.req.header("sec-gpc") === "1",
+    })
+    return result.ok ? ok(c, result.value) : fail(c, result.code, result.message)
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "get",
+    path: "/v1/legal/acceptances",
+    responses: {
+      200: { content: { "application/json": { schema: envelope(LegalStatus) } }, description: "Situação do aceite" },
+      401: errorResponse,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    return ok(c, await createPrivacyService(c.env).legalStatus(user.id))
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "post",
+    path: "/v1/legal/acceptances",
+    request: { body: { content: { "application/json": { schema: LegalAcceptanceRequest } }, required: true } },
+    responses: {
+      200: {
+        content: { "application/json": { schema: envelope(LegalAcceptanceReceipt) } },
+        description: "Aceite registrado",
+      },
+      400: errorResponse,
+      401: errorResponse,
+      429: errorResponse,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const result = await createPrivacyService(c.env).recordAcceptance(
+      user,
+      c.req.valid("json"),
+      c.req.header("cf-connecting-ip") ?? null,
+    )
+    return result.ok ? ok(c, result.value) : fail(c, result.code, result.message)
+  },
+)
+
+app.openapi(
+  createRoute({
     method: "get",
     path: "/v1/me/export",
     responses: {
@@ -233,7 +323,10 @@ app.openapi(
     const user = c.get("user")
     if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
     c.req.valid("json")
-    const result = await createAccountService(c.env).delete(user)
+    // A sessão recente é exigida pelo serviço; o instante de criação vem do próprio Better Auth.
+    const session = await createAuth(c.env).api.getSession({ headers: c.req.raw.headers })
+    if (!session) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const result = await createAccountService(c.env).delete(user, { createdAt: new Date(session.session.createdAt) })
     if (!result.ok) return fail(c, result.code as "forbidden" | "conflict" | "not_found", result.message)
     return ok(c, result.value)
   },
@@ -508,14 +601,18 @@ const mkitErrors = {
   404: errorResponse,
   409: errorResponse,
 }
-type MkitFailure = { code: "forbidden" | "not_found" | "conflict"; message: string }
+type MkitFailure = { code: "bad_request" | "forbidden" | "not_found" | "conflict"; message: string }
 const mkitFail = (c: Parameters<typeof fail>[0], failure: MkitFailure) => fail(c, failure.code, failure.message)
 
 app.openapi(
   createRoute({
     method: "get",
     path: MKIT_PATH,
-    request: { params: z.object({ restaurantId: Id }) },
+    request: {
+      params: z.object({ restaurantId: Id }),
+      // `?lixeira=1` lista os materiais da lixeira (restauráveis por 30 dias).
+      query: z.object({ lixeira: z.enum(["1"]).optional() }),
+    },
     responses: {
       200: { content: { "application/json": { schema: envelope(z.array(MkitMaterial)) } }, description: "Materiais" },
       ...mkitErrors,
@@ -524,7 +621,11 @@ app.openapi(
   async (c) => {
     const user = c.get("user")
     if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
-    const result = await createMkitService(c.env).list(user, c.req.valid("param").restaurantId)
+    const result = await createMkitService(c.env).list(
+      user,
+      c.req.valid("param").restaurantId,
+      c.req.valid("query").lixeira === "1",
+    )
     return result.ok ? ok(c, result.value) : mkitFail(c, result)
   },
 )
@@ -570,11 +671,15 @@ app.openapi(
   createRoute({
     method: "delete",
     path: `${MKIT_PATH}/{materialId}`,
-    request: { params: MaterialParams },
+    request: {
+      params: MaterialParams,
+      // `?definitivo=1` apaga de vez, mas só quem já está na lixeira.
+      query: z.object({ definitivo: z.enum(["1"]).optional() }),
+    },
     responses: {
       200: {
         content: { "application/json": { schema: envelope(z.object({ deleted: z.literal(true) })) } },
-        description: "Removido",
+        description: "Enviado à lixeira (ou apagado em definitivo)",
       },
       ...mkitErrors,
     },
@@ -583,7 +688,11 @@ app.openapi(
     const user = c.get("user")
     if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
     const { restaurantId, materialId } = c.req.valid("param")
-    const result = await createMkitService(c.env).remove(user, restaurantId, materialId)
+    const service = createMkitService(c.env)
+    const result =
+      c.req.valid("query").definitivo === "1"
+        ? await service.purge(user, restaurantId, materialId)
+        : await service.remove(user, restaurantId, materialId)
     return result.ok ? ok(c, { deleted: true as const }) : mkitFail(c, result)
   },
 )
@@ -609,6 +718,191 @@ app.openapi(
       "content-disposition": `attachment; filename="${result.value.filename}"`,
       "x-content-type-options": "nosniff",
     })
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "get",
+    path: "/v1/manage/restaurants/{restaurantId}/mkit/metrics",
+    request: { params: z.object({ restaurantId: Id }) },
+    responses: {
+      200: { content: { "application/json": { schema: envelope(MkitMetrics) } }, description: "Uso do MKit" },
+      ...mkitErrors,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const result = await createMkitService(c.env).metrics(user, c.req.valid("param").restaurantId)
+    return result.ok ? ok(c, result.value) : mkitFail(c, result)
+  },
+)
+
+const MKIT_BASE = "/v1/manage/restaurants/{restaurantId}/mkit"
+const RestaurantParams = z.object({ restaurantId: Id })
+
+app.openapi(
+  createRoute({
+    method: "post",
+    path: `${MKIT_PATH}/generate`,
+    request: { params: RestaurantParams, body: json(GenerateMkitMaterial) },
+    responses: {
+      201: { content: { "application/json": { schema: envelope(MkitMaterial) } }, description: "Rascunho gerado" },
+      ...mkitErrors,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const result = await createMkitService(c.env).generate(user, c.req.valid("param").restaurantId, c.req.valid("json"))
+    return result.ok ? created(c, result.value) : mkitFail(c, result)
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "post",
+    path: `${MKIT_PATH}/{materialId}/restore`,
+    request: { params: MaterialParams },
+    responses: {
+      200: { content: { "application/json": { schema: envelope(MkitMaterial) } }, description: "Material restaurado" },
+      ...mkitErrors,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const { restaurantId, materialId } = c.req.valid("param")
+    const result = await createMkitService(c.env).restore(user, restaurantId, materialId)
+    return result.ok ? ok(c, result.value) : mkitFail(c, result)
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "get",
+    path: `${MKIT_BASE}/categories`,
+    request: { params: RestaurantParams },
+    responses: {
+      200: { content: { "application/json": { schema: envelope(z.array(MkitCategory)) } }, description: "Categorias" },
+      ...mkitErrors,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const result = await createMkitService(c.env).listCategories(user, c.req.valid("param").restaurantId)
+    return result.ok ? ok(c, result.value) : mkitFail(c, result)
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "post",
+    path: `${MKIT_BASE}/categories`,
+    request: { params: RestaurantParams, body: json(CreateMkitCategory) },
+    responses: {
+      201: { content: { "application/json": { schema: envelope(MkitCategory) } }, description: "Categoria criada" },
+      ...mkitErrors,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const result = await createMkitService(c.env).createCategory(
+      user,
+      c.req.valid("param").restaurantId,
+      c.req.valid("json"),
+    )
+    return result.ok ? created(c, result.value) : mkitFail(c, result)
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "delete",
+    path: `${MKIT_BASE}/categories/{categoryId}`,
+    request: { params: z.object({ restaurantId: Id, categoryId: Id }) },
+    responses: {
+      200: {
+        content: { "application/json": { schema: envelope(z.object({ deleted: z.literal(true) })) } },
+        description: "Categoria removida",
+      },
+      ...mkitErrors,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const { restaurantId, categoryId } = c.req.valid("param")
+    const result = await createMkitService(c.env).removeCategory(user, restaurantId, categoryId)
+    return result.ok ? ok(c, { deleted: true as const }) : mkitFail(c, result)
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "get",
+    path: `${MKIT_BASE}/calendar`,
+    request: { params: RestaurantParams },
+    responses: {
+      200: {
+        content: { "application/json": { schema: envelope(z.array(MkitCalendarEvent)) } },
+        description: "Datas próprias do restaurante",
+      },
+      ...mkitErrors,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const result = await createMkitService(c.env).listCalendar(user, c.req.valid("param").restaurantId)
+    return result.ok ? ok(c, result.value) : mkitFail(c, result)
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "post",
+    path: `${MKIT_BASE}/calendar`,
+    request: { params: RestaurantParams, body: json(CreateMkitCalendarEvent) },
+    responses: {
+      201: { content: { "application/json": { schema: envelope(MkitCalendarEvent) } }, description: "Data criada" },
+      ...mkitErrors,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const result = await createMkitService(c.env).addCalendarEvent(
+      user,
+      c.req.valid("param").restaurantId,
+      c.req.valid("json"),
+    )
+    return result.ok ? created(c, result.value) : mkitFail(c, result)
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "delete",
+    path: `${MKIT_BASE}/calendar/{eventId}`,
+    request: { params: z.object({ restaurantId: Id, eventId: Id }) },
+    responses: {
+      200: {
+        content: { "application/json": { schema: envelope(z.object({ deleted: z.literal(true) })) } },
+        description: "Data removida",
+      },
+      ...mkitErrors,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const { restaurantId, eventId } = c.req.valid("param")
+    const result = await createMkitService(c.env).removeCalendarEvent(user, restaurantId, eventId)
+    return result.ok ? ok(c, { deleted: true as const }) : mkitFail(c, result)
   },
 )
 
@@ -677,8 +971,8 @@ export { app }
 
 export default {
   fetch: app.fetch,
-  /** Cron: reenvia eventos de tempo real da caixa de saída (jobs.ts) e apaga janelas antigas do limite de requisições. */
+  /** Cron: reenvia eventos de tempo real da caixa de saída (jobs.ts) apaga janelas antigas do limite de requisições e dados que passaram do prazo de retenção (retention.ts). */
   async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext) {
-    ctx.waitUntil(Promise.all([runOutbox(env), pruneRateLimits(env)]))
+    ctx.waitUntil(Promise.all([runOutbox(env), pruneRateLimits(env), purgeExpired(env)]))
   },
 } satisfies ExportedHandler<Env>
