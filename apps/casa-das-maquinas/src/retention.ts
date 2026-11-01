@@ -8,6 +8,8 @@ export const RETENTION_DAYS = {
   /** Prova do consentimento de cookies e atendimento a solicitações: prazo prescricional razoável. */
   consentRecords: 5 * 365,
   dataRequests: 5 * 365,
+  /** Materiais do MKit na lixeira: dá tempo de restaurar e depois somem. */
+  mkitTrash: 30,
 } as const
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -16,6 +18,7 @@ export type RetentionResult = {
   contactMessages: number
   consentRecords: number
   dataRequests: number
+  mkitTrash: number
   sessions: number
   verifications: number
 }
@@ -40,6 +43,10 @@ export async function purgeExpired(env: Env, now = Date.now()): Promise<Retentio
       before(RETENTION_DAYS.consentRecords),
     ),
     dataRequests: await run("delete from data_requests where created_at < ?", before(RETENTION_DAYS.dataRequests)),
+    mkitTrash: await run(
+      "delete from mkit_materials where deleted_at is not null and deleted_at < ?",
+      before(RETENTION_DAYS.mkitTrash),
+    ),
     // Sessões e verificações guardam o tempo em milissegundos desde a época.
     sessions: await run("delete from session where expires_at < ?", now),
     verifications: await run("delete from verification where expires_at < ?", now),

@@ -29,6 +29,7 @@ describe("GET /v1/manage/restaurants/:id/mkit/metrics", () => {
       total: 0,
       published: 0,
       drafts: 0,
+      trashed: 0,
       totalExports: 0,
       byKind: { post: 0, cartaz: 0, promocao: 0 },
       top: [],

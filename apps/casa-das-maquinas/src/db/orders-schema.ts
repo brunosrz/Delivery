@@ -163,15 +163,59 @@ export const mkitMaterials = sqliteTable(
       .references(() => restaurants.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
     kind: text("kind", { enum: ["post", "cartaz", "promocao"] }).notNull(),
+    /** Digital (post, story, mensagem) ou físico (cartaz, cardápio impresso). */
+    medium: text("medium", { enum: ["digital", "fisico"] })
+      .notNull()
+      .default("digital"),
+    /** Categoria editorial (global ou do restaurante). Sem chave estrangeira: a coluna precisa poder ser removida no rollback. */
+    categoryId: text("category_id"),
     body: text("body").notNull(),
     status: text("status", { enum: ["draft", "published"] })
       .notNull()
       .default("draft"),
     exportCount: integer("export_count").notNull().default(0),
+    /** Preenchido quando vai para a lixeira; some de vez depois de 30 dias (retention.ts) ou ao excluir em definitivo. */
+    deletedAt: text("deleted_at"),
     createdAt: text("created_at").notNull().default(isoNow),
     updatedAt: text("updated_at").notNull().default(isoNow),
   },
   (table) => [index("mkit_materials_restaurant_idx").on(table.restaurantId, table.updatedAt)],
+)
+
+/**
+ * Categorias editoriais dos materiais. `restaurant_id` nulo = categoria padrão da plataforma (vale para todos); com
+ * valor, é do restaurante. Dados editoriais ficam no banco, não no código.
+ */
+export const mkitCategories = sqliteTable(
+  "mkit_categories",
+  {
+    id: text("id").primaryKey(),
+    restaurantId: text("restaurant_id").references(() => restaurants.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    createdAt: text("created_at").notNull().default(isoNow),
+  },
+  (table) => [
+    index("mkit_categories_restaurant_idx").on(table.restaurantId),
+    uniqueIndex("mkit_categories_name_unique").on(table.restaurantId, table.name),
+  ],
+)
+
+/** Datas comemorativas próprias do restaurante (aniversário da casa, prato do mês...), somadas ao calendário nacional. */
+export const mkitCalendarEvents = sqliteTable(
+  "mkit_calendar_events",
+  {
+    id: text("id").primaryKey(),
+    restaurantId: text("restaurant_id")
+      .notNull()
+      .references(() => restaurants.id, { onDelete: "cascade" }),
+    /** Data no formato AAAA-MM-DD. */
+    date: text("date").notNull(),
+    name: text("name").notNull(),
+    /** Repete todo ano no mesmo dia e mês. */
+    recurring: integer("recurring", { mode: "boolean" }).notNull().default(false),
+    createdAt: text("created_at").notNull().default(isoNow),
+  },
+  (table) => [index("mkit_calendar_restaurant_idx").on(table.restaurantId, table.date)],
 )
 
 /**
