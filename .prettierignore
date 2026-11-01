@@ -1,4 +1,4 @@
-pnpm-lock.yaml
+bun.lock
 .next/
 coverage/
 node_modules/
@@ -13,5 +13,5 @@ apps/casa-das-maquinas/migrations/meta/
 
 # Markdown fica fora da verificação de formatação nesta metade (tratado na documentação).
 *.md
-# Snapshot gerado por `pnpm openapi:export` (formato fixo do gerador).
+# Snapshot gerado por `bun run openapi:export` (formato fixo do gerador).
 packages/contracts/openapi/

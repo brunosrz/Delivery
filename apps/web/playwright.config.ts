@@ -21,14 +21,14 @@ export default defineConfig({
   webServer: [
     {
       // Casa das Máquinas real (workerd + D1 local com seed sintético).
-      command: "pnpm --filter @delivery/casa-das-maquinas e2e:serve",
+      command: "bun run --filter @delivery/casa-das-maquinas e2e:serve",
       url: `${apiUrl}/v1/health`,
       env: { E2E_API_PORT: String(apiPort) },
       reuseExistingServer: !process.env.CI,
       timeout: 180_000,
     },
     {
-      command: `pnpm exec next start -p ${port}`,
+      command: `bunx next start -p ${port}`,
       url: `http://127.0.0.1:${port}`,
       env: { CASA_DAS_MAQUINAS_URL: apiUrl },
       reuseExistingServer: !process.env.CI,

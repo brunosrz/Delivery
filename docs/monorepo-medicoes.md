@@ -1,15 +1,15 @@
 # Medições do monorepo
 
-Medidas reais de CI, sem estimativa. Fonte: duração de cada passo do job `quality` (GitHub Actions, `ubuntu-24.04`, Node 22, pnpm 11, cache do pnpm ligado), lida pela API do GitHub.
+Medidas reais de CI, sem estimativa. Fonte: duração de cada passo do job `quality` (GitHub Actions, `ubuntu-24.04`, Node 22, pnpm 11, cache do pnpm ligado (medição anterior à migração para Bun)), lida pela API do GitHub.
 
 | Passo                      | Antes: `83d01b1` (#21, app único) | Depois: `219b28d` (`main` com workspace, Worker e E2E) |
 | -------------------------- | --------------------------------: | -----------------------------------------------------: |
-| `pnpm install --frozen-lockfile` |                              7 s |                                                   13 s |
-| `pnpm format:check`        |                               1 s |                                                    3 s |
-| `pnpm lint`                |                               3 s |                                                    6 s |
-| `pnpm typecheck`           |                               4 s |                                                   11 s |
-| `pnpm test:coverage`       |                               1 s |                                                   19 s |
-| `pnpm build` (Next)        |                              28 s |                                                   30 s |
+| `bun install --frozen-lockfile` |                              7 s |                                                   13 s |
+| `bun run format:check`        |                               1 s |                                                    3 s |
+| `bun run lint`                |                               3 s |                                                    6 s |
+| `bun run typecheck`           |                               4 s |                                                   11 s |
+| `bun run test:coverage`       |                               1 s |                                                   19 s |
+| `bun run build` (Next)        |                              28 s |                                                   30 s |
 | Playwright (instalação)    |                           (não havia) |                                                   24 s |
 | E2E de fumaça              |                           (não havia) |                                                   23 s |
 | **Total do job**           |                   **cerca de 50 s** |                                       **cerca de 2 min 30 s** |
@@ -24,4 +24,4 @@ Run de referência: `41150534706` (antes) e `41163173189` (depois).
 
 ## Rollback do workspace
 
-Não exercitado. O procedimento previsto é reverter os merges #25 e #26 em uma branch descartável e conferir `pnpm install --frozen-lockfile`, `pnpm lint`, `pnpm typecheck` e `pnpm test`; fica pendente de execução e registro aqui.
+Não exercitado. O procedimento previsto é reverter os merges #25 e #26 em uma branch descartável e conferir `bun install --frozen-lockfile`, `bun run lint`, `bun run typecheck` e `bun run test`; fica pendente de execução e registro aqui.

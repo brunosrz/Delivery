@@ -67,7 +67,7 @@ Esta migração será feita gradualmente, mantendo a compatibilidade entre as ab
 Para iniciar o desenvolvimento:
 
 \`\`\`bash
-pnpm dev
+bun run dev
 \`\`\`
 
 Todos os projetos estarão disponíveis através do mesmo servidor Next.js:
