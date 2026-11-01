@@ -29,4 +29,5 @@ for name in ("help", "install", "build", "coverage", "lint", "tests", "check", "
     if name == "deploy":
         env.Alias("prod", node)
 Help(HELP)
-Default("help")
+# `scons --latest` sozinho é um pedido de atualização com majors: sem alvo, vale como `scons update --latest`.
+Default("update" if GetOption("latest") else "help")
