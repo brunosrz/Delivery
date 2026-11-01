@@ -1,10 +1,25 @@
 import { redirect } from "next/navigation"
 import { AccessDenied } from "@/components/auth/access-denied"
+import { getApiClient } from "@/lib/api"
 import { getSessionUser } from "@/lib/session"
 import { MaterialsPanel } from "./materials-panel"
 
 export const dynamic = "force-dynamic"
 export const metadata = { title: "Materiais | MKit" }
+
+/** Produtos do cardápio do restaurante, para os modelos de promoção e novidade. Sem cardápio, a lista vem vazia. */
+async function productsOf(restaurantId: string): Promise<{ id: string; name: string }[]> {
+  const api = getApiClient()
+  if (!api) return []
+  const restaurants = await api.listRestaurants()
+  const slug = restaurants.ok ? restaurants.data.find((restaurant) => restaurant.id === restaurantId)?.slug : undefined
+  if (!slug) return []
+  const menu = await api.getMenu(slug)
+  if (!menu.ok) return []
+  return menu.data.sections.flatMap((section) =>
+    section.products.map((product) => ({ id: product.id, name: product.name })),
+  )
+}
 
 export default async function MkitMaterialsPage() {
   const user = await getSessionUser()
@@ -21,5 +36,5 @@ export default async function MkitMaterialsPage() {
       </div>
     )
   }
-  return <MaterialsPanel restaurantId={restaurantId} />
+  return <MaterialsPanel restaurantId={restaurantId} products={await productsOf(restaurantId)} />
 }

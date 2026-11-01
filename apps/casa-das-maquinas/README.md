@@ -75,6 +75,10 @@ Janela fixa de 1 minuto, contada no D1 (`rate_limit_buckets`) com um único `INS
 
 O formulário de contato mantém o limite próprio por hora (`src/contact.ts`).
 
+## MKit: categorias, calendário, geração e lixeira
+
+Rotas sob `/v1/manage/restaurants/:id/mkit` (equipe do restaurante ou admin): `categories` (GET, POST, DELETE `:categoryId`), `calendar` (GET, POST, DELETE `:eventId`), `materials/generate` (POST), `materials/:id/restore` (POST), `materials?lixeira=1` (GET) e `materials/:id?definitivo=1` (DELETE, só na lixeira). Veja `docs/mkit.md` para o mapa completo da issue #12.
+
 ## MKit: métricas
 
 `GET /v1/manage/restaurants/:id/mkit/metrics` (equipe do restaurante ou admin) devolve o total de materiais, publicados e rascunhos, a divisão por tipo, o total de exportações e os cinco materiais mais exportados. Cada exportação (`.txt`, imagem ou PDF) soma 1 em `exportCount` pelo endpoint de exportação; imagem e PDF são gerados no navegador (`apps/web/lib/mkit-render.ts`), sem dependência nova.

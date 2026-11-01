@@ -31,7 +31,27 @@ const ALLOWED: readonly Allowed[] = [
     pattern: /^manage\/restaurants\/[A-Za-z0-9_-]{1,64}\/mkit\/materials\/[A-Za-z0-9_-]{1,64}\/export$/,
   },
   { methods: ["GET"], pattern: /^manage\/restaurants\/[A-Za-z0-9_-]{1,64}\/mkit\/metrics$/ },
+  // MKit editorial: categorias, calendário próprio, geração de rascunho e lixeira.
+  { methods: ["GET", "POST"], pattern: /^manage\/restaurants\/[A-Za-z0-9_-]{1,64}\/mkit\/categories$/ },
+  { methods: ["DELETE"], pattern: /^manage\/restaurants\/[A-Za-z0-9_-]{1,64}\/mkit\/categories\/[A-Za-z0-9_-]{1,64}$/ },
+  { methods: ["GET", "POST"], pattern: /^manage\/restaurants\/[A-Za-z0-9_-]{1,64}\/mkit\/calendar$/ },
+  { methods: ["DELETE"], pattern: /^manage\/restaurants\/[A-Za-z0-9_-]{1,64}\/mkit\/calendar\/[A-Za-z0-9_-]{1,64}$/ },
+  { methods: ["POST"], pattern: /^manage\/restaurants\/[A-Za-z0-9_-]{1,64}\/mkit\/materials\/generate$/ },
+  {
+    methods: ["POST"],
+    pattern: /^manage\/restaurants\/[A-Za-z0-9_-]{1,64}\/mkit\/materials\/[A-Za-z0-9_-]{1,64}\/restore$/,
+  },
 ]
+
+/** Só estes parâmetros de consulta passam pelo proxy, e só com o valor "1" (lixeira e exclusão definitiva do MKit). */
+const FORWARDED_QUERY = ["lixeira", "definitivo"] as const
+
+export function forwardedQuery(search: URLSearchParams): string {
+  const kept = new URLSearchParams()
+  for (const key of FORWARDED_QUERY) if (search.get(key) === "1") kept.set(key, "1")
+  const text = kept.toString()
+  return text ? `?${text}` : ""
+}
 
 export function isAllowed(method: string, path: readonly string[]): boolean {
   const joined = path.join("/")

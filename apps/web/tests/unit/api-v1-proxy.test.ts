@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { DELETE, GET, POST } from "@/app/api/v1/[...path]/route"
-import { isAllowed } from "@/lib/api-proxy-rules"
+import { forwardedQuery, isAllowed } from "@/lib/api-proxy-rules"
 
 const params = (...path: string[]) => ({ params: Promise.resolve({ path }) })
 
@@ -23,6 +23,14 @@ describe("isAllowed", () => {
     ["DELETE", ["manage", "restaurants", "rest_1", "mkit", "materials", "m1"]],
     ["GET", ["manage", "restaurants", "rest_1", "mkit", "materials", "m1", "export"]],
     ["GET", ["manage", "restaurants", "rest_1", "mkit", "metrics"]],
+    ["GET", ["manage", "restaurants", "rest_1", "mkit", "categories"]],
+    ["POST", ["manage", "restaurants", "rest_1", "mkit", "categories"]],
+    ["DELETE", ["manage", "restaurants", "rest_1", "mkit", "categories", "c1"]],
+    ["GET", ["manage", "restaurants", "rest_1", "mkit", "calendar"]],
+    ["POST", ["manage", "restaurants", "rest_1", "mkit", "calendar"]],
+    ["DELETE", ["manage", "restaurants", "rest_1", "mkit", "calendar", "e1"]],
+    ["POST", ["manage", "restaurants", "rest_1", "mkit", "materials", "generate"]],
+    ["POST", ["manage", "restaurants", "rest_1", "mkit", "materials", "m1", "restore"]],
   ])("permite %s %j", (method, path) => expect(isAllowed(method, path)).toBe(true))
 
   it.each([
@@ -31,6 +39,11 @@ describe("isAllowed", () => {
     ["GET", ["manage", "restaurants", "r1"]],
     ["POST", ["manage", "restaurants", "r1", "mkit", "materials", "m1", "export"]],
     ["POST", ["manage", "restaurants", "r1", "mkit", "metrics"]],
+    ["PATCH", ["manage", "restaurants", "r1", "mkit", "categories"]],
+    ["PUT", ["manage", "restaurants", "r1", "mkit", "calendar", "e1"]],
+    ["GET", ["manage", "restaurants", "r1", "mkit", "materials", "generate"]],
+    ["GET", ["manage", "restaurants", "r1", "mkit", "materials", "m1", "restore"]],
+    ["POST", ["manage", "restaurants", "r1", "mkit", "categories", "c1"]],
     ["PUT", ["manage", "restaurants", "r1", "mkit", "materials", "m1"]],
     ["POST", ["webhooks", "asaas"]],
     ["GET", ["me"]],
@@ -46,6 +59,16 @@ describe("isAllowed", () => {
     ["POST", ["orders", "..", "me"]],
     ["GET", ["orders", "a/b"]],
   ])("recusa %s %j", (method, path) => expect(isAllowed(method, path)).toBe(false))
+})
+
+describe("forwardedQuery", () => {
+  it("repassa só lixeira e definitivo, e só com o valor 1", () => {
+    expect(forwardedQuery(new URLSearchParams("lixeira=1"))).toBe("?lixeira=1")
+    expect(forwardedQuery(new URLSearchParams("definitivo=1&lixeira=1"))).toBe("?lixeira=1&definitivo=1")
+    expect(forwardedQuery(new URLSearchParams("lixeira=0"))).toBe("")
+    expect(forwardedQuery(new URLSearchParams("lixeira=1&admin=1&x=<script>"))).toBe("?lixeira=1")
+    expect(forwardedQuery(new URLSearchParams(""))).toBe("")
+  })
 })
 
 describe("proxy /api/v1", () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { GET } from "@/app/mkit/calendario/route"
-import { easterSunday, eventsFor, icsEscape, toIcs } from "@/lib/mkit-calendar"
+import { easterSunday, eventsFor, icsEscape, mergeCalendar, toIcs } from "@/lib/mkit-calendar"
 
 describe("easterSunday", () => {
   it.each([
@@ -67,5 +67,48 @@ describe("GET /mkit/calendario", () => {
     expect(GET(new Request("http://web.test/mkit/calendario?ano=abc")).status).toBe(400)
     expect(GET(new Request("http://web.test/mkit/calendario?ano=1999")).status).toBe(400)
     expect(GET(new Request("http://web.test/mkit/calendario")).status).toBe(200)
+  })
+})
+
+describe("mergeCalendar (datas nacionais + próprias do restaurante)", () => {
+  const custom = [
+    { id: "c1", date: "2026-03-05", name: "Prato do mês", recurring: false },
+    { id: "c2", date: "2020-12-20", name: "Festa da casa", recurring: true },
+    { id: "c3", date: "2027-06-01", name: "Só em 2027", recurring: false },
+    { id: "c4", date: "2024-02-29", name: "Aniversário bissexto", recurring: true },
+  ]
+
+  it("inclui as nacionais e as próprias do ano, em ordem de data", () => {
+    const merged = mergeCalendar(2026, custom)
+    expect(merged.filter((entry) => entry.source === "national")).toHaveLength(eventsFor(2026).length)
+    const own = merged.filter((entry) => entry.source === "custom")
+    expect(own.map((entry) => [entry.date, entry.name, entry.id])).toEqual([
+      ["2026-03-05", "Prato do mês", "c1"],
+      ["2026-12-20", "Festa da casa", "c2"],
+    ])
+    expect(merged.map((entry) => entry.date)).toEqual([...merged.map((entry) => entry.date)].sort())
+  })
+
+  it("data única só vale no ano dela; recorrente repete todo ano", () => {
+    expect(mergeCalendar(2027, custom).some((entry) => entry.name === "Só em 2027")).toBe(true)
+    expect(mergeCalendar(2026, custom).some((entry) => entry.name === "Só em 2027")).toBe(false)
+    expect(mergeCalendar(2030, custom).some((entry) => entry.name === "Festa da casa")).toBe(true)
+    expect(mergeCalendar(2019, custom).some((entry) => entry.name === "Prato do mês")).toBe(false)
+  })
+
+  it("29 de fevereiro recorrente só aparece em ano bissexto", () => {
+    expect(mergeCalendar(2028, custom).some((entry) => entry.date === "2028-02-29")).toBe(true)
+    expect(mergeCalendar(2027, custom).some((entry) => entry.name === "Aniversário bissexto")).toBe(false)
+  })
+
+  it("sem datas próprias devolve só as nacionais", () => {
+    expect(mergeCalendar(2026, []).every((entry) => entry.source === "national")).toBe(true)
+  })
+
+  it("o .ics gerado com o calendário combinado inclui as datas próprias escapadas", () => {
+    const ics = toIcs(
+      mergeCalendar(2026, [{ id: "x", date: "2026-05-01", name: "Festa; da casa, hoje", recurring: false }]),
+    )
+    expect(ics).toContain("SUMMARY:Festa\\; da casa\\, hoje")
   })
 })
