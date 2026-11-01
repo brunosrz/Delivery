@@ -9,7 +9,7 @@ import sys
 import time
 from pathlib import Path
 
-HELP = """Delivery - Node 22+, pnpm 11, Python 3 e SCons no PATH.
+HELP = """Delivery - Node 22+, Bun 1.4, Python 3 e SCons no PATH.
 scons [help|install|build|tests|coverage|lint|check|deploy|prod|update|clean]
 update --latest pode alterar versoes major. Logs: .scons-logs/<alvo>.log.
 Deploy exige vercel no PATH, VERCEL_PROJECT_ID e VERCEL_ORG_ID.
@@ -109,14 +109,14 @@ class Tasks:
         return "".join(output) if capture else None
 
     def tests(self):
-        # O script `test` da raiz já delega ao pnpm -r: raiz e workspaces rodam uma vez.
-        self.run("pnpm", "run", "test")
+        # O script `test` da raiz já delega ao bun run --filter: raiz e workspaces rodam uma vez.
+        self.run("bun", "run", "test")
 
     def lint(self):
         failed = False
         for script in ("lint", "format:check", "typecheck"):
             try:
-                self.run("pnpm", "run", script)
+                self.run("bun", "run", script)
             except (OSError, RuntimeError):
                 failed = True
         if failed:
@@ -138,7 +138,7 @@ class Tasks:
         if data.get("projectId") != project or data.get("orgId") != org:
             raise RuntimeError("Vinculo Vercel diverge dos identificadores configurados")
         if has_worker:
-            self.resolve("pnpm")
+            self.resolve("bunx")
             if not any((worker / name).is_file() for name in WORKER_CONFIGS):
                 raise RuntimeError("Worker sem configuracao Wrangler")
         else:
@@ -147,9 +147,9 @@ class Tasks:
         self.run("vercel", "whoami")
         self.run("vercel", "project", "inspect", project, "--scope", org)
         if has_worker:
-            self.run("pnpm", "exec", "wrangler", "whoami", cwd=worker)
-            self.run("pnpm", "exec", "wrangler", "deploy", "--dry-run", cwd=worker)
-            self.run("pnpm", "exec", "wrangler", "deploy", cwd=worker)
+            self.run("bunx", "wrangler", "whoami", cwd=worker)
+            self.run("bunx", "wrangler", "deploy", "--dry-run", cwd=worker)
+            self.run("bunx", "wrangler", "deploy", cwd=worker)
         self.run("vercel", "deploy", "--prod", "--yes", "--scope", org)
 
     def clean(self):
@@ -170,14 +170,14 @@ class Tasks:
             if self.name == "help":
                 print(HELP)
             elif self.name == "install":
-                self.run("pnpm", "install", "--frozen-lockfile")
+                self.run("bun", "install", "--frozen-lockfile")
             elif self.name == "build":
-                self.run("pnpm", "run", "build")
+                self.run("bun", "run", "build")
             elif self.name == "coverage":
-                self.run("pnpm", "run", "test:coverage")
+                self.run("bun", "run", "test:coverage")
             elif self.name == "update":
                 # `-r` inclui a raiz e os workspaces configurados, sem duplicação.
-                self.run("pnpm", "update", "-r", *(["--latest"] if self.latest else []))
+                self.run("bun", "update", "-r", *(["--latest"] if self.latest else []))
             elif self.name == "check":
                 self.lint()
                 self.tests()

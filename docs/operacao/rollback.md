@@ -4,7 +4,7 @@
 
 ```bash
 cd apps/casa-das-maquinas
-pnpm exec wrangler rollback        # volta o Worker para a versão anterior publicada
+bunx wrangler rollback        # volta o Worker para a versão anterior publicada
 ```
 
 Ou republique o commit anterior com `workflow_dispatch` em `.github/workflows/deploy.yml`.
@@ -16,7 +16,7 @@ O D1 não tem "down" nativo. Cada migração tem um script compensatório em `ap
 Para desfazer a última migração (exemplo, `0003_asaas.sql`):
 
 ```bash
-pnpm exec wrangler d1 execute DB --remote --file=migrations-rollback/0003_asaas.sql
+bunx wrangler d1 execute DB --remote --file=migrations-rollback/0003_asaas.sql
 ```
 
 Desfaça sempre na ordem inversa (3, 2, 1, 0). **Isso apaga os dados das tabelas removidas.** Em produção, anote o bookmark do Time Travel antes (abaixo).
@@ -26,8 +26,8 @@ Evidência: `scripts/tests/migrations-rollback.test.mjs` aplica, reverte e reapl
 ## Dados (Time Travel)
 
 ```bash
-pnpm exec wrangler d1 time-travel info DB            # bookmark atual
-pnpm exec wrangler d1 time-travel restore DB --bookmark=<id>
+bunx wrangler d1 time-travel info DB            # bookmark atual
+bunx wrangler d1 time-travel restore DB --bookmark=<id>
 ```
 
 Time Travel restaura o **banco inteiro** para um ponto no tempo (últimos 30 dias); não é um rollback seletivo. Use para recuperar dados; use os scripts compensatórios para desfazer schema.

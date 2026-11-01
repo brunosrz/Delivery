@@ -17,23 +17,23 @@ class TaskTests(unittest.TestCase):
 
     def test_resolution_missing(self):
         with patch("shutil.which", return_value=None):
-            with self.assertRaisesRegex(OSError, "pnpm"):
-                self.task.resolve("pnpm")
+            with self.assertRaisesRegex(OSError, "bun"):
+                self.task.resolve("bun")
 
     def test_windows_resolution(self):
-        with patch("sys.platform", "win32"), patch("shutil.which", side_effect=[None, "pnpm.exe"]) as which:
-            self.assertEqual(self.task.resolve("pnpm"), "pnpm.exe")
-            self.assertEqual(which.call_args.args, ("pnpm.exe",))
+        with patch("sys.platform", "win32"), patch("shutil.which", side_effect=[None, "bun.exe"]) as which:
+            self.assertEqual(self.task.resolve("bun"), "bun.exe")
+            self.assertEqual(which.call_args.args, ("bun.exe",))
 
     def test_run_logs_environment_and_failure(self):
         process = Mock(stdout=io.StringIO("\x1b[31msecret\x1b[0m\n"))
         process.wait.return_value = 2
         self.task.env["API_TOKEN"] = "secret"
-        with patch.object(self.task, "resolve", return_value="/pnpm"), patch(
+        with patch.object(self.task, "resolve", return_value="/bun"), patch(
             "subprocess.Popen", return_value=process
         ) as popen:
             with self.assertRaises(RuntimeError):
-                self.task.run("pnpm", "test")
+                self.task.run("bun", "test")
         self.assertEqual(popen.call_args.kwargs["cwd"], self.root)
         self.assertEqual(popen.call_args.kwargs["env"]["CI"], "true")
         self.assertFalse(popen.call_args.kwargs.get("shell", False))
@@ -46,24 +46,24 @@ class TaskTests(unittest.TestCase):
     def test_interruption_waits(self):
         process = Mock(stdout=io.StringIO(""))
         process.wait.side_effect = [KeyboardInterrupt, 0]
-        with patch.object(self.task, "resolve", return_value="/pnpm"), patch(
+        with patch.object(self.task, "resolve", return_value="/bun"), patch(
             "subprocess.Popen", return_value=process
         ):
             with self.assertRaises(KeyboardInterrupt):
-                self.task.run("pnpm")
+                self.task.run("bun")
         process.terminate.assert_called_once()
         self.assertEqual(process.wait.call_count, 2)
 
     def test_tests_run_root_script_once(self):
         with patch.object(self.task, "run") as run:
             self.task.tests()
-        run.assert_called_once_with("pnpm", "run", "test")
+        run.assert_called_once_with("bun", "run", "test")
 
     def test_update_includes_latest_only_when_requested(self):
         task = Tasks(self.root, "update", True)
         with patch.object(task, "run") as run:
             self.assertEqual(task.execute(), 0)
-        run.assert_called_once_with("pnpm", "update", "-r", "--latest")
+        run.assert_called_once_with("bun", "update", "-r", "--latest")
         with patch.object(self.task, "run"):
             self.task.latest = True
             self.assertEqual(self.task.execute(), 1)

@@ -2,9 +2,9 @@
 const nextConfig = {
   // Pacotes do workspace são publicados como TypeScript e compilados pelo Next.
   transpilePackages: ["@delivery/domain", "@delivery/contracts"],
-  // O lint roda como gate próprio (`pnpm lint --max-warnings 0`). Dentro do
+  // O lint roda como gate próprio (`bun run lint --max-warnings 0`). Dentro do
   // `next build` o carregador legado de plugins não resolve o
-  // eslint-plugin-react-hooks no layout estrito do pnpm. A checagem de tipos
+  // eslint-plugin-react-hooks no layout de `node_modules` isolado. A checagem de tipos
   // do build continua ativa.
   eslint: {
     ignoreDuringBuilds: true,

@@ -35,7 +35,7 @@ Este documento descreve o plano para migrar a estrutura atual do projeto (basead
 ├── .github/ # Configurações de CI/CD e GitHub Actions
 ├── turbo.json # Configuração do Turborepo
 ├── package.json # Dependências do monorepo
-└── pnpm-workspace.yaml # Configuração do workspace PNPM
+└── package.json        # Campo `workspaces` (Bun)
 \`\`\`
 
 ## Fases da Migração

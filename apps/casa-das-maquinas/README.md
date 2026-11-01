@@ -36,14 +36,14 @@ Uma falha ao publicar no tempo real é registrada no log e não desfaz o pedido 
 
 ```bash
 cp apps/casa-das-maquinas/.dev.vars.example apps/casa-das-maquinas/.dev.vars
-pnpm --filter @delivery/casa-das-maquinas db:migrate:local
-pnpm --filter @delivery/casa-das-maquinas exec wrangler d1 execute DB --local --file seed/demo.sql
-pnpm --filter @delivery/casa-das-maquinas dev
+bun run --filter @delivery/casa-das-maquinas db:migrate:local
+(cd apps/casa-das-maquinas && bunx wrangler d1 execute DB --local --file seed/demo.sql)
+bun run --filter @delivery/casa-das-maquinas dev
 ```
 
-- `pnpm db:generate` gera uma nova migração a partir de `src/db/schema.ts`; nunca edite migrações já aplicadas.
-- `pnpm cf-typegen` regenera os tipos do `Env` depois de mudar o `wrangler.jsonc`.
-- `pnpm test` roda os testes no runtime `workerd`. Cada arquivo de teste recebe um D1 isolado, com as migrações e o seed sintético aplicados.
+- `bun run db:generate` gera uma nova migração a partir de `src/db/schema.ts`; nunca edite migrações já aplicadas.
+- `bun run cf-typegen` regenera os tipos do `Env` depois de mudar o `wrangler.jsonc`.
+- `bun run test` roda os testes no runtime `workerd`. Cada arquivo de teste recebe um D1 isolado, com as migrações e o seed sintético aplicados.
 
 ## Deploy
 
@@ -57,3 +57,18 @@ O seed de demonstração não roda automaticamente em produção; aplique-o manu
 - `DELETE /v1/me` com `{"confirm": "EXCLUIR MINHA CONTA"}`: anonimiza a conta do cliente em um único lote. O pedido é mantido (obrigação fiscal e financeira, art. 16), sem endereço e sem vínculo com dados pessoais; sessões, credenciais, cadastro de cobrança e verificações são apagados e o e-mail vira `excluido-<id>@invalid.local`. Recusa com `409` se houver pedido em andamento e com `403` fora de contas de cliente (equipe, entregador e admin saem pelo administrador).
 
 Ainda não há tela no app web nem exclusão de tenant (restaurante): ficam como roadmap da #39.
+
+## Limite de requisições
+
+Janela fixa de 1 minuto, contada no D1 (`rate_limit_buckets`) com um único `INSERT ... ON CONFLICT ... RETURNING`, então simultâneas não furam o limite. A identidade é o usuário da sessão ou, sem sessão, o IP (hash salgado; o IP nunca é gravado). Acima da cota a API responde `429` com `Retry-After` em segundos e o envelope `rate_limited`. Se o D1 falhar, a requisição passa. O cron apaga janelas com mais de 24 h.
+
+| Rota (POST)                      | Cota/min | Por      |
+| -------------------------------- | -------- | -------- |
+| `/api/auth/*`                    | 20       | IP       |
+| `/v1/quotes`                     | 60       | IP       |
+| `/v1/orders`                     | 15       | usuário  |
+| `/v1/orders/:id/payment`         | 10       | usuário  |
+| `/v1/orders/:id/transitions`     | 120      | usuário  |
+| `/v1/live/tickets`               | 30       | usuário  |
+
+O formulário de contato mantém o limite próprio por hora (`src/contact.ts`).

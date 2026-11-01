@@ -31,6 +31,7 @@ import { type LiveScope, signTicket, verifyTicket } from "./live-ticket.js"
 import { createAccountService } from "./account.js"
 import { receiveContact } from "./contact.js"
 import { markPublished, runOutbox } from "./jobs.js"
+import { pruneRateLimits, rateLimit } from "./rate-limit.js"
 import { createMkitService } from "./mkit.js"
 import { createOrdersService } from "./orders.js"
 import { createPaymentsService } from "./payments.js"
@@ -102,6 +103,14 @@ app.use("/v1/courier/*", withSession)
 app.use("/v1/orders", withSession)
 app.use("/v1/orders/*", withSession)
 app.use("/v1/live/tickets", withSession)
+
+// Limites por janela de 1 minuto. Auth e cotação são públicas (por IP); o resto vale por usuário da sessão.
+app.on("POST", "/api/auth/*", rateLimit({ scope: "auth", limit: 20, windowSeconds: 60 }))
+app.on("POST", "/v1/quotes", rateLimit({ scope: "quotes", limit: 60, windowSeconds: 60 }))
+app.on("POST", "/v1/orders", rateLimit({ scope: "orders", limit: 15, windowSeconds: 60 }))
+app.on("POST", "/v1/orders/:orderId/payment", rateLimit({ scope: "payment", limit: 10, windowSeconds: 60 }))
+app.on("POST", "/v1/orders/:orderId/transitions", rateLimit({ scope: "transitions", limit: 120, windowSeconds: 60 }))
+app.on("POST", "/v1/live/tickets", rateLimit({ scope: "tickets", limit: 30, windowSeconds: 60 }))
 
 app.onError((error, c) => {
   logError(c, "unhandled_error", error)
@@ -668,8 +677,8 @@ export { app }
 
 export default {
   fetch: app.fetch,
-  /** Cron: reenvia eventos de tempo real que ficaram na caixa de saída (ver jobs.ts). */
+  /** Cron: reenvia eventos de tempo real da caixa de saída (jobs.ts) e apaga janelas antigas do limite de requisições. */
   async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext) {
-    ctx.waitUntil(runOutbox(env))
+    ctx.waitUntil(Promise.all([runOutbox(env), pruneRateLimits(env)]))
   },
 } satisfies ExportedHandler<Env>

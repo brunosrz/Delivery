@@ -4,15 +4,15 @@ Plataforma web para catálogos, pedidos e operação de restaurantes. O projeto 
 
 ## Desenvolvimento local
 
-Requisitos: Node.js 22 LTS e pnpm 11.
+Requisitos: Node.js 22 LTS e Bun 1.4.
 
 ```bash
-pnpm install
+bun install
 cp .env.example apps/web/.env.local
-pnpm dev
+bun run dev
 ```
 
-O `pnpm build` local exige as variáveis de Supabase e NextAuth listadas em [`.env.example`](.env.example). No CI, o build usa valores dummy e não acessa serviços externos; use valores dummy apenas em testes ou CI.
+O `bun run build` local exige as variáveis de Supabase e NextAuth listadas em [`.env.example`](.env.example). No CI, o build usa valores dummy e não acessa serviços externos; use valores dummy apenas em testes ou CI.
 
 Estrutura do workspace:
 
@@ -25,19 +25,19 @@ Estrutura do workspace:
 Validações disponíveis (rodam em todos os pacotes):
 
 ```bash
-pnpm format:check
-pnpm lint
-pnpm typecheck
-pnpm test:coverage
-pnpm build
-pnpm e2e
+bun run format:check
+bun run lint
+bun run typecheck
+bun run test:coverage
+bun run build
+bun run e2e
 ```
 
-O repositório usa Node.js e pnpm, mantendo o lockfile existente. A migração do backend para Rust será conduzida em uma issue própria, com contratos e testes antes de substituir qualquer caminho funcional.
+O repositório usa Bun como gerenciador de pacotes e executor de scripts (lockfile `bun.lock`); o Node.js 22 segue sendo o runtime de Next.js, Vitest e Playwright. A migração do backend para Rust será conduzida em uma issue própria, com contratos e testes antes de substituir qualquer caminho funcional.
 
 ## Automação com SCons
 
-Pré-requisitos: Node 22, pnpm 11, Python 3.9+ e SCons no PATH (`python -m pip install scons`).
+Pré-requisitos: Node 22, Bun 1.4, Python 3.9+ e SCons no PATH (`python -m pip install scons`).
 `scons` e `scons -h` mostram a ajuda; `scons -n <alvo>` não executa tarefas.
 
 - `scons install`: instalação com lockfile congelado.

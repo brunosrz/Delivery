@@ -1,6 +1,6 @@
 # Planejamento do Monorepo Futuro
 
-> **Documento de proposta.** O que existe hoje é um workspace pnpm com `apps/web`, `apps/casa-das-maquinas`, `packages/domain` e `packages/contracts` (ver [`estrutura-atual.md`](./estrutura-atual.md)). Turborepo, `packages/ui` e `packages/config` **não** estão implementados; ficam adiados até haver dois consumidores e medição de ganho (issue #39). Menções a tRPC, Prisma e NextAuth são históricas: o backend é a Casa das Máquinas (Hono, Drizzle, Better Auth).
+> **Documento de proposta.** O que existe hoje é um workspace Bun com `apps/web`, `apps/casa-das-maquinas`, `packages/domain` e `packages/contracts` (ver [`estrutura-atual.md`](./estrutura-atual.md)). Turborepo, `packages/ui` e `packages/config` **não** estão implementados; ficam adiados até haver dois consumidores e medição de ganho (issue #39). Menções a tRPC, Prisma e NextAuth são históricas: o backend é a Casa das Máquinas (Hono, Drizzle, Better Auth).
 
 Este documento detalha o planejamento e a estrutura do futuro monorepo para o projeto Ecossistema Delivery Express, utilizando Turborepo como ferramenta de gerenciamento.
 
@@ -34,7 +34,7 @@ O monorepo será estruturado para permitir o desenvolvimento e deploy independen
 ├── .github/ # Configurações de CI/CD e GitHub Actions
 ├── turbo.json # Configuração do Turborepo
 ├── package.json # Dependências do monorepo
-└── pnpm-workspace.yaml # Configuração do workspace PNPM
+└── package.json        # Campo `workspaces` (Bun)
 ```
 
 ## Detalhamento dos Componentes
