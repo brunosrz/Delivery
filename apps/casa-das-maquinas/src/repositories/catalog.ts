@@ -82,14 +82,18 @@ export function createCatalogRepository(d1: D1Database) {
     })
 
     const toProduct = (product: (typeof products)[number]): Product => {
-      const addonGroups = (groupsByProduct.get(product.id) ?? [])
-        // Um grupo sem opções não é selecionável e quebraria o contrato (options.min(1)).
-        .filter((group) => optionsByGroup.has(group.id))
-        .map(toAddonGroup)
-      // Grupo obrigatório sem opções disponíveis suficientes: o produto não pode ser pedido agora.
-      const satisfiable = addonGroups.every(
-        (group) => group.options.filter((option) => option.available).length >= group.minSelections,
-      )
+      // A viabilidade é avaliada nos grupos ORIGINAIS: filtrar antes faria um grupo obrigatório sem opções
+      // desaparecer e deixaria o produto "disponível" sem poder ser pedido.
+      let satisfiable = true
+      const addonGroups: AddonGroup[] = []
+      for (const group of groupsByProduct.get(product.id) ?? []) {
+        const groupOptions = optionsByGroup.get(group.id) ?? []
+        if (groupOptions.filter((option) => option.available).length < group.minSelections) satisfiable = false
+        // Grupo sem opções, ou com menos opções do que o mínimo, quebraria o contrato (options.min(1) e
+        // minSelections <= options.length) e não é selecionável: não é publicado.
+        if (groupOptions.length === 0 || groupOptions.length < group.minSelections) continue
+        addonGroups.push(toAddonGroup(group))
+      }
       return {
         id: product.id,
         restaurantId: product.restaurantId,
