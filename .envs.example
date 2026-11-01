@@ -14,7 +14,7 @@
 # ----------------------------------------------------------------------------
 # Bloco 1: app web (apps/web/.env.local)
 # ----------------------------------------------------------------------------
-# URL da Casa das Máquinas (API v1). Local: `pnpm --filter @delivery/casa-das-maquinas dev`
+# URL da Casa das Máquinas (API v1). Local: `bun run --filter @delivery/casa-das-maquinas dev`
 # sobe em http://127.0.0.1:8787. Na Vercel, use a URL pública do Worker.
 # Sem ela o catálogo aparece como "indisponível" e o login/checkout respondem 503.
 CASA_DAS_MAQUINAS_URL=http://127.0.0.1:8787
@@ -44,7 +44,7 @@ TURNSTILE_SECRET=
 # ----------------------------------------------------------------------------
 # Bloco 3: Worker, produção
 # ----------------------------------------------------------------------------
-# Segredos (cadastre com `pnpm exec wrangler secret put NOME`, em apps/casa-das-maquinas):
+# Segredos (cadastre com `bunx wrangler secret put NOME`, em apps/casa-das-maquinas):
 #   BETTER_AUTH_SECRET   obrigatório
 #   GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET   opcionais
 #   ASAAS_API_KEY / ASAAS_WEBHOOK_TOKEN       obrigatórios para pagamento online

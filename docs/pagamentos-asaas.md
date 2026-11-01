@@ -39,8 +39,8 @@ A API do Asaas não aceita cartão de débito: "os dados de cartão de débito n
 | `ASAAS_WEBHOOK_TOKEN`   | segredo | De 32 a 255 caracteres, sem espaços, diferente da chave de API. É enviado pelo Asaas no header `asaas-access-token`. |
 
 ```bash
-pnpm exec wrangler secret put ASAAS_API_KEY
-pnpm exec wrangler secret put ASAAS_WEBHOOK_TOKEN
+bunx wrangler secret put ASAAS_API_KEY
+bunx wrangler secret put ASAAS_WEBHOOK_TOKEN
 node scripts/asaas-register-webhook.mjs https://<worker>/v1/webhooks/asaas contato@exemplo.com
 ```
 

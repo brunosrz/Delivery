@@ -8,7 +8,7 @@ Este guia fornece instruções para desenvolvedores que trabalham no ecossistema
 
 ### Requisitos
 
-- Node.js `>=22 <25` (o Node 26 quebra o build do webpack) e pnpm 11
+- Node.js `>=22 <25` (o Node 26 quebra o build do webpack) e Bun 1.4
 - Python 3.9+ e SCons (opcional, para `scons`)
 - Git
 
@@ -22,7 +22,7 @@ Este guia fornece instruções para desenvolvedores que trabalham no ecossistema
 
 2. Instale as dependências:
    \`\`\`bash
-   pnpm install
+   bun install
    \`\`\`
 
 3. Configure as variáveis de ambiente:
@@ -35,7 +35,7 @@ Este guia fornece instruções para desenvolvedores que trabalham no ecossistema
 
 4. Inicie o servidor de desenvolvimento:
    \`\`\`bash
-   pnpm dev
+   bun run dev
    \`\`\`
 
 5. Acesse o projeto em [http://localhost:3000](http://localhost:3000)
@@ -107,9 +107,9 @@ import './styles.css';
 
 3. **Teste localmente**: Certifique-se de que tudo funciona como esperado
    \`\`\`bash
-   pnpm dev
-   pnpm test
-   pnpm lint
+   bun run dev
+   bun run test
+   bun run lint
    \`\`\`
 
 4. **Commit das alterações**: Use mensagens de commit descritivas
@@ -198,14 +198,14 @@ Scripts reais da raiz (`package.json`):
 
 | Script                 | O que faz                                                          |
 | ---------------------- | ------------------------------------------------------------------ |
-| `pnpm dev` / `build` / `start` | Next.js (`apps/web`)                                       |
-| `pnpm lint`            | ESLint em todos os pacotes                                         |
-| `pnpm format:check`    | Prettier                                                           |
-| `pnpm typecheck`       | `tsc --noEmit` em todos os pacotes                                 |
-| `pnpm test`            | Vitest em todos os pacotes (o backend roda no `workerd`)           |
-| `pnpm test:coverage`   | Testes com cobertura                                               |
-| `pnpm check:boundaries`| Falha se um pacote importa o que não pode (matriz em `scripts/check-import-boundaries.mjs`) |
-| `pnpm e2e`             | Playwright (`apps/web`)                                            |
+| `bun run dev` / `build` / `start` | Next.js (`apps/web`)                                       |
+| `bun run lint`            | ESLint em todos os pacotes                                         |
+| `bun run format:check`    | Prettier                                                           |
+| `bun run typecheck`       | `tsc --noEmit` em todos os pacotes                                 |
+| `bun run test`            | Vitest em todos os pacotes (o backend roda no `workerd`)           |
+| `bun run test:coverage`   | Testes com cobertura                                               |
+| `bun run check:boundaries`| Falha se um pacote importa o que não pode (matriz em `scripts/check-import-boundaries.mjs`) |
+| `bun run e2e`             | Playwright (`apps/web`)                                            |
 
 O mesmo fluxo existe via SCons: `scons check`, `scons tests`, `scons lint`. Os testes da automação Python: `python -m unittest discover -s tests -t . -p 'test_scons*.py'`.
 
@@ -214,8 +214,8 @@ O mesmo fluxo existe via SCons: `scons check`, `scons tests`, `scons lint`. Os t
 ```bash
 cd apps/casa-das-maquinas
 cp .dev.vars.example .dev.vars        # preencha BETTER_AUTH_SECRET
-pnpm db:migrate:local                 # migrações no D1 local
-pnpm dev                              # wrangler dev
+bun run db:migrate:local                 # migrações no D1 local
+bun run dev                              # wrangler dev
 ```
 
 Em `apps/web/.env.local`, aponte `CASA_DAS_MAQUINAS_URL` para a API. O pagamento online (Asaas) é opcional em desenvolvimento: veja `docs/pagamentos-asaas.md`.
