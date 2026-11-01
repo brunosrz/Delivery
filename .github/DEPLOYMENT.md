@@ -39,7 +39,7 @@ Passos sem secret são pulados, não falham.
 
 ## Rollback
 
-- **Worker:** `pnpm exec wrangler rollback` em `apps/casa-das-maquinas`, ou novo deploy a partir do commit anterior (`workflow_dispatch`). Migrations D1 são só aditivas; reverter schema exige uma migration nova.
+- **Worker:** `bunx wrangler rollback` em `apps/casa-das-maquinas`, ou novo deploy a partir do commit anterior (`workflow_dispatch`). Migrations D1 são só aditivas; reverter schema exige uma migration nova.
 - **Web:** promova o deploy anterior no painel da Vercel (*Promote to Production*).
 
 ## Deploy local

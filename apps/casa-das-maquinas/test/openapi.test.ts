@@ -5,7 +5,7 @@ import { call } from "./helpers"
 describe("OpenAPI publicado", () => {
   it("é igual ao snapshot versionado em packages/contracts/openapi/v1.json", async () => {
     const served = await (await call("/v1/openapi.json")).json()
-    // Falhou? Rota ou schema mudou: rode `pnpm --filter @delivery/casa-das-maquinas openapi:export` e versione o resultado.
+    // Falhou? Rota ou schema mudou: rode `bun run --filter @delivery/casa-das-maquinas openapi:export` e versione o resultado.
     expect(served).toEqual(JSON.parse(env.OPENAPI_SNAPSHOT))
   })
 

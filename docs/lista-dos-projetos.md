@@ -4,7 +4,7 @@ Este documento lista as aplicações do ecossistema, onde cada uma vive no repos
 
 ## Estrutura atual
 
-O repositório é um **workspace pnpm**. Os frontends são uma única aplicação Next.js 15 (App Router) em `apps/web`, com um único build e uma rota de primeiro nível por produto. As regras puras ficam em `packages/domain` (totais em centavos e máquina de estados do pedido) e os contratos da API v1 em `packages/contracts` (schemas zod). O backend da Casa das Máquinas entra em `apps/casa-das-maquinas` na Fase 2 (issue #4).
+O repositório é um **workspace Bun**. Os frontends são uma única aplicação Next.js 15 (App Router) em `apps/web`, com um único build e uma rota de primeiro nível por produto. As regras puras ficam em `packages/domain` (totais em centavos e máquina de estados do pedido) e os contratos da API v1 em `packages/contracts` (schemas zod). O backend da Casa das Máquinas entra em `apps/casa-das-maquinas` na Fase 2 (issue #4).
 
 | Produto            | Público     | Rota atual                        | Observação                                                               |
 | ------------------ | ----------- | --------------------------------- | ------------------------------------------------------------------------ |
@@ -28,13 +28,13 @@ Observabilidade e operação ficam fora do produto (Grafana, métricas e logs ex
 ## Desenvolvimento local
 
 ```bash
-pnpm install
+bun install
 cp .env.example apps/web/.env.local
-pnpm dev
+bun run dev
 ```
 
 Todos os produtos ficam acessíveis em `http://localhost:3000/<rota>`; não há gateway por subdomínio.
 
 ## Deploy por ambiente
 
-Hoje só existe um app publicável (`apps/web`, `pnpm build`) e não há deploy automatizado. O deploy independente de cada app do workspace (web na Vercel, Casa das Máquinas na Cloudflare) entra com a Fase 2 (issues #4, #11 e #13). Quando existir, a configuração precisa ser versionada no CI e não depender de arquivos gerados por plataforma.
+Hoje só existe um app publicável (`apps/web`, `bun run build`) e não há deploy automatizado. O deploy independente de cada app do workspace (web na Vercel, Casa das Máquinas na Cloudflare) entra com a Fase 2 (issues #4, #11 e #13). Quando existir, a configuração precisa ser versionada no CI e não depender de arquivos gerados por plataforma.

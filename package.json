@@ -2,21 +2,32 @@
   "name": "delivery",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "bun@1.4.4",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "trustedDependencies": [
+    "esbuild",
+    "sharp",
+    "unrs-resolver",
+    "workerd"
+  ],
   "engines": {
     "node": ">=22 <25"
   },
   "scripts": {
-    "dev": "pnpm --filter @delivery/web dev",
-    "build": "pnpm --filter @delivery/web build",
-    "start": "pnpm --filter @delivery/web start",
-    "lint": "pnpm -r lint",
+    "dev": "bun run --filter @delivery/web dev",
+    "build": "bun run --filter @delivery/web build",
+    "start": "bun run --filter @delivery/web start",
+    "lint": "bun run --filter '*' lint",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
-    "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test",
-    "test:coverage": "pnpm -r test:coverage",
+    "typecheck": "bun run --filter '*' typecheck",
+    "test": "bun run --filter '*' test",
+    "test:coverage": "bun run --filter '*' test:coverage",
     "check:boundaries": "node scripts/check-import-boundaries.mjs && node --test \"scripts/tests/*.test.mjs\"",
-    "e2e": "pnpm --filter @delivery/web e2e"
+    "e2e": "bun run --filter @delivery/web e2e"
   },
   "devDependencies": {
     "prettier": "3.9.10"

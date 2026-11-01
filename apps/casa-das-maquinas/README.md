@@ -36,14 +36,14 @@ Uma falha ao publicar no tempo real é registrada no log e não desfaz o pedido 
 
 ```bash
 cp apps/casa-das-maquinas/.dev.vars.example apps/casa-das-maquinas/.dev.vars
-pnpm --filter @delivery/casa-das-maquinas db:migrate:local
-pnpm --filter @delivery/casa-das-maquinas exec wrangler d1 execute DB --local --file seed/demo.sql
-pnpm --filter @delivery/casa-das-maquinas dev
+bun run --filter @delivery/casa-das-maquinas db:migrate:local
+(cd apps/casa-das-maquinas && bunx wrangler d1 execute DB --local --file seed/demo.sql)
+bun run --filter @delivery/casa-das-maquinas dev
 ```
 
-- `pnpm db:generate` gera uma nova migração a partir de `src/db/schema.ts`; nunca edite migrações já aplicadas.
-- `pnpm cf-typegen` regenera os tipos do `Env` depois de mudar o `wrangler.jsonc`.
-- `pnpm test` roda os testes no runtime `workerd`. Cada arquivo de teste recebe um D1 isolado, com as migrações e o seed sintético aplicados.
+- `bun run db:generate` gera uma nova migração a partir de `src/db/schema.ts`; nunca edite migrações já aplicadas.
+- `bun run cf-typegen` regenera os tipos do `Env` depois de mudar o `wrangler.jsonc`.
+- `bun run test` roda os testes no runtime `workerd`. Cada arquivo de teste recebe um D1 isolado, com as migrações e o seed sintético aplicados.
 
 ## Deploy
 
