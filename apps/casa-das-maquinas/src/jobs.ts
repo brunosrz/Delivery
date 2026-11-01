@@ -43,18 +43,23 @@ export async function runOutbox(
       const event = JSON.parse(job.payload) as Omit<LiveEvent, "seq">
       await env.RESTAURANT_ROOM.getByName(job.restaurant_id).publish(event)
       // Condicionado a `pending`: um job já encerrado por outra execução nunca é reaberto nem sobrescrito.
-      await env.DB.prepare("update outbox_jobs set status = 'done', updated_at = ? where id = ? and status = 'pending'")
+      const closed = await env.DB.prepare(
+        "update outbox_jobs set status = 'done', updated_at = ? where id = ? and status = 'pending'",
+      )
         .bind(now.toISOString(), job.id)
         .run()
-      outcome.published += 1
+      // Só conta quem de fato encerrou o job: outra execução pode ter chegado antes.
+      if (closed.meta.changes === 1) outcome.published += 1
     } catch (error) {
-      const attempts = job.attempts + 1
-      const dead = attempts >= MAX_ATTEMPTS
-      await env.DB.prepare(
-        "update outbox_jobs set attempts = ?, status = ?, last_error = ?, updated_at = ? where id = ? and status = 'pending'",
+      // O contador e o status saem do valor no banco, na mesma instrução: duas falhas simultâneas somam as duas.
+      const row = await env.DB.prepare(
+        "update outbox_jobs set attempts = attempts + 1, status = case when attempts + 1 >= ? then 'dead' else 'pending' end, last_error = ?, updated_at = ? where id = ? and status = 'pending' returning attempts, status",
       )
-        .bind(attempts, dead ? "dead" : "pending", redact(String(error)).slice(0, 300), now.toISOString(), job.id)
-        .run()
+        .bind(MAX_ATTEMPTS, redact(String(error)).slice(0, 300), now.toISOString(), job.id)
+        .first<{ attempts: number; status: string }>()
+      // Sem linha alterada, o job já foi encerrado por outra execução: nada a classificar nem a registrar.
+      if (!row) continue
+      const dead = row.status === "dead"
       if (dead) outcome.dead += 1
       else outcome.failed += 1
       log(
@@ -63,7 +68,7 @@ export async function runOutbox(
           event: dead ? "outbox_job_dead" : "outbox_job_retry",
           jobId: job.id,
           orderId: job.order_id,
-          attempts,
+          attempts: row.attempts,
         }),
       )
     }

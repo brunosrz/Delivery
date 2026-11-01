@@ -290,27 +290,65 @@ describe("POST /v1/webhooks/asaas", () => {
     expect(await paymentStatusOf(order.id)).toBe("paid")
   })
 
-  it("eventos DIFERENTES e simultâneos (pago e vencido) terminam em pago, sem consumir evento não aplicado", async () => {
+  const registeredEvents = async (chargeId: string) =>
+    (
+      await env.DB.prepare(
+        "select event_id as id from payment_webhook_events where provider_charge_id = ? order by event_id",
+      )
+        .bind(chargeId)
+        .all<{ id: string }>()
+    ).results.map((row) => row.id)
+
+  it("evento cujo UPDATE falha não fica registrado e é aplicado na reentrega; os demais convergem para pago", async () => {
+    const { order, chargeId } = await orderWithCharge()
+    const trigger = `falha_pago_${order.id.replace(/\W/g, "_")}`
+
+    expect((await webhook(event("evt_conc_over", "PAYMENT_OVERDUE", { id: chargeId }))).status).toBe(200)
+    expect(await paymentStatusOf(order.id)).toBe("failed")
+
+    // Força a falha do UPDATE do evento de pagamento: o lote inteiro é desfeito.
+    await env.DB.prepare(
+      `create trigger ${trigger} before update of payment_status on orders when new.id = '${order.id}' and new.payment_status = 'paid' begin select raise(abort, 'falha simulada'); end`,
+    ).run()
+    try {
+      const failed = await webhook(event("evt_conc_paid", "PAYMENT_RECEIVED", { id: chargeId, value: 75.8 }))
+      expect(failed.status).toBeGreaterThanOrEqual(500)
+    } finally {
+      await env.DB.prepare(`drop trigger if exists ${trigger}`).run()
+    }
+
+    // Antes da reentrega: o pedido não mudou e o evento não foi consumido.
+    expect(await paymentStatusOf(order.id)).toBe("failed")
+    expect(await registeredEvents(chargeId)).not.toContain("evt_conc_paid")
+
+    // Reentrega do mesmo evento: aplica; o evento seguinte já encontra o pedido pago e é ignorado de forma definitiva.
+    expect((await webhook(event("evt_conc_paid", "PAYMENT_RECEIVED", { id: chargeId, value: 75.8 }))).status).toBe(200)
+    expect(await paymentStatusOf(order.id)).toBe("paid")
+    expect((await webhook(event("evt_conc_paid2", "PAYMENT_CONFIRMED", { id: chargeId, value: 75.8 }))).status).toBe(
+      200,
+    )
+    expect(await paymentStatusOf(order.id)).toBe("paid")
+
+    const ids = await registeredEvents(chargeId)
+    expect(new Set(ids).size).toBe(ids.length)
+    expect(ids).toEqual(expect.arrayContaining(["evt_conc_paid", "evt_conc_over", "evt_conc_paid2"]))
+  })
+
+  it("eventos DIFERENTES e simultâneos (pago e vencido) terminam em pago", async () => {
     const { order, chargeId } = await orderWithCharge()
     const responses = await Promise.all([
-      webhook(event("evt_conc_paid", "PAYMENT_RECEIVED", { id: chargeId, value: 75.8 })),
-      webhook(event("evt_conc_over", "PAYMENT_OVERDUE", { id: chargeId })),
-      webhook(event("evt_conc_paid2", "PAYMENT_CONFIRMED", { id: chargeId, value: 75.8 })),
+      webhook(event("evt_sim_paid", "PAYMENT_RECEIVED", { id: chargeId, value: 75.8 })),
+      webhook(event("evt_sim_over", "PAYMENT_OVERDUE", { id: chargeId })),
+      webhook(event("evt_sim_paid2", "PAYMENT_CONFIRMED", { id: chargeId, value: 75.8 })),
     ])
     for (const response of responses) expect(response.status).toBe(200)
 
     // failed -> paid é válido e paid -> failed não: qualquer ordem de chegada converge para pago.
     expect(await paymentStatusOf(order.id)).toBe("paid")
 
-    // Cada evento fica registrado no máximo uma vez, e só os aplicados ou ignorados de forma definitiva.
-    const events = await env.DB.prepare(
-      "select event_id as id from payment_webhook_events where provider_charge_id = ? order by event_id",
-    )
-      .bind(chargeId)
-      .all<{ id: string }>()
-    const ids = events.results.map((row) => row.id)
+    const ids = await registeredEvents(chargeId)
     expect(new Set(ids).size).toBe(ids.length)
-    expect(ids).toEqual(expect.arrayContaining(["evt_conc_paid"]))
+    expect(ids).toEqual(expect.arrayContaining(["evt_sim_paid", "evt_sim_over", "evt_sim_paid2"]))
   })
 
   it("estorno só vale depois do pagamento; antes disso o evento é reconhecido e ignorado", async () => {

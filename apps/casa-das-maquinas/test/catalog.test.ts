@@ -93,6 +93,40 @@ describe("GET /v1/restaurants/:slug/menu", () => {
     expect(product?.addonGroups.map((group) => group.id)).toContain("grp_min2")
   })
 
+  it("omite o grupo e marca o produto como indisponível quando há menos opções do que o mínimo", async () => {
+    await env.DB.batch([
+      env.DB.prepare(
+        "insert into addon_groups (id, restaurant_id, product_id, name, min_selections, max_selections) values ('grp_min3', 'rest_pizzaria', 'prod_pz_carne', 'Escolha 3', 3, 3)",
+      ),
+      env.DB.prepare(
+        "insert into addon_options (id, restaurant_id, group_id, name, price_cents, available) values ('opt_min3_a', 'rest_pizzaria', 'grp_min3', 'A', 0, 1), ('opt_min3_b', 'rest_pizzaria', 'grp_min3', 'B', 0, 1)",
+      ),
+    ])
+    const { data } = envelope(Menu).parse(await (await call("/v1/restaurants/pizzaria-da-praca/menu")).json())
+    const product = data?.sections.flatMap((section) => section.products).find((item) => item.id === "prod_pz_carne")
+    expect(product?.available).toBe(false)
+    expect(product?.addonGroups.map((group) => group.id)).not.toContain("grp_min3")
+  })
+
+  it("mantém o produto disponível quando as opções disponíveis são exatamente o mínimo", async () => {
+    // Produto próprio: o clássico é usado nos testes de pedido e não pode ganhar um grupo obrigatório.
+    await env.DB.batch([
+      env.DB.prepare(
+        "insert into products (id, restaurant_id, section_id, slug, name, price_cents) values ('prod_bg_exato', 'rest_burger', 'sec_bg_burgers', 'burger-exato', 'Burger exato', 1000)",
+      ),
+      env.DB.prepare(
+        "insert into addon_groups (id, restaurant_id, product_id, name, min_selections, max_selections) values ('grp_min_exato', 'rest_burger', 'prod_bg_exato', 'Escolha 2', 2, 2)",
+      ),
+      env.DB.prepare(
+        "insert into addon_options (id, restaurant_id, group_id, name, price_cents, available) values ('opt_exato_a', 'rest_burger', 'grp_min_exato', 'A', 0, 1), ('opt_exato_b', 'rest_burger', 'grp_min_exato', 'B', 0, 1)",
+      ),
+    ])
+    const { data } = envelope(Menu).parse(await (await call("/v1/restaurants/burger-do-bairro/menu")).json())
+    const product = data?.sections.flatMap((section) => section.products).find((item) => item.id === "prod_bg_exato")
+    expect(product?.available).toBe(true)
+    expect(product?.addonGroups.map((group) => group.id)).toContain("grp_min_exato")
+  })
+
   it("responde 404 no envelope para restaurante inexistente", async () => {
     const response = await call("/v1/restaurants/nao-existe/menu")
     expect(response.status).toBe(404)
