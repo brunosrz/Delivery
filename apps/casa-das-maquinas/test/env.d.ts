@@ -4,6 +4,7 @@ declare global {
   namespace Cloudflare {
     interface Env {
       TEST_MIGRATIONS: D1Migration[]
+      OPENAPI_SNAPSHOT: string
     }
     interface GlobalProps {
       mainModule: typeof import("../src/index")

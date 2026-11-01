@@ -17,12 +17,16 @@
       "migrations_dir": "migrations",
     },
   ],
+  // A cada minuto: reenvia eventos pendentes da caixa de saída (outbox_jobs).
+  "triggers": { "crons": ["* * * * *"] },
   "durable_objects": {
     "bindings": [{ "name": "RESTAURANT_ROOM", "class_name": "RestaurantRoom" }],
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["RestaurantRoom"] }],
   "vars": {
     "API_VERSION": "v1",
+    // sandbox até a conta de produção do Asaas estar aprovada; ASAAS_API_KEY e ASAAS_WEBHOOK_TOKEN são segredos.
+    "ASAAS_ENV": "sandbox",
     // Origem pública do app web: o login passa pelo proxy /api/auth do Next, então os cookies são do próprio site.
     "BETTER_AUTH_URL": "http://localhost:3000",
     "TRUSTED_ORIGINS": "http://localhost:3000,http://127.0.0.1:3000,http://127.0.0.1:3100",

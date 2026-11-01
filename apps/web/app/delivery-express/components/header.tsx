@@ -1,6 +1,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { AuthStatus } from "@/components/auth/auth-status"
+import { CartLink } from "./cart-link"
 
 export function Header() {
   return (
@@ -11,6 +12,7 @@ export function Header() {
           <span className="text-xl font-bold">Delivery Express</span>
         </Link>
         <div className="flex items-center gap-4">
+          <CartLink />
           <AuthStatus />
         </div>
       </div>

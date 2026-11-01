@@ -44,7 +44,7 @@ Pré-requisitos: Node 22, pnpm 11, Python 3.9+ e SCons no PATH (`python -m pip i
 - `scons build`, `scons tests`, `scons coverage`: delegam aos scripts do `package.json`.
 - `scons lint`: lint, formatação e tipos; roda todas as etapas e falha se qualquer uma falhar.
 - `scons check`: `lint` seguido de `tests`.
-- `scons update`: atualiza a raiz e os workspaces. `scons update --latest` ignora os ranges e pode trazer versões major: revise o diff e as breaking changes e rode `scons check` antes de commitar.
+- `scons update`: atualiza a raiz e os workspaces. `scons update --latest` (ou só `scons --latest`) ignora os ranges e pode trazer versões major: revise o diff e as breaking changes e rode `scons check` antes de commitar.
 - `scons clean`: remove só saídas geradas (build, cobertura, relatórios).
 - `scons deploy` (ou `prod`): valida ferramentas, vínculo e autenticação antes de publicar o Worker (se existir) e, depois, a Vercel; qualquer falha interrompe a sequência. Exige `vercel` no PATH, `VERCEL_PROJECT_ID`, `VERCEL_ORG_ID` e `.vercel/project.json` com os mesmos IDs.
 

@@ -28,8 +28,13 @@ export default defineConfig(async () => {
         miniflare: {
           bindings: {
             TEST_MIGRATIONS: [...migrations, seed],
+            // Snapshot versionado do OpenAPI (pnpm openapi:export); o teste confere que o documento servido é igual.
+            OPENAPI_SNAPSHOT: readFileSync(fromHere("../../packages/contracts/openapi/v1.json"), "utf8"),
             // Segredo apenas de teste; produção usa `wrangler secret put`.
             BETTER_AUTH_SECRET: "test-secret-with-at-least-32-characters!!",
+            // Asaas: só valores de teste; a chamada real é substituída por um fetch simulado.
+            ASAAS_API_KEY: "$aact_hmlg_test-key",
+            ASAAS_WEBHOOK_TOKEN: "token-de-webhook-de-teste-com-32-caracteres!",
             GOOGLE_CLIENT_ID: "",
             GOOGLE_CLIENT_SECRET: "",
           },

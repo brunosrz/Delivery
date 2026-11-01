@@ -19,6 +19,7 @@ Toda resposta usa o envelope `{ data, error, meta: { requestId, apiVersion } }`.
 - `canManageRestaurant` é a única regra de acesso a dados de gestão. A autorização acontece antes da consulta, para quem não gere o restaurante não descobrir se ele existe.
 - O app web expõe `/api/auth/*` como proxy para cá, então o cookie de sessão é do próprio site. `BETTER_AUTH_URL` deve ser a origem pública do app web, e `TRUSTED_ORIGINS` lista as origens aceitas.
 - Segredos: `BETTER_AUTH_SECRET` (obrigatório) e `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` (opcionais), via `wrangler secret put` em produção e `.dev.vars` localmente (veja `.dev.vars.example`).
+- Pagamento online (Asaas): `ASAAS_API_KEY` e `ASAAS_WEBHOOK_TOKEN` (segredos) e `ASAAS_ENV` (`sandbox` por padrão). Sem a chave, só os pagamentos na entrega funcionam. Configuração, fluxo e webhook em [`docs/pagamentos-asaas.md`](../../docs/pagamentos-asaas.md); o script `scripts/asaas-register-webhook.mjs` cadastra o webhook no Asaas.
 
 ## Tempo real
 

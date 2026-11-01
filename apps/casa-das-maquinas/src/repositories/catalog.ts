@@ -81,22 +81,29 @@ export function createCatalogRepository(d1: D1Database) {
       })),
     })
 
-    const toProduct = (product: (typeof products)[number]): Product => ({
-      id: product.id,
-      restaurantId: product.restaurantId,
-      slug: product.slug,
-      name: product.name,
-      description: product.description,
-      imageUrl: product.imageUrl,
-      priceCents: product.priceCents,
-      originalPriceCents: product.originalPriceCents,
-      available: product.available,
-      maxQuantity: product.maxQuantity,
-      // Um grupo sem opções não é selecionável e quebraria o contrato (options.min(1)).
-      addonGroups: (groupsByProduct.get(product.id) ?? [])
+    const toProduct = (product: (typeof products)[number]): Product => {
+      const addonGroups = (groupsByProduct.get(product.id) ?? [])
+        // Um grupo sem opções não é selecionável e quebraria o contrato (options.min(1)).
         .filter((group) => optionsByGroup.has(group.id))
-        .map(toAddonGroup),
-    })
+        .map(toAddonGroup)
+      // Grupo obrigatório sem opções disponíveis suficientes: o produto não pode ser pedido agora.
+      const satisfiable = addonGroups.every(
+        (group) => group.options.filter((option) => option.available).length >= group.minSelections,
+      )
+      return {
+        id: product.id,
+        restaurantId: product.restaurantId,
+        slug: product.slug,
+        name: product.name,
+        description: product.description,
+        imageUrl: product.imageUrl,
+        priceCents: product.priceCents,
+        originalPriceCents: product.originalPriceCents,
+        available: product.available && satisfiable,
+        maxQuantity: product.maxQuantity,
+        addonGroups,
+      }
+    }
 
     return {
       restaurant: toRestaurant(restaurant, hours),

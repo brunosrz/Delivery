@@ -7,5 +7,5 @@ import { createApiClient, type ApiClient } from "@delivery/contracts"
 export function getApiClient(): ApiClient | null {
   const baseUrl = process.env.CASA_DAS_MAQUINAS_URL
   if (!baseUrl) return null
-  return createApiClient({ baseUrl, timeoutMs: 4000, retries: 1 })
+  return createApiClient({ baseUrl, timeoutMs: 4000, retries: 1, requestId: crypto.randomUUID() })
 }

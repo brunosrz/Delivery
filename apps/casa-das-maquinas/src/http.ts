@@ -1,6 +1,7 @@
 import { API_VERSION, type ApiError, type ErrorCode, type SessionUser } from "@delivery/contracts"
 import type { Context, MiddlewareHandler } from "hono"
 import type { ContentfulStatusCode } from "hono/utils/http-status"
+import { pathWithoutQuery, redact } from "./redact.js"
 
 export type AppEnv = {
   Bindings: Env
@@ -56,8 +57,28 @@ export function logError(c: Context<AppEnv>, event: string, error: unknown) {
       level: "error",
       event,
       requestId: c.get("requestId"),
-      path: c.req.path,
-      message: error instanceof Error ? error.message : String(error),
+      path: pathWithoutQuery(c.req.path),
+      message: redact(error instanceof Error ? error.message : String(error)),
+    }),
+  )
+}
+
+/**
+ * Log de acesso: id, método, caminho sem query, status e duração. Nunca registra headers, cookies, corpo ou query
+ * (que pode trazer ticket de tempo real).
+ */
+export const accessLog: MiddlewareHandler<AppEnv> = async (c, next) => {
+  const started = Date.now()
+  await next()
+  console.log(
+    JSON.stringify({
+      level: "info",
+      event: "request",
+      requestId: c.get("requestId"),
+      method: c.req.method,
+      path: pathWithoutQuery(c.req.path),
+      status: c.res.status,
+      durationMs: Date.now() - started,
     }),
   )
 }

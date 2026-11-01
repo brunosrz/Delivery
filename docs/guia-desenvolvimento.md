@@ -8,8 +8,8 @@ Este guia fornece instruções para desenvolvedores que trabalham no ecossistema
 
 ### Requisitos
 
-- Node.js 18.x ou superior
-- PNPM 8.x ou superior
+- Node.js `>=22 <25` (o Node 26 quebra o build do webpack) e pnpm 11
+- Python 3.9+ e SCons (opcional, para `scons`)
 - Git
 
 ### Instalação
@@ -17,7 +17,7 @@ Este guia fornece instruções para desenvolvedores que trabalham no ecossistema
 1. Clone o repositório:
    \`\`\`bash
    git clone https://github.com/brunosrz/Delivery.git
-   cd delivery-system
+   cd Delivery
    \`\`\`
 
 2. Instale as dependências:
@@ -194,31 +194,39 @@ Consulte o documento [Comunicação Entre Módulos](./comunicacao-entre-modulos.
 
 ### Executando Testes
 
-\`\`\`bash
+Scripts reais da raiz (`package.json`):
 
-# Executar todos os testes
+| Script                 | O que faz                                                          |
+| ---------------------- | ------------------------------------------------------------------ |
+| `pnpm dev` / `build` / `start` | Next.js (`apps/web`)                                       |
+| `pnpm lint`            | ESLint em todos os pacotes                                         |
+| `pnpm format:check`    | Prettier                                                           |
+| `pnpm typecheck`       | `tsc --noEmit` em todos os pacotes                                 |
+| `pnpm test`            | Vitest em todos os pacotes (o backend roda no `workerd`)           |
+| `pnpm test:coverage`   | Testes com cobertura                                               |
+| `pnpm check:boundaries`| Falha se um pacote importa o que não pode (matriz em `scripts/check-import-boundaries.mjs`) |
+| `pnpm e2e`             | Playwright (`apps/web`)                                            |
 
-pnpm test
+O mesmo fluxo existe via SCons: `scons check`, `scons tests`, `scons lint`. Os testes da automação Python: `python -m unittest discover -s tests -t . -p 'test_scons*.py'`.
 
-# Executar testes de um módulo específico
+### Subindo a API localmente
 
-pnpm test:site-institucional
-pnpm test:delivery
+```bash
+cd apps/casa-das-maquinas
+cp .dev.vars.example .dev.vars        # preencha BETTER_AUTH_SECRET
+pnpm db:migrate:local                 # migrações no D1 local
+pnpm dev                              # wrangler dev
+```
 
-# etc.
-
-# Executar testes em modo watch
-
-pnpm test:watch
-\`\`\`
+Em `apps/web/.env.local`, aponte `CASA_DAS_MAQUINAS_URL` para a API. O pagamento online (Asaas) é opcional em desenvolvimento: veja `docs/pagamentos-asaas.md`.
 
 ## Deploy
 
 ### Ambientes
 
-- **Desenvolvimento**: Ambiente para testes durante o desenvolvimento
-- **Staging**: Ambiente de pré-produção para testes finais
-- **Produção**: Ambiente de produção
+- **Desenvolvimento**: local (`wrangler dev` + `next dev`)
+- **Staging**: planejado (ainda não existe)
+- **Produção**: deploy por `.github/workflows/deploy.yml`
 
 ### Processo de Deploy
 

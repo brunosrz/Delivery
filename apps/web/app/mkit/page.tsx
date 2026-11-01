@@ -148,6 +148,19 @@ export default function MKitPage() {
                     </div>
                   ))}
                 </div>
+                <p className="mt-4 text-sm">
+                  <a href="/mkit/calendario" className="underline">
+                    Baixar o calendário comercial do ano (.ics)
+                  </a>{" "}
+                  para importar no Google Agenda, Outlook ou Apple Calendário.
+                </p>
+                <p className="mt-2 text-sm">
+                  Equipe do restaurante:{" "}
+                  <a href="/mkit/materiais" className="underline">
+                    gerenciar materiais de marketing
+                  </a>
+                  .
+                </p>
               </CardContent>
             </Card>
 

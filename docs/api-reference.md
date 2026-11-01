@@ -1,5 +1,7 @@
 # Referência da API
 
+> **Documento histórico.** A referência operacional é a OpenAPI servida em `/v1/openapi.json` pela Casa das Máquinas (gerada dos schemas em `packages/contracts`). As seções abaixo descrevem um desenho anterior: envelope de resposta incompleto, paginação de `/restaurants` e preços decimais **não** correspondem à API v1, que usa envelope `{data, error, meta}`, sem paginação e preços em centavos. Pagamento online: [`pagamentos-asaas.md`](./pagamentos-asaas.md).
+
 ## Visão Geral
 
 A API da Casa das Máquinas é o backend centralizado que fornece serviços para todos os módulos do ecossistema Delivery Express. Esta referência documenta os endpoints disponíveis, parâmetros, respostas e exemplos de uso.

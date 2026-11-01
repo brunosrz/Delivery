@@ -1,0 +1,62 @@
+# ============================================================================
+# Variáveis de ambiente do Delivery: exemplo único (todos os apps)
+# ============================================================================
+# Este arquivo reúne, em um só lugar, tudo o que cada app lê. Ele não é carregado
+# por ninguém: copie cada bloco para o arquivo indicado.
+#
+#   Bloco 1 -> apps/web/.env.local                 (app web, Next.js)
+#   Bloco 2 -> apps/casa-das-maquinas/.dev.vars    (Worker, local; nunca versionado)
+#   Bloco 3 -> `wrangler secret put` / wrangler.jsonc (Worker, produção)
+#
+# Nunca versione credenciais reais. Em CI e nos testes os valores são dummy.
+# Segredos do GitHub Actions (deploy, release): veja .env.gha.example.
+
+# ----------------------------------------------------------------------------
+# Bloco 1: app web (apps/web/.env.local)
+# ----------------------------------------------------------------------------
+# URL da Casa das Máquinas (API v1). Local: `pnpm --filter @delivery/casa-das-maquinas dev`
+# sobe em http://127.0.0.1:8787. Na Vercel, use a URL pública do Worker.
+# Sem ela o catálogo aparece como "indisponível" e o login/checkout respondem 503.
+CASA_DAS_MAQUINAS_URL=http://127.0.0.1:8787
+
+# ----------------------------------------------------------------------------
+# Bloco 2: Worker, desenvolvimento local (apps/casa-das-maquinas/.dev.vars)
+# ----------------------------------------------------------------------------
+# Segredo do Better Auth (sessões e tickets de tempo real). Gere com: openssl rand -base64 32
+BETTER_AUTH_SECRET=troque-por-um-segredo-local-com-32-caracteres
+
+# [opcional] Login com Google.
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+
+# [opcional] Pagamento online com Asaas (Pix e cartão). Use SEMPRE a chave de
+# SANDBOX ($aact_hmlg_...) fora de produção; a de produção ($aact_prod_...) retorna
+# 401 no sandbox e vice-versa. Sem ASAAS_API_KEY só os pagamentos na entrega funcionam.
+ASAAS_API_KEY=
+# Token do webhook: de 32 a 255 caracteres, sem espaços, diferente da chave de API.
+# É o mesmo valor cadastrado no Asaas (enviado no header asaas-access-token).
+ASAAS_WEBHOOK_TOKEN=
+
+# [opcional] Segredo do Cloudflare Turnstile para o formulário de contato.
+# Sem ele o formulário usa só a armadilha anti-robô e o limite por IP.
+TURNSTILE_SECRET=
+
+# ----------------------------------------------------------------------------
+# Bloco 3: Worker, produção
+# ----------------------------------------------------------------------------
+# Segredos (cadastre com `pnpm exec wrangler secret put NOME`, em apps/casa-das-maquinas):
+#   BETTER_AUTH_SECRET   obrigatório
+#   GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET   opcionais
+#   ASAAS_API_KEY / ASAAS_WEBHOOK_TOKEN       obrigatórios para pagamento online
+#   TURNSTILE_SECRET                          opcional
+#
+# Variáveis (não secretas; ficam em apps/casa-das-maquinas/wrangler.jsonc, "vars"):
+#   API_VERSION=v1
+#   ASAAS_ENV=sandbox            # troque para "production" só com a chave de produção
+#   BETTER_AUTH_URL=https://SEU-SITE.vercel.app      # origem pública do app web
+#   TRUSTED_ORIGINS=https://SEU-SITE.vercel.app      # origens aceitas, separadas por vírgula
+#
+# Registro do webhook do Asaas (uma vez por ambiente):
+#   ASAAS_API_KEY=... ASAAS_WEBHOOK_TOKEN=... ASAAS_ENV=sandbox \
+#   node apps/casa-das-maquinas/scripts/asaas-register-webhook.mjs \
+#     https://SEU-WORKER.workers.dev/v1/webhooks/asaas contato@exemplo.com

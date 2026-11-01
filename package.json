@@ -8,12 +8,14 @@
   "scripts": {
     "dev": "pnpm --filter @delivery/web dev",
     "build": "pnpm --filter @delivery/web build",
+    "start": "pnpm --filter @delivery/web start",
     "lint": "pnpm -r lint",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "test:coverage": "pnpm -r test:coverage",
+    "check:boundaries": "node scripts/check-import-boundaries.mjs && node --test \"scripts/tests/*.test.mjs\"",
     "e2e": "pnpm --filter @delivery/web e2e"
   },
   "devDependencies": {

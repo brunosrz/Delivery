@@ -3,6 +3,7 @@
 // cookies entre domínios (Vercel <-> workers.dev).
 
 const FORWARDED_REQUEST_HEADERS = ["accept", "content-type", "cookie", "origin", "referer", "user-agent"]
+const REQUEST_ID_PATTERN = /^[A-Za-z0-9_-]{8,128}$/
 
 async function proxy(request: Request, { params }: { params: Promise<{ all: string[] }> }) {
   const baseUrl = process.env.CASA_DAS_MAQUINAS_URL
@@ -28,6 +29,10 @@ async function proxy(request: Request, { params }: { params: Promise<{ all: stri
   }
   const clientIp = request.headers.get("x-forwarded-for")
   if (clientIp) headers.set("x-forwarded-for", clientIp)
+  // Mantém o id de correlação recebido (se válido) ou cria um, para ligar o log do web ao da API.
+  const incomingId = request.headers.get("x-request-id")
+  const requestId = incomingId && REQUEST_ID_PATTERN.test(incomingId) ? incomingId : crypto.randomUUID()
+  headers.set("x-request-id", requestId)
 
   let upstream: Response
   try {
@@ -39,7 +44,10 @@ async function proxy(request: Request, { params }: { params: Promise<{ all: stri
       signal: AbortSignal.timeout(8000),
     })
   } catch {
-    return Response.json({ message: "autenticação indisponível" }, { status: 503 })
+    return Response.json(
+      { message: "autenticação indisponível" },
+      { status: 503, headers: { "x-request-id": requestId } },
+    )
   }
 
   const responseHeaders = new Headers()
@@ -48,6 +56,7 @@ async function proxy(request: Request, { params }: { params: Promise<{ all: stri
     responseHeaders.set(name, value)
   }
   for (const cookie of upstream.headers.getSetCookie()) responseHeaders.append("set-cookie", cookie)
+  responseHeaders.set("x-request-id", requestId)
 
   return new Response(upstream.body, { status: upstream.status, headers: responseHeaders })
 }

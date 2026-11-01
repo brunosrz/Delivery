@@ -41,6 +41,7 @@ class TaskTests(unittest.TestCase):
         self.assertIn("***", log)
         self.assertNotIn("\x1b", log)
         self.assertNotIn("secret", log)
+        self.assertRegex(log, r"exit=2 duration=\d+\.\d+s")
 
     def test_interruption_waits(self):
         process = Mock(stdout=io.StringIO(""))
