@@ -53,8 +53,10 @@ O seed de demonstração não roda automaticamente em produção; aplique-o manu
 
 ## Dados pessoais (LGPD)
 
-- `GET /v1/me/export`: cópia dos dados do titular (conta e pedidos). Nunca inclui hash de senha, tokens ou sessões.
-- `DELETE /v1/me` com `{"confirm": "EXCLUIR MINHA CONTA"}`: anonimiza a conta do cliente em um único lote. O pedido é mantido (obrigação fiscal e financeira, art. 16), sem endereço e sem vínculo com dados pessoais; sessões, credenciais, cadastro de cobrança e verificações são apagados e o e-mail vira `excluido-<id>@invalid.local`. Recusa com `409` se houver pedido em andamento e com `403` fora de contas de cliente (equipe, entregador e admin saem pelo administrador).
+- `GET /v1/me/export`: cópia dos dados do titular (conta e **todos** os pedidos, sem o limite de 50 da listagem comum). Nunca inclui hash de senha, tokens ou sessões.
+- `DELETE /v1/me` com `{"confirm": "EXCLUIR MINHA CONTA"}`: anonimiza a conta do cliente em um único lote. O pedido é mantido (obrigação fiscal e financeira, art. 16); em pedidos de entrega o endereço vira um valor fixo (`Endereço removido`, CEP `00000-000`) para o pedido continuar válido no schema `Order`. Sessões, credenciais, o vínculo local com o cadastro de cobrança e as verificações (inclusive tokens de redefinição de senha) são apagados e o e-mail vira `excluido-<id>@invalid.local`. Recusa com `409` se houver pedido em andamento e com `403` fora de contas de cliente (equipe, entregador e admin saem pelo administrador).
+
+**Asaas:** o cadastro do cliente no Asaas (nome, CPF/CNPJ e contato informados no pagamento) **não é removido** pela API: fica retido como registro de cobrança, com prazo definido pelas obrigações fiscais e financeiras. Só o vínculo local é apagado. Se a política exigir a remoção remota, é preciso uma operação própria com o cliente Asaas, tratada antes da anonimização local.
 
 Ainda não há tela no app web nem exclusão de tenant (restaurante): ficam como roadmap da #39.
 

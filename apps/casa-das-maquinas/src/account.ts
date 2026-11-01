@@ -3,6 +3,19 @@ import { createOrdersService } from "./orders.js"
 
 export type AccountResult<T> = { ok: true; value: T } | { ok: false; code: ErrorCode; message: string }
 
+/**
+ * Endereço no lugar do original nos pedidos de entrega anonimizados: o schema `Order` exige endereço em entrega, então
+ * a fila do restaurante continua válida sem expor o endereço real.
+ */
+export const ANONYMIZED_ADDRESS = {
+  street: "Endereço removido",
+  number: "0",
+  district: "-",
+  city: "-",
+  state: "--",
+  postalCode: "00000-000",
+} as const
+
 /** Pedidos nesses estados já terminaram; os demais ainda dependem do vínculo com o cliente. */
 const FINAL_STATUSES = ["delivered", "cancelled"] as const
 
@@ -29,7 +42,7 @@ export function createAccountService(env: Env) {
             role: row.role,
             createdAt: new Date(row.created_at).toISOString(),
           },
-          orders: await createOrdersService(env).listForCustomer(user),
+          orders: await createOrdersService(env).listAllForCustomer(user),
           hasPaymentProfile: profile !== null,
         },
       }
@@ -37,7 +50,8 @@ export function createAccountService(env: Env) {
 
     /**
      * Anonimiza a conta do cliente. Os pedidos ficam (obrigação fiscal e financeira, art. 16 da LGPD), sem endereço e
-     * sem vínculo com dados pessoais; credenciais, sessões e cadastro de cobrança são apagados.
+     * sem vínculo com dados pessoais; credenciais, sessões e o vínculo local com o cadastro de cobrança são apagados.
+     * O cadastro remoto no Asaas fica retido (obrigação fiscal e financeira): ver o README.
      */
     async delete(user: SessionUser): Promise<AccountResult<{ deleted: true }>> {
       if (user.role !== "customer") {
@@ -57,9 +71,16 @@ export function createAccountService(env: Env) {
 
       // Um único lote: ou a conta inteira é anonimizada, ou nada muda.
       await env.DB.batch([
-        env.DB.prepare("update orders set address_json = null where customer_id = ?").bind(user.id),
+        env.DB.prepare("update orders set address_json = ? where customer_id = ? and fulfillment = 'delivery'").bind(
+          JSON.stringify(ANONYMIZED_ADDRESS),
+          user.id,
+        ),
+        env.DB.prepare("update orders set address_json = null where customer_id = ? and fulfillment = 'pickup'").bind(
+          user.id,
+        ),
         env.DB.prepare("delete from asaas_customers where user_id = ?").bind(user.id),
-        env.DB.prepare("delete from verification where identifier = ?").bind(row.email),
+        // Verificação por e-mail (identifier) e tokens de redefinição de senha, que guardam o id do usuário (value).
+        env.DB.prepare("delete from verification where identifier = ? or value = ?").bind(row.email, user.id),
         env.DB.prepare("delete from session where user_id = ?").bind(user.id),
         env.DB.prepare("delete from account where user_id = ?").bind(user.id),
         env.DB.prepare(
