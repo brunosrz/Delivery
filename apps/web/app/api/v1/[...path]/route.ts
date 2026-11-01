@@ -1,7 +1,7 @@
 // Repassa chamadas do navegador à Casa das Máquinas. O navegador fala só com o próprio site (cookie de sessão
 // first-party, sem CORS). Só as rotas que a sacola e o checkout usam passam por aqui.
 
-import { isAllowed } from "@/lib/api-proxy-rules"
+import { forwardedQuery, isAllowed } from "@/lib/api-proxy-rules"
 import { isSameOriginRequest } from "@/lib/origin"
 
 const FORWARDED_REQUEST_HEADERS = ["accept", "content-type", "cookie", "idempotency-key", "sec-gpc", "user-agent"]
@@ -16,7 +16,8 @@ async function proxy(request: Request, { params }: { params: Promise<{ path: str
   const { path } = await params
   if (!isAllowed(request.method, path)) return Response.json({ message: "rota não permitida" }, { status: 404 })
 
-  const target = new URL(`/v1/${path.map(encodeURIComponent).join("/")}`, baseUrl)
+  const query = forwardedQuery(new URL(request.url).searchParams)
+  const target = new URL(`/v1/${path.map(encodeURIComponent).join("/")}${query}`, baseUrl)
   const headers = new Headers()
   for (const name of FORWARDED_REQUEST_HEADERS) {
     const value = request.headers.get(name)

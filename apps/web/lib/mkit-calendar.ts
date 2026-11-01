@@ -89,3 +89,26 @@ export function toIcs(events: readonly MkitEvent[], stamp = "20260101T000000Z"):
   lines.push("END:VCALENDAR")
   return `${lines.join("\r\n")}\r\n`
 }
+
+/** Data própria do restaurante, como vem da API. */
+export type CustomEvent = { id: string; date: string; name: string; recurring: boolean }
+
+export type CalendarEntry = MkitEvent & { source: "national" | "custom"; id?: string }
+
+/**
+ * Calendário do ano: as datas nacionais calculadas somadas às do restaurante. Data recorrente cai no mesmo dia e mês de
+ * todo ano (29/02 só aparece em ano bissexto); data única só vale no ano dela. Ordenado por data.
+ */
+export function mergeCalendar(year: number, custom: readonly CustomEvent[]): CalendarEntry[] {
+  const national: CalendarEntry[] = eventsFor(year).map((event) => ({ ...event, source: "national" }))
+  const own: CalendarEntry[] = []
+  for (const event of custom) {
+    const [eventYear, month, day] = event.date.split("-")
+    if (!event.recurring && Number(eventYear) !== year) continue
+    const date = `${year}-${month}-${day}`
+    // Recusa 29/02 em ano que não é bissexto (a data "vira" 01/03 no Date e deixa de bater).
+    if (new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) !== date) continue
+    own.push({ date, name: event.name, source: "custom", id: event.id })
+  }
+  return [...national, ...own].sort((a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name))
+}

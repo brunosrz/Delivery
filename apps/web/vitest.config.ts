@@ -23,6 +23,8 @@ export default defineConfig({
         "lib/legal/config.ts",
         "lib/legal/index.ts",
         "lib/legal-status.ts",
+        "lib/mkit-share.ts",
+        "lib/mkit-calendar.ts",
       ],
       reporter: ["text", "json-summary"],
       thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
