@@ -46,7 +46,7 @@ export async function signTicket(secret: string, ticket: Omit<LiveTicket, "exp">
 export async function verifyTicket(secret: string, token: string, now = Date.now()): Promise<LiveTicket | null> {
   const [payload, signature, extra] = token.split(".")
   if (!payload || !signature || extra !== undefined) return null
-  let valid = false
+  let valid: boolean
   try {
     valid = await crypto.subtle.verify("HMAC", await hmacKey(secret), fromBase64url(signature), encoder.encode(payload))
   } catch {
