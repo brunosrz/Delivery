@@ -42,7 +42,8 @@ export async function runOutbox(
     try {
       const event = JSON.parse(job.payload) as Omit<LiveEvent, "seq">
       await env.RESTAURANT_ROOM.getByName(job.restaurant_id).publish(event)
-      await env.DB.prepare("update outbox_jobs set status = 'done', updated_at = ? where id = ?")
+      // Condicionado a `pending`: um job já encerrado por outra execução nunca é reaberto nem sobrescrito.
+      await env.DB.prepare("update outbox_jobs set status = 'done', updated_at = ? where id = ? and status = 'pending'")
         .bind(now.toISOString(), job.id)
         .run()
       outcome.published += 1
@@ -50,7 +51,7 @@ export async function runOutbox(
       const attempts = job.attempts + 1
       const dead = attempts >= MAX_ATTEMPTS
       await env.DB.prepare(
-        "update outbox_jobs set attempts = ?, status = ?, last_error = ?, updated_at = ? where id = ?",
+        "update outbox_jobs set attempts = ?, status = ?, last_error = ?, updated_at = ? where id = ? and status = 'pending'",
       )
         .bind(attempts, dead ? "dead" : "pending", redact(String(error)).slice(0, 300), now.toISOString(), job.id)
         .run()

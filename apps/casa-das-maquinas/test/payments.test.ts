@@ -290,6 +290,29 @@ describe("POST /v1/webhooks/asaas", () => {
     expect(await paymentStatusOf(order.id)).toBe("paid")
   })
 
+  it("eventos DIFERENTES e simultâneos (pago e vencido) terminam em pago, sem consumir evento não aplicado", async () => {
+    const { order, chargeId } = await orderWithCharge()
+    const responses = await Promise.all([
+      webhook(event("evt_conc_paid", "PAYMENT_RECEIVED", { id: chargeId, value: 75.8 })),
+      webhook(event("evt_conc_over", "PAYMENT_OVERDUE", { id: chargeId })),
+      webhook(event("evt_conc_paid2", "PAYMENT_CONFIRMED", { id: chargeId, value: 75.8 })),
+    ])
+    for (const response of responses) expect(response.status).toBe(200)
+
+    // failed -> paid é válido e paid -> failed não: qualquer ordem de chegada converge para pago.
+    expect(await paymentStatusOf(order.id)).toBe("paid")
+
+    // Cada evento fica registrado no máximo uma vez, e só os aplicados ou ignorados de forma definitiva.
+    const events = await env.DB.prepare(
+      "select event_id as id from payment_webhook_events where provider_charge_id = ? order by event_id",
+    )
+      .bind(chargeId)
+      .all<{ id: string }>()
+    const ids = events.results.map((row) => row.id)
+    expect(new Set(ids).size).toBe(ids.length)
+    expect(ids).toEqual(expect.arrayContaining(["evt_conc_paid"]))
+  })
+
   it("estorno só vale depois do pagamento; antes disso o evento é reconhecido e ignorado", async () => {
     const { order, chargeId } = await orderWithCharge()
     expect((await webhook(event("evt_ref_early", "PAYMENT_REFUNDED", { id: chargeId }))).status).toBe(200)

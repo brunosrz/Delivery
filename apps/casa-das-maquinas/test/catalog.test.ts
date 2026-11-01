@@ -65,6 +65,34 @@ describe("GET /v1/restaurants/:slug/menu", () => {
     expect(carne?.addonGroups).toEqual([])
   })
 
+  it("marca o produto como indisponível quando um grupo obrigatório não tem opções", async () => {
+    await env.DB.prepare(
+      "insert into addon_groups (id, restaurant_id, product_id, name, min_selections, max_selections) values ('grp_obrig_vazio', 'rest_pizzaria', 'prod_pz_refri', 'Obrigatório sem opções', 1, 1)",
+    ).run()
+    const response = await call("/v1/restaurants/pizzaria-da-praca/menu")
+    expect(response.status).toBe(200)
+    const { data } = envelope(Menu).parse(await response.json())
+    const product = data?.sections.flatMap((section) => section.products).find((item) => item.id === "prod_pz_refri")
+    expect(product?.available).toBe(false)
+    // O grupo inviável não é publicado (quebraria o contrato), mas o produto fica indisponível.
+    expect(product?.addonGroups.map((group) => group.id)).not.toContain("grp_obrig_vazio")
+  })
+
+  it("marca o produto como indisponível quando as opções disponíveis não bastam para o mínimo", async () => {
+    await env.DB.batch([
+      env.DB.prepare(
+        "insert into addon_groups (id, restaurant_id, product_id, name, min_selections, max_selections) values ('grp_min2', 'rest_pizzaria', 'prod_pz_frango', 'Escolha 2', 2, 2)",
+      ),
+      env.DB.prepare(
+        "insert into addon_options (id, restaurant_id, group_id, name, price_cents, available) values ('opt_min2_a', 'rest_pizzaria', 'grp_min2', 'A', 0, 1), ('opt_min2_b', 'rest_pizzaria', 'grp_min2', 'B', 0, 0)",
+      ),
+    ])
+    const { data } = envelope(Menu).parse(await (await call("/v1/restaurants/pizzaria-da-praca/menu")).json())
+    const product = data?.sections.flatMap((section) => section.products).find((item) => item.id === "prod_pz_frango")
+    expect(product?.available).toBe(false)
+    expect(product?.addonGroups.map((group) => group.id)).toContain("grp_min2")
+  })
+
   it("responde 404 no envelope para restaurante inexistente", async () => {
     const response = await call("/v1/restaurants/nao-existe/menu")
     expect(response.status).toBe(404)

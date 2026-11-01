@@ -80,3 +80,48 @@ describe("GET /v1/courier/orders", () => {
     expect((await list(courier.cookie)).orders.map((item) => item.id)).not.toContain(order.id)
   })
 })
+
+describe("escopo do entregador em leitura e transição por id", () => {
+  const read = (cookie: string, orderId: string) => send("GET", `/v1/orders/${orderId}`, cookie)
+  const send = (method: string, path: string, cookie: string) => call(path, { method, headers: { cookie } })
+
+  it("não enxerga pedido que ainda não está pronto, nem retirada", async () => {
+    const customer = await newUser()
+    const courier = await newUser("courier")
+    const created = await postJson("/v1/orders", orderBody, {
+      cookie: customer.cookie,
+      "idempotency-key": `chave-${crypto.randomUUID()}`,
+    })
+    const order = envelope(Order).parse(await created.json()).data as Order
+    expect((await read(courier.cookie, order.id)).status).toBe(404)
+    expect((await move(courier.cookie, order.id, "dispatched")).status).toBe(404)
+
+    const pickup = await postJson(
+      "/v1/orders",
+      { ...orderBody, fulfillment: "pickup", address: undefined, expectedTotalCents: 3790 },
+      { cookie: customer.cookie, "idempotency-key": `chave-${crypto.randomUUID()}` },
+    )
+    const pickupOrder = envelope(Order).parse(await pickup.json()).data as Order
+    expect((await read(courier.cookie, pickupOrder.id)).status).toBe(404)
+  })
+
+  it("vê a entrega pronta e, depois de despachar, só quem despachou continua vendo e entregando", async () => {
+    const { order } = await readyOrder()
+    const courier = await newUser("courier")
+    const other = await newUser("courier")
+
+    expect((await read(courier.cookie, order.id)).status).toBe(200)
+    expect((await read(other.cookie, order.id)).status).toBe(200)
+
+    expect((await move(courier.cookie, order.id, "dispatched")).status).toBe(200)
+    expect((await read(courier.cookie, order.id)).status).toBe(200)
+    // Outro entregador não lê nem conclui a entrega alheia.
+    expect((await read(other.cookie, order.id)).status).toBe(404)
+    expect((await move(other.cookie, order.id, "delivered")).status).toBe(404)
+
+    expect((await move(courier.cookie, order.id, "delivered")).status).toBe(200)
+    // Entregue: continua visível só para quem a despachou.
+    expect((await read(courier.cookie, order.id)).status).toBe(200)
+    expect((await read(other.cookie, order.id)).status).toBe(404)
+  })
+})
