@@ -1,6 +1,6 @@
 import { Order, envelope } from "@delivery/contracts"
 import { env } from "cloudflare:workers"
-import { describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it } from "vitest"
 import { MAX_ATTEMPTS, runOutbox } from "../src/jobs"
 import { newUser, postJson } from "./helpers"
 
@@ -20,6 +20,31 @@ const jobsOf = (orderId: string) =>
     .all<{ status: string; attempts: number; lastError: string | null; payload: string }>()
     .then((result) => result.results)
 
+/**
+ * `env` cuja publicação só prossegue depois que `parties` execuções chegaram a ela. Como cada `runOutbox` já leu o job
+ * como pendente antes de publicar, isso força a sobreposição das atualizações; não depende da ordem do agendador.
+ */
+function overlapping(parties: number, outcome: "publish" | "fail") {
+  let arrived = 0
+  let release: () => void = () => undefined
+  const gate = new Promise<void>((resolve) => (release = resolve))
+  const room = {
+    getByName: (name: string) => ({
+      publish: async (event: never) => {
+        arrived += 1
+        if (arrived >= parties) release()
+        await gate
+        if (outcome === "fail") throw new Error("falha simulada")
+        return env.RESTAURANT_ROOM.getByName(name).publish(event)
+      },
+    }),
+  }
+  const wrapped = new Proxy(env, {
+    get: (target, key) => (key === "RESTAURANT_ROOM" ? room : Reflect.get(target, key)),
+  })
+  return { env: wrapped as typeof env, arrived: () => arrived }
+}
+
 async function insertJob(orderId: string, payload: string, createdAt = "2026-01-01T00:00:00.000Z") {
   await env.DB.prepare(
     "insert into outbox_jobs (id, restaurant_id, order_id, payload, created_at, updated_at) values (?, 'rest_burger', ?, ?, ?, ?)",
@@ -29,6 +54,11 @@ async function insertJob(orderId: string, payload: string, createdAt = "2026-01-
 }
 
 describe("caixa de saída de eventos", () => {
+  // Os testes executam o cron sem idade mínima: o que sobra pendente de um teste não pode contaminar o próximo.
+  afterEach(async () => {
+    await env.DB.prepare("update outbox_jobs set status = 'done' where status = 'pending'").run()
+  })
+
   it("o pedido grava o job na mesma transação e a publicação imediata o encerra", async () => {
     const { cookie } = await newUser()
     const response = await postJson("/v1/orders", orderBody, {
@@ -107,5 +137,78 @@ describe("caixa de saída de eventos", () => {
       failed: 0,
       dead: 0,
     })
+  })
+
+  it("registra a falha no log com as tentativas gravadas no banco", async () => {
+    const orderId = `log-${crypto.randomUUID()}`
+    await insertJob(orderId, "payload inválido")
+    const lines: string[] = []
+    await runOutbox(env, { minAgeMs: 0, log: (line) => lines.push(line) })
+    const entries = lines.map((line) => JSON.parse(line)).filter((entry) => entry.orderId === orderId)
+    expect(entries).toEqual([expect.objectContaining({ event: "outbox_job_retry", attempts: 1 })])
+  })
+
+  it("duas execuções simultâneas publicam o mesmo job uma única vez", async () => {
+    const orderId = `duplo-${crypto.randomUUID()}`
+    await insertJob(orderId, JSON.stringify({ type: "order.updated", orderId, status: "ready", at: "2026-01-02" }))
+    const overlap = overlapping(2, "publish")
+    const results = await Promise.all([
+      runOutbox(overlap.env, { minAgeMs: 0 }),
+      runOutbox(overlap.env, { minAgeMs: 0 }),
+    ])
+    // As duas execuções chegaram a publicar o mesmo job pendente; só uma o encerrou.
+    expect(overlap.arrived()).toBe(2)
+    expect(results.reduce((sum, result) => sum + result.published, 0)).toBe(1)
+    expect((await jobsOf(orderId))[0]).toMatchObject({ status: "done", attempts: 0 })
+  })
+
+  it("duas falhas simultâneas somam as duas tentativas, sem perder contagem", async () => {
+    const orderId = `falha-dupla-${crypto.randomUUID()}`
+    await insertJob(orderId, JSON.stringify({ type: "order.updated", orderId, status: "ready", at: "2026-01-03" }))
+    const overlap = overlapping(2, "fail")
+    const results = await Promise.all([
+      runOutbox(overlap.env, { minAgeMs: 0, log: () => undefined }),
+      runOutbox(overlap.env, { minAgeMs: 0, log: () => undefined }),
+    ])
+    // Ambas leram attempts = 0 e falharam ao mesmo tempo: o banco soma as duas, não grava 1 duas vezes.
+    expect(overlap.arrived()).toBe(2)
+    expect(results.reduce((sum, result) => sum + result.failed, 0)).toBe(2)
+    expect((await jobsOf(orderId))[0]).toMatchObject({ status: "pending", attempts: 2 })
+  })
+
+  it("job fechado durante a execução não vira falha nem entra no log", async () => {
+    const orderId = `fechado-${crypto.randomUUID()}`
+    await insertJob(orderId, "payload inválido")
+    const lines: string[] = []
+    const [result] = await Promise.all([
+      runOutbox(env, { minAgeMs: 0, log: (line) => lines.push(line) }),
+      env.DB.prepare("update outbox_jobs set status = 'done' where order_id = ? and status = 'pending'")
+        .bind(orderId)
+        .run(),
+    ])
+    const [job] = await jobsOf(orderId)
+    const logged = lines.filter((line) => JSON.parse(line).orderId === orderId)
+    if (job?.status === "done") {
+      // O fechamento venceu: o job continua encerrado e a falha não é contada nem registrada.
+      expect(job.attempts).toBe(0)
+      expect(logged).toHaveLength(0)
+    } else {
+      expect(job).toMatchObject({ status: "pending", attempts: 1 })
+      expect(logged).toHaveLength(1)
+    }
+    expect(result.dead).toBe(0)
+  })
+
+  it("job que chega ao limite vira dead na mesma instrução e entra no log como dead", async () => {
+    const orderId = `limite-${crypto.randomUUID()}`
+    await insertJob(orderId, "payload inválido")
+    await env.DB.prepare("update outbox_jobs set attempts = ? where order_id = ?")
+      .bind(MAX_ATTEMPTS - 1, orderId)
+      .run()
+    const lines: string[] = []
+    expect(await runOutbox(env, { minAgeMs: 0, log: (line) => lines.push(line) })).toMatchObject({ dead: 1 })
+    expect((await jobsOf(orderId))[0]).toMatchObject({ status: "dead", attempts: MAX_ATTEMPTS })
+    const entries = lines.map((line) => JSON.parse(line)).filter((entry) => entry.orderId === orderId)
+    expect(entries).toEqual([expect.objectContaining({ event: "outbox_job_dead", attempts: MAX_ATTEMPTS })])
   })
 })

@@ -83,14 +83,35 @@ function actorFor(user: SessionUser, order: OrderRow): TransitionActor | null {
   return null
 }
 
+/** Dono, equipe do restaurante ou administração. O entregador tem regra própria (ver `courierCanSee`). */
 function canRead(user: SessionUser, order: OrderRow): boolean {
-  return order.customerId === user.id || canManageRestaurant(user, order.restaurantId) || user.role === "courier"
+  return order.customerId === user.id || canManageRestaurant(user, order.restaurantId)
 }
 
 export function createOrdersService(env: Env) {
   const db = drizzle(env.DB, { schema: ordersSchema })
   const catalog = createCatalogRepository(env.DB)
   const payments = createPaymentsService(env)
+
+  /**
+   * Escopo do entregador: entregas prontas para sair (fila global, por escolha do produto) e as que ele mesmo
+   * despachou, inclusive depois de entregues. Pedidos em outros estados, retiradas e entregas de outro entregador
+   * ficam invisíveis (404), tanto na leitura quanto na transição.
+   */
+  async function courierCanSee(user: SessionUser, row: OrderRow): Promise<boolean> {
+    if (user.role !== "courier" || row.fulfillment !== "delivery") return false
+    if (row.status === "ready") return true
+    const dispatchedByMe = await env.DB.prepare(
+      "select 1 as ok from order_events where order_id = ? and status = 'dispatched' and actor_id = ? limit 1",
+    )
+      .bind(row.id, user.id)
+      .first<{ ok: number }>()
+    return dispatchedByMe !== null
+  }
+
+  async function canAccess(user: SessionUser, row: OrderRow): Promise<boolean> {
+    return canRead(user, row) || (await courierCanSee(user, row))
+  }
 
   async function chargeFor(orderId: string): Promise<Charge | undefined> {
     const row = await payments.chargeForOrder(orderId)
@@ -229,7 +250,7 @@ export function createOrdersService(env: Env) {
     /** Pedido visível ao dono, à equipe do restaurante, a entregadores e à administração; os demais recebem 404. */
     async get(user: SessionUser, orderId: string): Promise<ServiceResult<Order>> {
       const [row] = await db.select().from(ordersSchema.orders).where(eq(ordersSchema.orders.id, orderId)).limit(1)
-      if (!row || !canRead(user, row)) return failure("not_found", "pedido não encontrado")
+      if (!row || !(await canAccess(user, row))) return failure("not_found", "pedido não encontrado")
       return { ok: true, value: await present(row) }
     },
 
@@ -324,7 +345,7 @@ export function createOrdersService(env: Env) {
       request: StatusTransitionRequest,
     ): Promise<ServiceResult<Order>> {
       const [row] = await db.select().from(ordersSchema.orders).where(eq(ordersSchema.orders.id, orderId)).limit(1)
-      if (!row || !canRead(user, row)) return failure("not_found", "pedido não encontrado")
+      if (!row || !(await canAccess(user, row))) return failure("not_found", "pedido não encontrado")
 
       const actor = actorFor(user, row)
       if (!actor) return failure("forbidden", "sem permissão para alterar este pedido")
