@@ -1,9 +1,12 @@
 import {
   API_VERSION,
+  AccountExport,
   ContactReceipt,
   ContactRequest,
   CreateMkitMaterial,
   CreateOrderRequest,
+  DeleteAccountRequest,
+  DeleteAccountResult,
   Id,
   MkitMaterial,
   MkitMetrics,
@@ -26,6 +29,7 @@ import { createMiddleware } from "hono/factory"
 import { canManageRestaurant, createAuth, getSessionUser } from "./auth.js"
 import { type AppEnv, accessLog, created, fail, logError, ok, requestId } from "./http.js"
 import { type LiveScope, signTicket, verifyTicket } from "./live-ticket.js"
+import { createAccountService } from "./account.js"
 import { receiveContact } from "./contact.js"
 import { markPublished, runOutbox } from "./jobs.js"
 import { pruneRateLimits, rateLimit } from "./rate-limit.js"
@@ -94,6 +98,7 @@ const withSession = createMiddleware<AppEnv>(async (c, next) => {
   await next()
 })
 app.use("/v1/me", withSession)
+app.use("/v1/me/*", withSession)
 app.use("/v1/manage/*", withSession)
 app.use("/v1/courier/*", withSession)
 app.use("/v1/orders", withSession)
@@ -186,6 +191,52 @@ app.openapi(
     const user = c.get("user")
     if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
     return ok(c, user)
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "get",
+    path: "/v1/me/export",
+    responses: {
+      200: { content: { "application/json": { schema: envelope(AccountExport) } }, description: "Dados do titular" },
+      401: errorResponse,
+      404: errorResponse,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const result = await createAccountService(c.env).export(user)
+    if (!result.ok) return fail(c, result.code as "not_found", result.message)
+    return ok(c, result.value)
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "delete",
+    path: "/v1/me",
+    request: { body: { content: { "application/json": { schema: DeleteAccountRequest } }, required: true } },
+    responses: {
+      200: {
+        content: { "application/json": { schema: envelope(DeleteAccountResult) } },
+        description: "Conta anonimizada",
+      },
+      400: errorResponse,
+      401: errorResponse,
+      403: errorResponse,
+      404: errorResponse,
+      409: errorResponse,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    c.req.valid("json")
+    const result = await createAccountService(c.env).delete(user)
+    if (!result.ok) return fail(c, result.code as "forbidden" | "conflict" | "not_found", result.message)
+    return ok(c, result.value)
   },
 )
 
