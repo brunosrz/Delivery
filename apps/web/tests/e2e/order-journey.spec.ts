@@ -6,6 +6,7 @@ import { expect, test, type APIRequestContext } from "@playwright/test"
 // entregador dependem de vínculo no banco e ficam nos testes do Worker (courier.test.ts e orders.test.ts).
 
 const uniqueEmail = () => `jornada-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.test`
+const testIp = () => `198.51.100.${Math.floor(Math.random() * 250) + 1}`
 
 // Burger clássico (32,90) + ao ponto + bacon (5,00) = 37,90 por unidade; entrega R$ 5,90.
 const item = { productId: "prod_bg_classico", quantity: 2, addonOptionIds: ["opt_bg_ponto", "opt_bg_bacon"] }
@@ -19,9 +20,9 @@ const address = {
 }
 const TOTAL = 2 * 3790 + 590
 
-async function signUp(request: APIRequestContext, baseURL: string) {
+async function signUp(request: APIRequestContext, baseURL: string, ip: string) {
   const response = await request.post("/api/auth/sign-up/email", {
-    headers: { origin: baseURL },
+    headers: { origin: baseURL, "cf-connecting-ip": ip },
     data: { email: uniqueEmail(), password: "senha-forte-123", name: "Cliente Jornada" },
   })
   expect(response.status()).toBe(200)
@@ -30,7 +31,7 @@ async function signUp(request: APIRequestContext, baseURL: string) {
 const key = () => `e2e-${crypto.randomUUID()}`
 
 test.describe("jornada do pedido pela API", () => {
-  test.beforeEach(async ({ request, baseURL }) => signUp(request, baseURL ?? ""))
+  test.beforeEach(async ({ request, baseURL }) => signUp(request, baseURL ?? "", testIp()))
 
   test("cota, cria o pedido, repete a mesma chave sem duplicar e lê a linha do tempo", async ({ request }) => {
     const quote = await request.post("/api/v1/quotes", {
