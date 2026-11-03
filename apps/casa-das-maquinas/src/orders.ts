@@ -252,6 +252,9 @@ export function createOrdersService(env: Env) {
     async get(user: SessionUser, orderId: string): Promise<ServiceResult<Order>> {
       const [row] = await db.select().from(ordersSchema.orders).where(eq(ordersSchema.orders.id, orderId)).limit(1)
       if (!row || !(await canAccess(user, row))) return failure("not_found", "pedido não encontrado")
+      if (user.role === "restaurant_staff" && (await isTenantSuspended(env, row.restaurantId))) {
+        return failure("not_found", "pedido não encontrado")
+      }
       return { ok: true, value: await present(row) }
     },
 

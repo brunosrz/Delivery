@@ -126,20 +126,18 @@ app.use("/v1/live/tickets", withSession)
 // Limites por janela de 1 minuto. Auth e cotação são públicas (por IP); o resto vale por usuário da sessão.
 app.use("/api/auth/*", rateLimit({ scope: "auth", limit: 20, windowSeconds: 60 }))
 app.use("/v1/quotes", rateLimit({ scope: "quotes", limit: 60, windowSeconds: 60 }))
-app.use("/v1/orders", rateLimit({ scope: "orders", limit: 15, windowSeconds: 60 }))
+app.on("POST", "/v1/orders", rateLimit({ scope: "orders", limit: 15, windowSeconds: 60 }))
 app.use("/v1/orders/:orderId/payment", rateLimit({ scope: "payment", limit: 10, windowSeconds: 60 }))
 app.use("/v1/orders/:orderId/transitions", rateLimit({ scope: "transitions", limit: 120, windowSeconds: 60 }))
 app.use("/v1/live/tickets", rateLimit({ scope: "tickets", limit: 30, windowSeconds: 60 }))
 // Privacidade: baixa cota nas operações do titular (exportar e excluir), mais folgada no registro de consentimento.
 app.on("GET", "/v1/me/export", rateLimit({ scope: "export", limit: 10, windowSeconds: 60 }))
 app.on("DELETE", "/v1/me", rateLimit({ scope: "erase", limit: 5, windowSeconds: 60 }))
-app.on(
-  "POST",
+app.use(
   "/v1/admin/restaurants/:restaurantId/suspend",
   rateLimit({ scope: "tenant-admin", limit: 10, windowSeconds: 60 }),
 )
-app.on(
-  "POST",
+app.use(
   "/v1/admin/restaurants/:restaurantId/restore",
   rateLimit({ scope: "tenant-admin", limit: 10, windowSeconds: 60 }),
 )

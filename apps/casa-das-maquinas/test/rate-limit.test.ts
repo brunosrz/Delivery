@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers"
 import { describe, expect, it } from "vitest"
 import { pruneRateLimits } from "../src/rate-limit"
-import { newUser, postJson } from "./helpers"
+import { call, newUser, postJson } from "./helpers"
 
 const QUOTES_LIMIT = 60
 const ORDERS_LIMIT = 15
@@ -38,6 +38,41 @@ describe("limite de requisições", () => {
     for (let n = 0; n < ORDERS_LIMIT; n++) expect((await create(first.cookie)).status).toBe(400)
     expect((await create(first.cookie)).status).toBe(429)
     expect((await create(second.cookie)).status).toBe(400)
+  })
+
+  it("não consome a cota de criação com leituras de pedidos", async () => {
+    const customer = await newUser()
+    const cookie = customer.cookie
+    for (let n = 0; n < ORDERS_LIMIT + 5; n++) {
+      expect((await call("/v1/orders", { headers: { cookie } })).status).toBe(200)
+    }
+    expect((await postJson("/v1/orders", {}, { cookie })).status).toBe(400)
+  })
+
+  it("limita ações administrativas de tenant com 429 e Retry-After", async () => {
+    const admin = await newUser("admin")
+    const ip = ipOf()
+    for (let n = 0; n < 11; n++) {
+      const response = await postJson(
+        "/v1/admin/restaurants/rest_burger/suspend",
+        {},
+        {
+          cookie: admin.cookie,
+          "cf-connecting-ip": ip,
+        },
+      )
+      expect(response.status).toBe(n === 0 ? 200 : n === 10 ? 429 : 409)
+    }
+    const limited = await postJson(
+      "/v1/admin/restaurants/rest_burger/restore",
+      {},
+      {
+        cookie: admin.cookie,
+        "cf-connecting-ip": ip,
+      },
+    )
+    expect(limited.status).toBe(429)
+    expect(Number(limited.headers.get("retry-after"))).toBeGreaterThanOrEqual(1)
   })
 
   it("não grava o IP: a chave é um hash", async () => {

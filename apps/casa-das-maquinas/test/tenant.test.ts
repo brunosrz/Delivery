@@ -149,6 +149,8 @@ describe("suspensão", () => {
     ).toBe(200)
     // O cliente continua vendo o próprio pedido.
     expect((await call(`/v1/orders/${order.id}`, { headers: { cookie: customer.cookie } })).status).toBe(200)
+    expect((await call(`/v1/orders/${order.id}`, { headers: { cookie: staff.cookie } })).status).toBe(404)
+    expect((await call(`/v1/orders/${order.id}`, { headers: { cookie: admin.cookie } })).status).toBe(200)
   })
 
   it("cancela os jobs pendentes da caixa de saída e deixa os de outros restaurantes", async () => {
@@ -250,11 +252,14 @@ describe("remoção definitiva depois do prazo", () => {
   it("depois dos 30 dias remove cardápio, MKit e equipe, deixa o marcador e não dá mais para restaurar", async () => {
     const admin = await newUser("admin")
     const id = await createTenant()
+    const now = Date.now()
     expect(await tenantRows(id)).toEqual(FULL)
     await suspend(admin.cookie, id)
-    await markDeleted(id, TENANT_GRACE_DAYS + 1)
+    await env.DB.prepare("update restaurants set deleted_at = ? where id = ?")
+      .bind(new Date(now - (TENANT_GRACE_DAYS + 1) * DAY).toISOString(), id)
+      .run()
 
-    expect(await purgeSuspendedTenants(env)).toBeGreaterThanOrEqual(1)
+    expect(await purgeSuspendedTenants(env, now)).toBeGreaterThanOrEqual(1)
 
     expect(await tenantRows(id)).toEqual(EMPTY)
     const marker = await env.DB.prepare("select purged_at, deleted_at from restaurants where id = ?").bind(id).first<{
@@ -282,6 +287,128 @@ describe("remoção definitiva depois do prazo", () => {
     expect(await tenantRows(removed)).toEqual(EMPTY)
   })
 
+  it("não restaura depois do prazo de 30 dias", async () => {
+    const admin = await newUser("admin")
+    const id = await createTenant()
+    await suspend(admin.cookie, id)
+    await markDeleted(id, TENANT_GRACE_DAYS + 1)
+    expect((await restore(admin.cookie, id)).status).toBe(409)
+    expect(await count("select count(*) as n from restaurants where id = ? and deleted_at is not null", id)).toBe(1)
+  })
+
+  it("não apaga dados se a restauração vencer a corrida com a purga", async () => {
+    const admin = await newUser("admin")
+    const id = await createTenant()
+    await suspend(admin.cookie, id)
+    await markDeleted(id, TENANT_GRACE_DAYS - 1)
+    // Um restore concorrente confirmado depois da seleção da lista torna o batch obsoleto.
+    const originalAll = env.DB.prepare.bind(env.DB)
+    let restoreOnSelection = true
+    const db = new Proxy(env.DB, {
+      get(target, property) {
+        if (property === "prepare")
+          return (sql: string) => {
+            const statement = originalAll(sql)
+            if (!sql.startsWith("select id from restaurants where deleted_at")) return statement
+            return new Proxy(statement, {
+              get(query, queryProperty) {
+                if (queryProperty === "all")
+                  return async (...args: Parameters<D1PreparedStatement["all"]>) => {
+                    const selected = await statement.all(...args)
+                    if (restoreOnSelection) {
+                      restoreOnSelection = false
+                      await restore(admin.cookie, id)
+                    }
+                    return selected
+                  }
+                const value = Reflect.get(query, queryProperty, query)
+                return typeof value === "function" ? value.bind(query) : value
+              },
+            })
+          }
+        const value = Reflect.get(target, property, target)
+        return typeof value === "function" ? value.bind(target) : value
+      },
+    }) as D1Database
+    expect(await purgeSuspendedTenants({ ...env, DB: db })).toBe(0)
+    expect(await tenantRows(id)).toEqual(FULL)
+  })
+
+  it("continua a purga dos demais tenants quando um batch de remoção falha", async () => {
+    const admin = await newUser("admin")
+    const first = await createTenant()
+    const second = await createTenant()
+    await suspend(admin.cookie, first)
+    await suspend(admin.cookie, second)
+    const now = Date.now()
+    const cutoff = new Date(now - (TENANT_GRACE_DAYS + 1) * DAY).toISOString()
+    await env.DB.batch([
+      env.DB.prepare("update restaurants set deleted_at = ? where id = ?").bind(cutoff, first),
+      env.DB.prepare("update restaurants set deleted_at = ? where id = ?").bind(cutoff, second),
+    ])
+    const originalBatch = env.DB.batch.bind(env.DB)
+    let failOnce = true
+    const db = new Proxy(env.DB, {
+      get(target, property) {
+        if (property === "batch")
+          return (...args: Parameters<D1Database["batch"]>) => {
+            if (failOnce) {
+              failOnce = false
+              return Promise.resolve().then(() => {
+                throw new Error("falha simulada no batch")
+              })
+            }
+            return originalBatch(...args)
+          }
+        const value = Reflect.get(target, property, target)
+        return typeof value === "function" ? value.bind(target) : value
+      },
+    }) as D1Database
+    expect(await purgeSuspendedTenants({ ...env, DB: db }, now)).toBe(1)
+    const purged = await count(
+      "select count(*) as n from restaurants where id in (?, ?) and purged_at is not null",
+      first,
+      second,
+    )
+    expect(purged).toBe(1)
+  })
+
+  it("retenta no próximo ciclo quando destroy falha", async () => {
+    const admin = await newUser("admin")
+    const id = await createTenant()
+    await suspend(admin.cookie, id)
+    const now = Date.now()
+    await env.DB.prepare("update restaurants set deleted_at = ? where id = ?")
+      .bind(new Date(now - (TENANT_GRACE_DAYS + 1) * DAY).toISOString(), id)
+      .run()
+    let failDestroy = true
+    const rooms = new Proxy(env.RESTAURANT_ROOM, {
+      get(target, property) {
+        if (property === "getByName")
+          return (name: string) => {
+            const room = target.getByName(name)
+            if (!failDestroy) return room
+            return new Proxy(room, {
+              get(object, key) {
+                if (key === "destroy")
+                  return async () => {
+                    throw new Error("falha simulada")
+                  }
+                const value = Reflect.get(object, key, object)
+                return typeof value === "function" ? value.bind(object) : value
+              },
+            })
+          }
+        return Reflect.get(target, property, target)
+      },
+    }) as DurableObjectNamespace<import("../src/restaurant-room").RestaurantRoom>
+    expect(await purgeSuspendedTenants({ ...env, RESTAURANT_ROOM: rooms }, now)).toBe(0)
+    expect(await tenantRows(id)).toEqual(FULL)
+    failDestroy = false
+    expect(await purgeSuspendedTenants({ ...env, RESTAURANT_ROOM: rooms }, now)).toBe(1)
+    expect(await tenantRows(id)).toEqual(EMPTY)
+  })
+
   it("limpa o histórico de eventos do objeto durável do restaurante", async () => {
     const admin = await newUser("admin")
     const id = await createTenant()
@@ -306,16 +433,34 @@ describe("remoção definitiva depois do prazo", () => {
   it("os pedidos do restaurante removido ficam guardados e o cliente ainda os vê", async () => {
     const admin = await newUser("admin")
     const customer = await newUser()
-    const order = await placeOrder(customer.cookie)
-    await suspend(admin.cookie, "rest_burger")
-    await markDeleted("rest_burger", TENANT_GRACE_DAYS + 1)
+    const staff = await newUser({ staffOf: "rest_burger" })
+    const id = await createTenant()
+    const productId = `${id}_prod`
+    const orderResponse = await postJson(
+      "/v1/orders",
+      {
+        restaurantId: id,
+        fulfillment: "pickup",
+        items: [{ productId, quantity: 1, addonOptionIds: [] }],
+        paymentMethod: "cash",
+        expectedTotalCents: 1000,
+      },
+      { cookie: customer.cookie, "idempotency-key": `chave-${crypto.randomUUID()}` },
+    )
+    expect(orderResponse.status).toBe(201)
+    const order = envelope(Order).parse(await orderResponse.json()).data
+    if (!order) throw new Error("pedido criado sem dados")
+    await suspend(admin.cookie, id)
+    expect((await call(`/v1/orders/${order.id}`, { headers: { cookie: staff.cookie } })).status).toBe(404)
+    expect((await call(`/v1/orders/${order.id}`, { headers: { cookie: admin.cookie } })).status).toBe(200)
+    await markDeleted(id, TENANT_GRACE_DAYS + 1)
 
     await purgeSuspendedTenants(env)
 
     expect(await count("select count(*) as n from orders where id = ?", order.id)).toBe(1)
-    expect(
-      await count("select count(*) as n from restaurants where id = 'rest_burger' and purged_at is not null"),
-    ).toBe(1)
+    expect(await count("select count(*) as n from restaurants where id = ? and purged_at is not null", id)).toBe(1)
     expect((await call(`/v1/orders/${order.id}`, { headers: { cookie: customer.cookie } })).status).toBe(200)
+    expect((await call(`/v1/orders/${order.id}`, { headers: { cookie: staff.cookie } })).status).toBe(404)
+    expect((await call(`/v1/orders/${order.id}`, { headers: { cookie: admin.cookie } })).status).toBe(200)
   })
 })

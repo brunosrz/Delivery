@@ -74,9 +74,16 @@ export function createTenantService(env: Env) {
       if (row.purged_at)
         return { ok: false, code: "conflict", message: "os dados deste restaurante já foram removidos" }
       if (!row.deleted_at) return { ok: false, code: "conflict", message: "restaurante não está excluído" }
-      await env.DB.prepare("update restaurants set deleted_at = null, updated_at = ? where id = ?")
-        .bind(new Date().toISOString(), restaurantId)
+      const now = new Date().toISOString()
+      const restoreCutoff = new Date(Date.now() - TENANT_GRACE_DAYS * DAY_MS).toISOString()
+      const result = await env.DB.prepare(
+        "update restaurants set deleted_at = null, updated_at = ? where id = ? and deleted_at = ? and deleted_at >= ? and purged_at is null",
+      )
+        .bind(now, restaurantId, row.deleted_at, restoreCutoff)
         .run()
+      if (result.meta.changes !== 1) {
+        return { ok: false, code: "conflict", message: "prazo de restauração expirado ou restaurante já processado" }
+      }
       return { ok: true, value: { restaurantId } }
     },
   }
@@ -109,21 +116,44 @@ export async function purgeSuspendedTenants(env: Env, now = Date.now()): Promise
       )
       continue
     }
-    await env.DB.batch([
-      // Cardápio: as seções levam produtos, grupos e opções em cascata.
-      env.DB.prepare("delete from menu_sections where restaurant_id = ?").bind(id),
-      env.DB.prepare("delete from opening_hours where restaurant_id = ?").bind(id),
-      env.DB.prepare("delete from mkit_materials where restaurant_id = ?").bind(id),
-      env.DB.prepare("delete from mkit_calendar_events where restaurant_id = ?").bind(id),
-      env.DB.prepare("delete from mkit_categories where restaurant_id = ?").bind(id),
-      env.DB.prepare("delete from restaurant_members where restaurant_id = ?").bind(id),
-      env.DB.prepare("update restaurants set purged_at = ?, updated_at = ? where id = ?").bind(
-        new Date(now).toISOString(),
-        new Date(now).toISOString(),
-        id,
-      ),
-    ])
-    purged += 1
+    try {
+      const purgeNow = new Date(now).toISOString()
+      const results = await env.DB.batch([
+        // Cada alteração confere a suspensão e o prazo no instante de execução; restauração confirmada cancela a purga.
+        env.DB.prepare(
+          "delete from menu_sections where restaurant_id = ? and exists (select 1 from restaurants where id = ? and deleted_at is not null and deleted_at < ? and purged_at is null)",
+        ).bind(id, id, cutoff),
+        env.DB.prepare(
+          "delete from opening_hours where restaurant_id = ? and exists (select 1 from restaurants where id = ? and deleted_at is not null and deleted_at < ? and purged_at is null)",
+        ).bind(id, id, cutoff),
+        env.DB.prepare(
+          "delete from mkit_materials where restaurant_id = ? and exists (select 1 from restaurants where id = ? and deleted_at is not null and deleted_at < ? and purged_at is null)",
+        ).bind(id, id, cutoff),
+        env.DB.prepare(
+          "delete from mkit_calendar_events where restaurant_id = ? and exists (select 1 from restaurants where id = ? and deleted_at is not null and deleted_at < ? and purged_at is null)",
+        ).bind(id, id, cutoff),
+        env.DB.prepare(
+          "delete from mkit_categories where restaurant_id = ? and exists (select 1 from restaurants where id = ? and deleted_at is not null and deleted_at < ? and purged_at is null)",
+        ).bind(id, id, cutoff),
+        env.DB.prepare(
+          "delete from restaurant_members where restaurant_id = ? and exists (select 1 from restaurants where id = ? and deleted_at is not null and deleted_at < ? and purged_at is null)",
+        ).bind(id, id, cutoff),
+        env.DB.prepare(
+          "update restaurants set purged_at = ?, updated_at = ? where id = ? and deleted_at is not null and deleted_at < ? and purged_at is null",
+        ).bind(purgeNow, purgeNow, id, cutoff),
+      ])
+      if (results.at(-1)?.meta.changes === 1) purged += 1
+    } catch (error) {
+      console.error(
+        JSON.stringify({
+          level: "error",
+          event: "tenant_purge_db_failed",
+          restaurantId: id,
+          message: String(error).slice(0, 200),
+        }),
+      )
+      continue
+    }
   }
   return purged
 }
