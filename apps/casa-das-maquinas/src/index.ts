@@ -104,9 +104,6 @@ app.use(
   cors({ origin: "*", allowHeaders: ["Content-Type", "X-Request-Id"], exposeHeaders: ["X-Request-Id"] }),
 )
 
-// Login, cadastro e sessão do Better Auth. O app web repassa /api/auth/* para cá (mesmo site, cookie first-party).
-app.on(["GET", "POST"], "/api/auth/*", (c) => createAuth(c.env).handler(c.req.raw))
-
 const withSession = createMiddleware<AppEnv>(async (c, next) => {
   c.set("user", await getSessionUser(c.env, c.req.raw.headers))
   await next()
@@ -127,22 +124,27 @@ app.use("/v1/orders/*", withSession)
 app.use("/v1/live/tickets", withSession)
 
 // Limites por janela de 1 minuto. Auth e cotação são públicas (por IP); o resto vale por usuário da sessão.
-app.on("POST", "/api/auth/*", rateLimit({ scope: "auth", limit: 20, windowSeconds: 60 }))
-app.on("POST", "/v1/quotes", rateLimit({ scope: "quotes", limit: 60, windowSeconds: 60 }))
-app.on("POST", "/v1/orders", rateLimit({ scope: "orders", limit: 15, windowSeconds: 60 }))
-app.on("POST", "/v1/orders/:orderId/payment", rateLimit({ scope: "payment", limit: 10, windowSeconds: 60 }))
-app.on("POST", "/v1/orders/:orderId/transitions", rateLimit({ scope: "transitions", limit: 120, windowSeconds: 60 }))
-app.on("POST", "/v1/live/tickets", rateLimit({ scope: "tickets", limit: 30, windowSeconds: 60 }))
+app.use("/api/auth/*", rateLimit({ scope: "auth", limit: 20, windowSeconds: 60 }))
+app.use("/v1/quotes", rateLimit({ scope: "quotes", limit: 60, windowSeconds: 60 }))
+app.use("/v1/orders", rateLimit({ scope: "orders", limit: 15, windowSeconds: 60 }))
+app.use("/v1/orders/:orderId/payment", rateLimit({ scope: "payment", limit: 10, windowSeconds: 60 }))
+app.use("/v1/orders/:orderId/transitions", rateLimit({ scope: "transitions", limit: 120, windowSeconds: 60 }))
+app.use("/v1/live/tickets", rateLimit({ scope: "tickets", limit: 30, windowSeconds: 60 }))
 // Privacidade: baixa cota nas operações do titular (exportar e excluir), mais folgada no registro de consentimento.
 app.on("GET", "/v1/me/export", rateLimit({ scope: "export", limit: 10, windowSeconds: 60 }))
 app.on("DELETE", "/v1/me", rateLimit({ scope: "erase", limit: 5, windowSeconds: 60 }))
 app.on(
   "POST",
-  "/v1/admin/restaurants/:restaurantId/:action",
+  "/v1/admin/restaurants/:restaurantId/suspend",
   rateLimit({ scope: "tenant-admin", limit: 10, windowSeconds: 60 }),
 )
-app.on("POST", "/v1/consents", rateLimit({ scope: "consents", limit: 30, windowSeconds: 60 }))
-app.on("POST", "/v1/legal/acceptances", rateLimit({ scope: "acceptances", limit: 10, windowSeconds: 60 }))
+app.on(
+  "POST",
+  "/v1/admin/restaurants/:restaurantId/restore",
+  rateLimit({ scope: "tenant-admin", limit: 10, windowSeconds: 60 }),
+)
+app.use("/v1/consents", rateLimit({ scope: "consents", limit: 30, windowSeconds: 60 }))
+app.use("/v1/legal/acceptances", rateLimit({ scope: "acceptances", limit: 10, windowSeconds: 60 }))
 
 app.onError((error, c) => {
   logError(c, "unhandled_error", error)
@@ -150,6 +152,9 @@ app.onError((error, c) => {
 })
 
 app.notFound((c) => fail(c, "not_found", "rota não encontrada"))
+
+// Better Auth recebe GET e POST depois do middleware de limite; rotas inexistentes continuam no notFound padrão.
+app.on(["GET", "POST"], "/api/auth/*", (c) => createAuth(c.env).handler(c.req.raw))
 
 const errorResponse = { content: { "application/json": { schema: envelope(z.null()) } }, description: "Erro" }
 
