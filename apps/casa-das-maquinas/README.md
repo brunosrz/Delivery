@@ -58,7 +58,7 @@ O seed de demonstração não roda automaticamente em produção; aplique-o manu
 
 **Asaas:** o cadastro do cliente no Asaas (nome, CPF/CNPJ e contato informados no pagamento) **não é removido** pela API: fica retido como registro de cobrança, com prazo definido pelas obrigações fiscais e financeiras. Só o vínculo local é apagado. Se a política exigir a remoção remota, é preciso uma operação própria com o cliente Asaas, tratada antes da anonimização local.
 
-Ainda não há tela no app web nem exclusão de tenant (restaurante): ficam como roadmap da #39.
+Ainda não há tela no app web para administrar a suspensão e restauração de restaurantes. A API permite que a administração suspenda um restaurante e o restaure em até 30 dias; veja [Exclusão recuperável de restaurante](#exclusão-recuperável-de-restaurante).
 
 ## Limite de requisições
 
@@ -72,6 +72,8 @@ Janela fixa de 1 minuto, contada no D1 (`rate_limit_buckets`) com um único `INS
 | `/v1/orders/:id/payment`         | 10       | usuário  |
 | `/v1/orders/:id/transitions`     | 120      | usuário  |
 | `/v1/live/tickets`               | 30       | usuário  |
+| `/v1/admin/restaurants/:id/suspend` | 10       | usuário  |
+| `/v1/admin/restaurants/:id/restore` | 10       | usuário  |
 
 O formulário de contato mantém o limite próprio por hora (`src/contact.ts`).
 

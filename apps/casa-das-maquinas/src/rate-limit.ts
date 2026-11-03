@@ -41,7 +41,9 @@ export function rateLimit(rule: RateLimitRule): MiddlewareHandler<AppEnv> {
       )
         .bind(key, windowStart)
         .first<{ count: number }>()
-      if (row && row.count > rule.limit) {
+      const configuredLimit = rule.scope === "auth" ? Number(c.env.AUTH_RATE_LIMIT ?? rule.limit) : rule.limit
+      const limit = Number.isSafeInteger(configuredLimit) && configuredLimit > 0 ? configuredLimit : rule.limit
+      if (row && row.count > limit) {
         const retryAfter = Math.max(1, windowStart + rule.windowSeconds - nowSeconds)
         c.header("retry-after", String(retryAfter))
         return fail(c, "rate_limited", "muitas requisições; tente de novo em instantes")

@@ -38,6 +38,7 @@ describe("proxy /api/auth", () => {
     expect(init.headers.get("cookie")).toBe("a=b")
     expect(init.headers.get("origin")).toBe("http://web.test")
     expect(init.headers.get("x-forwarded-for")).toBe("203.0.113.7")
+    expect(init.headers.get("cf-connecting-ip")).toBe("203.0.113.7")
     expect(init.headers.get("authorization")).toBeNull()
     expect(init.redirect).toBe("manual")
   })

@@ -55,6 +55,12 @@ export class RestaurantRoom extends DurableObject<Env> {
     this.createSchema()
   }
 
+  /** Fecha apenas os sockets da equipe quando o restaurante é suspenso, preservando feeds individuais de clientes. */
+  closeRestaurantFeed(): void {
+    for (const socket of this.ctx.getWebSockets(RESTAURANT_TAG))
+      socket.close(REVOKED_CLOSE_CODE, "restaurante suspenso")
+  }
+
   /**
    * Grava e distribui o evento. Um evento mais antigo que o último gravado para o
    * mesmo pedido é descartado: ele chegou atrasado e não pode sobrescrever um estado
@@ -100,13 +106,14 @@ export class RestaurantRoom extends DurableObject<Env> {
     const attachment = socket.deserializeAttachment() as Attachment | null
     if (!attachment) return false
     const row = await this.env.DB.prepare(
-      "select u.role as role, exists(select 1 from restaurant_members m where m.user_id = u.id and m.restaurant_id = ?) as member from user u where u.id = ?",
+      "select u.role as role, exists(select 1 from restaurant_members m where m.user_id = u.id and m.restaurant_id = ?) as member, " +
+        "exists(select 1 from restaurants r where r.id = ? and r.deleted_at is not null) as suspended from user u where u.id = ?",
     )
-      .bind(attachment.restaurantId, attachment.sub)
-      .first<{ role: string; member: number }>()
+      .bind(attachment.restaurantId, attachment.restaurantId, attachment.sub)
+      .first<{ role: string; member: number; suspended: number }>()
     if (!row) return false
     if (row.role === "admin") return true
-    return row.role === "restaurant_staff" && row.member === 1
+    return row.role === "restaurant_staff" && row.member === 1 && row.suspended === 0
   }
 
   private safeSend(socket: WebSocket, message: string) {

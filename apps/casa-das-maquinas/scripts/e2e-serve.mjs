@@ -30,6 +30,8 @@ const [command, argv] = wrangler([
   `BETTER_AUTH_SECRET:${e2eSecret}`,
   "--var",
   `BETTER_AUTH_URL:${webOrigin}`,
+  "--var",
+  "AUTH_RATE_LIMIT:1000",
 ])
 const server = spawn(command, argv, { stdio: "inherit", shell: process.platform === "win32" })
 for (const signal of ["SIGINT", "SIGTERM"]) process.on(signal, () => server.kill(signal))

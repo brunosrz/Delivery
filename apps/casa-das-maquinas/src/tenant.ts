@@ -63,6 +63,7 @@ export function createTenantService(env: Env) {
           "update outbox_jobs set status = 'dead', last_error = 'restaurante excluído', updated_at = ? where restaurant_id = ? and status = 'pending'",
         ).bind(now, restaurantId),
       ])
+      await env.RESTAURANT_ROOM.getByName(restaurantId).closeRestaurantFeed()
       return { ok: true, value: { restaurantId, deletedAt: now, purgeAfter: purgeAfter(now) } }
     },
 

@@ -433,8 +433,8 @@ describe("remoção definitiva depois do prazo", () => {
   it("os pedidos do restaurante removido ficam guardados e o cliente ainda os vê", async () => {
     const admin = await newUser("admin")
     const customer = await newUser()
-    const staff = await newUser({ staffOf: "rest_burger" })
     const id = await createTenant()
+    const staff = await newUser({ staffOf: id })
     const productId = `${id}_prod`
     const orderResponse = await postJson(
       "/v1/orders",

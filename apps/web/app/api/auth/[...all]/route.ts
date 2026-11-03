@@ -2,7 +2,15 @@
 // com o próprio site, então o cookie de sessão é first-party e não depende de
 // cookies entre domínios (Vercel <-> workers.dev).
 
-const FORWARDED_REQUEST_HEADERS = ["accept", "content-type", "cookie", "origin", "referer", "user-agent"]
+const FORWARDED_REQUEST_HEADERS = [
+  "accept",
+  "content-type",
+  "cookie",
+  "origin",
+  "referer",
+  "user-agent",
+  "cf-connecting-ip",
+]
 const REQUEST_ID_PATTERN = /^[A-Za-z0-9_-]{8,128}$/
 
 async function proxy(request: Request, { params }: { params: Promise<{ all: string[] }> }) {
@@ -28,7 +36,11 @@ async function proxy(request: Request, { params }: { params: Promise<{ all: stri
     if (value) headers.set(name, value)
   }
   const clientIp = request.headers.get("x-forwarded-for")
-  if (clientIp) headers.set("x-forwarded-for", clientIp)
+  if (clientIp) {
+    headers.set("x-forwarded-for", clientIp)
+    // E2E usa IP sintético próprio; na Vercel o header é gerado pela borda confiável.
+    if (!headers.has("cf-connecting-ip")) headers.set("cf-connecting-ip", clientIp.split(",")[0]?.trim() ?? clientIp)
+  }
   // Mantém o id de correlação recebido (se válido) ou cria um, para ligar o log do web ao da API.
   const incomingId = request.headers.get("x-request-id")
   const requestId = incomingId && REQUEST_ID_PATTERN.test(incomingId) ? incomingId : crypto.randomUUID()
