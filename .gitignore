@@ -21,6 +21,7 @@ yarn-error.log*
 !.env.example
 !.env.gha.example
 !.envs.example
+.vars*
 
 # vercel
 .vercel

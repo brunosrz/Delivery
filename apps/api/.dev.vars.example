@@ -1,4 +1,5 @@
-# Copie para .dev.vars (nunca versionado). Gere com: openssl rand -base64 32
+# Copie para .dev.vars (nunca versionado). Gere com: openssl rand -base64 32.
+# Use segredo próprio do Delivery; não reutilize credenciais da API ERP/PDV.
 BETTER_AUTH_SECRET=troque-por-um-segredo-local-com-32-caracteres
 # Opcional: login com Google
 GOOGLE_CLIENT_ID=

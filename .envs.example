@@ -14,8 +14,8 @@
 # ----------------------------------------------------------------------------
 # Bloco 1: app web (apps/web/.env.local)
 # ----------------------------------------------------------------------------
-# URL da Casa das Máquinas (API v1). Local: `bun run --filter @delivery/api dev`
-# sobe em http://127.0.0.1:8787. Na Vercel, use a URL pública do Worker.
+# URL da API (v1). Local: `bun run --filter @delivery/api dev` sobe em
+# http://127.0.0.1:8787 usando bindings locais; Preview/Production usam o Worker.
 # Sem ela o catálogo aparece como "indisponível" e o login/checkout respondem 503.
 API_URL=http://127.0.0.1:8787
 
@@ -53,13 +53,13 @@ TURNSTILE_SECRET=
 # Variáveis (não secretas; ficam em apps/api/wrangler.jsonc, "vars"):
 #   API_VERSION=v1
 #   ASAAS_ENV=sandbox            # troque para "production" só com a chave de produção
-#   BETTER_AUTH_URL=https://SEU-SITE.vercel.app      # origem pública do app web
-#   TRUSTED_ORIGINS=https://SEU-SITE.vercel.app      # origens aceitas, separadas por vírgula
+#   BETTER_AUTH_URL=https://delivery.brunosrz.com    # URL pública após a migração web
+#   TRUSTED_ORIGINS=https://delivery.brunosrz.com    # origens aceitas, separadas por vírgula
 #
 # Registro do webhook do Asaas (uma vez por ambiente):
 #   ASAAS_API_KEY=... ASAAS_WEBHOOK_TOKEN=... ASAAS_ENV=sandbox \
 #   node apps/api/scripts/asaas-register-webhook.mjs \
-#     https://SEU-WORKER.workers.dev/v1/webhooks/asaas contato@exemplo.com
+#     https://delivery-api.workers.dev/v1/webhooks/asaas contato@exemplo.com
 
 # Controlador dos dados, exibido nas páginas /legal/* (Termos, Privacidade e Cookies). Sem nome e e-mail válidos, as
 # páginas avisam que o controlador não foi configurado. Valores públicos: vão para o navegador.
