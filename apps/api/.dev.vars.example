@@ -1,4 +1,5 @@
-# Copie para .dev.vars (nunca versionado). Gere com: openssl rand -base64 32
+# Copie para .dev.vars (nunca versionado). Gere com: openssl rand -base64 32.
+# Use segredo próprio do Delivery; não reutilize credenciais da API ERP/PDV.
 BETTER_AUTH_SECRET=troque-por-um-segredo-local-com-32-caracteres
 # Opcional: login com Google
 GOOGLE_CLIENT_ID=
@@ -9,3 +10,5 @@ ASAAS_API_KEY=
 ASAAS_WEBHOOK_TOKEN=
 # Opcional: segredo do Turnstile para o formulário de contato (sem ele, só honeypot e limite por IP).
 TURNSTILE_SECRET=
+# Opcional: limite de tentativas de login por janela (vazio usa o padrão do código).
+AUTH_RATE_LIMIT=

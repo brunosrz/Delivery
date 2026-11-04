@@ -1,47 +1,82 @@
-# Deploy e GitHub Actions
+# Infraestrutura Cloudflare e publicação
 
-## Workflows
+## Isolamento por projeto e ambiente
 
-| Workflow                  | Gatilho                              | O que faz                                                                                        |
-| ------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| `quality.yml`             | PR e push em `main`                  | Formatação, lint, tipos, testes com cobertura, build e E2E de fumaça.                            |
-| `codeql.yml`              | PR e push                            | Análise estática de segurança.                                                                   |
-| `pr-checks.yml`           | PR                                   | Labels automáticas (`labeler.yml`), título em Conventional Commits e testes dos utilitários.     |
-| `pr-release-milestone.yml`| PR (`pull_request_target`)           | Atribui a milestone da linha de release da base e bloqueia combinações incompatíveis.            |
-| `release-please.yml`      | push em `main` e `release/**`        | Abre/atualiza a PR de release da linha configurada em `release-lines.json`.                      |
-| `rotate-release-lines.yml`| release publicada                    | Ao publicar uma minor, abre a próxima `release/X.Y` e as milestones.                             |
-| `forward-port-release.yml`| push em `main` e `release/**`        | Sincroniza `main` (estável) para a minor em desenvolvimento; abre PR se houver conflito.         |
-| `deploy.yml`              | push em `main` e manual              | Migrations D1 + Worker da Casa das Máquinas e, depois, o web na Vercel.                          |
+Esta branch prepara somente a API Delivery. Ela usa a mesma conta/token
+Cloudflare do ERP/PDV, mas todos os recursos abaixo são próprios do Delivery:
 
-## Linhas de release
+| Ambiente | Worker | D1 | R2 | KV |
+| --- | --- | --- | --- | --- |
+| Preview | `delivery-api-preview` | `delivery-preview` | `delivery-preview-private` | `delivery-preview-cache` |
+| Production | `delivery-api` | `delivery-production` | `delivery-production-private` | `delivery-production-cache` |
 
-`.github/release-lines.json` define as duas linhas ativas:
+`RestaurantRoom` é o Durable Object da API Delivery. As migrações D1 são
+aplicadas antes da publicação do Worker. Não apontar bindings para recursos do
+ERP/PDV. O bucket R2 e o namespace KV estão provisionados para uso futuro e
+não substituem armazenamento/cache implementados pela aplicação.
 
-- **maintenance** (`main`, milestone `0.1.x`): patches da série estável. Cada PR contra `main` recebe a milestone `0.1.x`.
-- **development** (`release/0.2`, milestone `0.2`): próxima minor. Cada PR contra `release/0.2` recebe a milestone `0.2`.
+## Deploy da API
 
-Ao publicar `v0.2.0`, `rotate-release-lines.yml` abre `release/0.3` e move as milestones; `main` passa a ser a série `0.2.x`.
+`.github/workflows/deploy.yml` publica exclusivamente `apps/api`:
 
-PRs de release criadas com o `GITHUB_TOKEN` não disparam outros workflows. Para o gate `Quality` rodar sozinho na PR de release (e para o evento `release: published` disparar a rotação), configure o secret `RELEASE_PLEASE_TOKEN` com um token pessoal; sem ele, aprove o gate manualmente na aba Actions.
+- PR para `main`: deploy isolado em Preview após testes e migrations;
+- push em `main`: deploy em Production;
+- `workflow_dispatch`: Preview em qualquer ref ou Production somente em `main`.
 
-## Secrets
+Configure nos GitHub Environments `Preview` e `Production` os secrets
+`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` e `D1_DATABASE_ID`. O token e
+account ID podem ser iguais aos usados pelo ERP/PDV; cada `D1_DATABASE_ID` deve
+ser o ID Delivery correspondente à tabela acima. O workflow valida os IDs antes
+de executar qualquer comando remoto.
 
-Em **Settings → Secrets and variables → Actions**. Os de produção ficam no Environment `Production`.
+Os secrets de runtime do Worker (`BETTER_AUTH_SECRET`, Google, Asaas e
+Turnstile) são independentes por aplicação e ambiente. Cadastre-os no Worker
+com Wrangler quando os fluxos correspondentes forem ativados. Nunca reutilize
+segredos de sessão ou pagamento do ERP/PDV.
 
-| Secret                                   | Usado em                | Descrição                                                    |
-| ---------------------------------------- | ----------------------- | ------------------------------------------------------------ |
-| `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` | `deploy.yml` (api) | Autenticação do Wrangler (D1 e Workers).                     |
-| `D1_DATABASE_ID`                         | `deploy.yml` (api)      | ID do banco D1 de produção, aplicado no `wrangler.jsonc`.    |
-| `VERCEL_TOKEN` / `VERCEL_ORG_ID` / `VERCEL_PROJECT_ID` | `deploy.yml` (web) | Publicação do `apps/web`. O projeto na Vercel precisa ter *Root Directory* `apps/web`. |
-| `RELEASE_PLEASE_TOKEN` (opcional)        | `release-please.yml`    | Token pessoal para que as PRs de release disparem workflows. |
+## Domínios planejados
 
-Passos sem secret são pulados, não falham.
+Os nomes reservados para os apps do ecossistema são:
 
-## Rollback
+- `delivery.brunosrz.com`
+- `entregador.brunosrz.com`
+- `institucional.brunosrz.com`
+- `pedidos.brunosrz.com`
 
-- **Worker:** `bunx wrangler rollback` em `apps/api`, ou novo deploy a partir do commit anterior (`workflow_dispatch`). Migrations D1 são só aditivas; reverter schema exige uma migration nova.
-- **Web:** promova o deploy anterior no painel da Vercel (*Promote to Production*).
+Esta branch não cria registros DNS, Workers Routes nem publica `apps/web`.
+Esses nomes devem ser ligados às aplicações na etapa de migração dos frontends.
+O endpoint da API fica no domínio `workers.dev` próprio do Worker enquanto não
+houver decisão e configuração de um subdomínio específico para API.
 
-## Deploy local
+## Builds nativos
 
-`scons deploy` (ver README) executa os mesmos passos a partir da máquina local, interrompendo na primeira falha.
+Os workflows de Android/iOS (Capacitor), desktop (Electron) e anexos de release
+estão preparados, mas os jobs têm condição explícita controlada pela variável
+de repositório `NATIVE_BUILDS_ENABLED`. Mantenha-a diferente de `true` até as
+aplicações nativas existirem. Atualmente o repositório contém apenas `apps/web`
+e `apps/api`; os diretórios Android, iOS e Electron ainda serão introduzidos.
+
+## SCons local
+
+Copie `.env.example` para `.env` e configure as credenciais compartilhadas da
+conta Cloudflare. IDs D1 e nomes de recursos são específicos do Delivery.
+
+```powershell
+scons preview       # migrations + deploy de apps/api no Preview
+scons prod          # migrations + deploy de apps/api em Production
+```
+
+Os comandos não publicam o app web. Configure runtime secrets com Wrangler e
+`apps/api/.dev.vars` apenas para desenvolvimento local; ambos são ignorados
+pelo Git.
+
+## Outros workflows
+
+| Workflow | Finalidade |
+| --- | --- |
+| `quality.yml` | lint, tipos, testes e builds dos pacotes atuais |
+| `d1-remote-check.yml` | migrations, rollback e reaplicação num D1 descartável |
+| `deploy.yml` | deploy da API Delivery na Cloudflare, sem deploy web |
+| `native-builds.yml` | builds nativos Capacitor/Electron desativados até a migração |
+| `release-please.yml` | PRs, tags e GitHub Releases |
+| `release-assets.yml` | anexar artefatos nativos após a migração, atualmente desativado |

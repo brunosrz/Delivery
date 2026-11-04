@@ -15,19 +15,36 @@ root = Dir("#").abspath
 env = Environment()
 previous = None
 # Serializa os alvos operacionais pedidos na linha de comando, mesmo com -j.
-for name in ("help", "install", "build", "coverage", "lint", "tests", "check", "deploy", "update", "clean"):
+for name in (
+    "help",
+    "install",
+    "build",
+    "coverage",
+    "lint",
+    "tests",
+    "check",
+    "deploy",
+    "deploy-preview",
+    "deploy-prod",
+    "update",
+    "clean",
+):
 
     def action(target, source, env, name=name):
         return Tasks(root, name, GetOption("latest")).execute()
 
     node = env.Alias(name, [], Action(action, "[scons] " + name))
     AlwaysBuild(node)
-    if name in COMMAND_LINE_TARGETS or (name == "deploy" and "prod" in COMMAND_LINE_TARGETS):
+    if name in COMMAND_LINE_TARGETS:
         if previous is not None:
             Requires(node, previous)
         previous = node
-    if name == "deploy":
+    if name == "deploy-prod":
         env.Alias("prod", node)
+    if name == "deploy-preview":
+        env.Alias("preview", node)
+    if name == "deploy":
+        env.Alias("deploy-api", node)
 Help(HELP)
 # `scons --latest` sozinho é um pedido de atualização com majors: sem alvo, vale como `scons update --latest`.
 Default("update" if GetOption("latest") else "help")

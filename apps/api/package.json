@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "wrangler dev --env local",
     "deploy": "wrangler deploy",
     "openapi:export": "node --experimental-transform-types scripts/openapi-export.mjs",
     "cf-typegen": "wrangler types --strict-vars=false src/worker-configuration.d.ts",
@@ -13,7 +13,9 @@
     "lint": "eslint . --max-warnings 0",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
-    "test:coverage": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "db:check": "drizzle-kit check && node scripts/check-schema-drift.mjs",
+    "deploy:dry-run": "wrangler deploy --dry-run --outdir .wrangler/dry-run",
     "e2e:serve": "node scripts/e2e-serve.mjs"
   },
   "dependencies": {
@@ -28,6 +30,7 @@
   "devDependencies": {
     "@cloudflare/vitest-plugin": "1.4.11",
     "@eslint/js": "10.0.1",
+    "@vitest/coverage-istanbul": "5.0.5",
     "drizzle-kit": "0.31.11",
     "eslint": "10.14.0",
     "typescript": "5.9.3",

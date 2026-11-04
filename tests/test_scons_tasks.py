@@ -96,38 +96,63 @@ class TaskTests(unittest.TestCase):
                 self.task.lint()
         self.assertEqual(run.call_count, 3)
 
-    def _deploy_setup(self, worker):
-        (self.root / ".vercel").mkdir()
-        (self.root / ".vercel/project.json").write_text(json.dumps({"projectId": "p", "orgId": "o"}))
-        self.task.env.update(VERCEL_PROJECT_ID="p", VERCEL_ORG_ID="o")
+    PREVIEW_ID = "7e64fb05-d729-4aae-9ff0-425831b69a31"
+    PRODUCTION_ID = "c24822ba-9107-4a97-bab3-0e5ba01bff32"
+
+    def _deploy_setup(self, worker=True, **env):
         if worker:
             folder = self.root / "apps/api"
             folder.mkdir(parents=True)
             (folder / "wrangler.jsonc").touch()
+        values = {
+            "CLOUDFLARE_API_TOKEN": "token",
+            "CLOUDFLARE_ACCOUNT_ID": "conta",
+            "PREVIEW_D1_DATABASE_ID": self.PREVIEW_ID,
+            "PRODUCTION_D1_DATABASE_ID": self.PRODUCTION_ID,
+        }
+        values.update(env)
+        self.task.env.clear()
+        self.task.env.update({key: value for key, value in values.items() if value is not None})
 
-    def test_deploy_without_worker_skips_it(self):
-        self._deploy_setup(False)
+    def test_deploy_requires_the_worker_config(self):
+        self._deploy_setup(worker=False)
         with patch.object(self.task, "resolve"), patch.object(self.task, "run") as run:
-            self.task.deploy()
-        self.assertFalse(any("wrangler" in call.args for call in run.call_args_list))
-        self.assertEqual(run.call_args_list[-1].args[:3], ("vercel", "deploy", "--prod"))
+            with self.assertRaises(RuntimeError):
+                self.task.deploy("preview")
+        run.assert_not_called()
 
-    def test_deploy_stops_after_worker_failure(self):
-        self._deploy_setup(True)
+    def test_deploy_requires_cloudflare_credentials(self):
+        self._deploy_setup(CLOUDFLARE_API_TOKEN=None)
+        with patch.object(self.task, "resolve"), patch.object(self.task, "run") as run:
+            with self.assertRaises(RuntimeError):
+                self.task.deploy("preview")
+        run.assert_not_called()
+
+    def test_deploy_rejects_a_database_id_of_another_environment(self):
+        self._deploy_setup(PREVIEW_D1_DATABASE_ID=self.PRODUCTION_ID)
+        with patch.object(self.task, "resolve"), patch.object(self.task, "run") as run:
+            with self.assertRaises(RuntimeError):
+                self.task.deploy("preview")
+        run.assert_not_called()
+
+    def test_deploy_migrates_then_publishes_the_chosen_environment(self):
+        self._deploy_setup()
+        with patch.object(self.task, "resolve"), patch.object(self.task, "run") as run:
+            self.task.deploy("production")
+        commands = [call.args for call in run.call_args_list]
+        self.assertEqual(commands[0][:3], ("bunx", "wrangler", "whoami"))
+        self.assertIn("migrations", commands[1])
+        self.assertEqual(commands[1][-2:], ("--env", "production"))
+        self.assertEqual(commands[2], ("bunx", "wrangler", "deploy", "--env", "production"))
+
+    def test_deploy_stops_when_the_migration_fails(self):
+        self._deploy_setup()
         with patch.object(self.task, "resolve"), patch.object(
-            self.task, "run", side_effect=[None, None, None, None, RuntimeError]
+            self.task, "run", side_effect=[None, RuntimeError]
         ) as run:
             with self.assertRaises(RuntimeError):
-                self.task.deploy()
-        self.assertFalse(any(call.args[:2] == ("vercel", "deploy") for call in run.call_args_list))
-
-    def test_deploy_rejects_diverging_link(self):
-        self._deploy_setup(False)
-        self.task.env["VERCEL_ORG_ID"] = "other"
-        with patch.object(self.task, "resolve"), patch.object(self.task, "run") as run:
-            with self.assertRaises(RuntimeError):
-                self.task.deploy()
-        run.assert_not_called()
+                self.task.deploy("preview")
+        self.assertFalse(any(call.args[:3] == ("bunx", "wrangler", "deploy") for call in run.call_args_list))
 
 
 if __name__ == "__main__":

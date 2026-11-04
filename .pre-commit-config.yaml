@@ -30,3 +30,15 @@ repos:
         entry: bun run typecheck
         language: system
         pass_filenames: false
+      - id: api-migrations
+        name: api migrations (journal, snapshots, rollbacks)
+        entry: node --test scripts/tests/migrations-integrity.test.mjs scripts/tests/migrations-rollback.test.mjs
+        language: system
+        files: ^apps/api/(migrations|migrations-rollback)/
+        pass_filenames: false
+      - id: api-schema-drift
+        name: api schema without drift from migrations
+        entry: node apps/api/scripts/check-schema-drift.mjs
+        language: system
+        files: ^apps/api/(src/db/|migrations/|drizzle\.config\.ts)
+        pass_filenames: false

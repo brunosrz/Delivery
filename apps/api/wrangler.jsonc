@@ -1,23 +1,20 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "delivery-api",
+  "name": "delivery-api-preview",
   "main": "src/index.ts",
   "compatibility_date": "2026-10-29",
   "compatibility_flags": ["nodejs_compat"],
-  "observability": {
-    "enabled": true,
-    "head_sampling_rate": 1,
-  },
+  "observability": { "enabled": true, "head_sampling_rate": 1 },
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "casa-das-maquinas",
-      // Substituído pelo id real no deploy (ver README do pacote); o desenvolvimento local usa um banco do Miniflare.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_name": "delivery-preview",
+      "database_id": "7e64fb05-d729-4aae-9ff0-425831b69a31",
       "migrations_dir": "migrations",
     },
   ],
-  // A cada minuto: reenvia eventos pendentes da caixa de saída (outbox_jobs).
+  "kv_namespaces": [{ "binding": "CACHE", "id": "4fe6e9c3ac6a4dfc8664403e3b1482ed" }],
+  "r2_buckets": [{ "binding": "PRIVATE_FILES", "bucket_name": "delivery-preview-private" }],
   "triggers": { "crons": ["* * * * *"] },
   "durable_objects": {
     "bindings": [{ "name": "RESTAURANT_ROOM", "class_name": "RestaurantRoom" }],
@@ -25,10 +22,79 @@
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["RestaurantRoom"] }],
   "vars": {
     "API_VERSION": "v1",
-    // sandbox até a conta de produção do Asaas estar aprovada; ASAAS_API_KEY e ASAAS_WEBHOOK_TOKEN são segredos.
     "ASAAS_ENV": "sandbox",
-    // Origem pública do app web: o login passa pelo proxy /api/auth do Next, então os cookies são do próprio site.
     "BETTER_AUTH_URL": "http://localhost:3000",
     "TRUSTED_ORIGINS": "http://localhost:3000,http://127.0.0.1:3000,http://127.0.0.1:3100",
+  },
+  "env": {
+    "local": {
+      "name": "delivery-api-local",
+      "workers_dev": true,
+      "durable_objects": {
+        "bindings": [{ "name": "RESTAURANT_ROOM", "class_name": "RestaurantRoom" }],
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "delivery-local",
+          "database_id": "00000000-0000-0000-0000-000000000000",
+          "migrations_dir": "migrations",
+        },
+      ],
+      "kv_namespaces": [{ "binding": "CACHE", "id": "00000000000000000000000000000000" }],
+      "r2_buckets": [{ "binding": "PRIVATE_FILES", "bucket_name": "delivery-local-private" }],
+      "vars": {
+        "API_VERSION": "v1",
+        "ASAAS_ENV": "sandbox",
+        "BETTER_AUTH_URL": "http://localhost:8787",
+        "TRUSTED_ORIGINS": "http://localhost:3000,http://127.0.0.1:3000,http://127.0.0.1:3100",
+      },
+    },
+    "preview": {
+      "name": "delivery-api-preview",
+      "workers_dev": true,
+      "durable_objects": {
+        "bindings": [{ "name": "RESTAURANT_ROOM", "class_name": "RestaurantRoom" }],
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "delivery-preview",
+          "database_id": "7e64fb05-d729-4aae-9ff0-425831b69a31",
+          "migrations_dir": "migrations",
+        },
+      ],
+      "kv_namespaces": [{ "binding": "CACHE", "id": "4fe6e9c3ac6a4dfc8664403e3b1482ed" }],
+      "r2_buckets": [{ "binding": "PRIVATE_FILES", "bucket_name": "delivery-preview-private" }],
+      "vars": {
+        "API_VERSION": "v1",
+        "ASAAS_ENV": "sandbox",
+        "BETTER_AUTH_URL": "https://delivery-api-preview.bruno-soarxz.workers.dev",
+        "TRUSTED_ORIGINS": "http://localhost:3000,http://127.0.0.1:3000,http://127.0.0.1:3100",
+      },
+    },
+    "production": {
+      "name": "delivery-api",
+      "workers_dev": true,
+      "durable_objects": {
+        "bindings": [{ "name": "RESTAURANT_ROOM", "class_name": "RestaurantRoom" }],
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "delivery-production",
+          "database_id": "c24822ba-9107-4a97-bab3-0e5ba01bff32",
+          "migrations_dir": "migrations",
+        },
+      ],
+      "kv_namespaces": [{ "binding": "CACHE", "id": "b2f7625e62eb46dfa9250f671bab4597" }],
+      "r2_buckets": [{ "binding": "PRIVATE_FILES", "bucket_name": "delivery-production-private" }],
+      "vars": {
+        "API_VERSION": "v1",
+        "ASAAS_ENV": "sandbox",
+        "BETTER_AUTH_URL": "https://delivery-api.bruno-soarxz.workers.dev",
+        "TRUSTED_ORIGINS": "https://delivery.brunosrz.com,https://entregador.brunosrz.com,https://institucional.brunosrz.com,https://pedidos.brunosrz.com",
+      },
+    },
   },
 }
