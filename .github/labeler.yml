@@ -36,5 +36,4 @@ labels:
       - "^packages/domain/.*"
   - label: docs
     files:
-      - "^docs/.*"
       - "^.*[.]md$"

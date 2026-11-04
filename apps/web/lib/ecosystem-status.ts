@@ -1,5 +1,5 @@
 // Fonte única do estado real de cada produto do ecossistema.
-// Alimenta a página inicial e o inventário em docs/estado-atual.md; o teste
+// Alimenta a página inicial; o teste
 // tests/unit/ecosystem-status.test.ts garante que toda rota listada existe.
 
 export type CapabilityState = "implementado" | "parcial" | "demo" | "stub" | "planejado"
