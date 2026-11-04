@@ -30,11 +30,6 @@ reviews:
       instructions: |
         Verifique triggers, permissões mínimas, versões de actions, cache, artefatos,
         propagação de exit code e que cada gate realmente falhe quando a prova falta.
-    - path: "docs/**"
-      instructions: |
-        Documentação deve declarar escopo, dependências, decisões, critérios de
-        aceite, evidências, limitações e próximos passos; não declare capacidade não
-        implementada como pronta.
 
 chat:
   auto_reply: true

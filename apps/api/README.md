@@ -19,7 +19,7 @@ Toda resposta usa o envelope `{ data, error, meta: { requestId, apiVersion } }`.
 - `canManageRestaurant` é a única regra de acesso a dados de gestão. A autorização acontece antes da consulta, para quem não gere o restaurante não descobrir se ele existe.
 - O app web expõe `/api/auth/*` como proxy para cá, então o cookie de sessão é do próprio site. `BETTER_AUTH_URL` deve ser a origem pública do app web, e `TRUSTED_ORIGINS` lista as origens aceitas. Os hosts planejados são `delivery.brunosrz.com`, `entregador.brunosrz.com`, `institucional.brunosrz.com` e `pedidos.brunosrz.com`; DNS e publicação dos apps não fazem parte desta configuração de infra.
 - Segredos: `BETTER_AUTH_SECRET` (obrigatório) e `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` (opcionais), via `wrangler secret put` em produção e `.dev.vars` localmente (veja `.dev.vars.example`).
-- Pagamento online (Asaas): `ASAAS_API_KEY` e `ASAAS_WEBHOOK_TOKEN` (segredos) e `ASAAS_ENV` (`sandbox` por padrão). Sem a chave, só os pagamentos na entrega funcionam. Configuração, fluxo e webhook em [`docs/pagamentos-asaas.md`](../../docs/pagamentos-asaas.md); o script `scripts/asaas-register-webhook.mjs` cadastra o webhook no Asaas.
+- Pagamento online (Asaas): `ASAAS_API_KEY` e `ASAAS_WEBHOOK_TOKEN` (segredos) e `ASAAS_ENV` (`sandbox` por padrão). Sem a chave, só os pagamentos na entrega funcionam. Contexto e decisões na issue #43; o script `scripts/asaas-register-webhook.mjs` cadastra o webhook no Asaas.
 
 ## Tempo real
 
@@ -81,7 +81,7 @@ O formulário de contato mantém o limite próprio por hora (`src/contact.ts`).
 
 ## MKit: categorias, calendário, geração e lixeira
 
-Rotas sob `/v1/manage/restaurants/:id/mkit` (equipe do restaurante ou admin): `categories` (GET, POST, DELETE `:categoryId`), `calendar` (GET, POST, DELETE `:eventId`), `materials/generate` (POST), `materials/:id/restore` (POST), `materials?lixeira=1` (GET) e `materials/:id?definitivo=1` (DELETE, só na lixeira). Veja `docs/mkit.md` para o mapa completo da issue #12.
+Rotas sob `/v1/manage/restaurants/:id/mkit` (equipe do restaurante ou admin): `categories` (GET, POST, DELETE `:categoryId`), `calendar` (GET, POST, DELETE `:eventId`), `materials/generate` (POST), `materials/:id/restore` (POST), `materials?lixeira=1` (GET) e `materials/:id?definitivo=1` (DELETE, só na lixeira). O mapa completo está na issue #12.
 
 ## MKit: métricas
 
