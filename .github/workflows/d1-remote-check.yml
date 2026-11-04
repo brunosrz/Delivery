@@ -70,8 +70,10 @@ jobs:
           set -euo pipefail
           # Guarda: só o banco criado agora pode ser alvo; nunca o id de produção.
           case "$DB_NAME" in delivery-check-*) ;; *) echo "::error::nome inesperado"; exit 1 ;; esac
-          sed -i "s/00000000-0000-0000-0000-000000000000/${DB_ID}/; s/\"database_name\": \"casa-das-maquinas\"/\"database_name\": \"${DB_NAME}\"/" wrangler.jsonc
+          # A configuração de nível superior aponta para o D1 de Preview; troca pelo banco descartável.
+          sed -i "s/7e64fb05-d729-4aae-9ff0-425831b69a31/${DB_ID}/; s/\"database_name\": \"delivery-preview\"/\"database_name\": \"${DB_NAME}\"/" wrangler.jsonc
           grep -q "$DB_ID" wrangler.jsonc
+          ! grep -q "7e64fb05-d729-4aae-9ff0-425831b69a31" wrangler.jsonc
 
       - name: Apply the migrations
         if: steps.create.outputs.id != ''

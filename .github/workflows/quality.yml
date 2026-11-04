@@ -75,7 +75,10 @@ jobs:
         run: node scripts/check-schema-drift.mjs
       - name: Generated Worker types are up to date
         working-directory: apps/api
-        run: bunx wrangler types --strict-vars=false --check src/worker-configuration.d.ts
+        # Os segredos entram nos tipos a partir de .dev.vars; o exemplo versionado os declara de forma determinística.
+        run: |
+          cp .dev.vars.example .dev.vars
+          bunx wrangler types --strict-vars=false --check src/worker-configuration.d.ts
       - name: OpenAPI snapshot is up to date
         run: |
           bun run --filter @delivery/api openapi:export
