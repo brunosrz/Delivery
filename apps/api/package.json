@@ -28,6 +28,7 @@
   "devDependencies": {
     "@cloudflare/vitest-plugin": "1.4.11",
     "@eslint/js": "10.0.1",
+    "@vitest/coverage-istanbul": "5.0.5",
     "drizzle-kit": "0.31.11",
     "eslint": "10.14.0",
     "typescript": "5.9.3",
