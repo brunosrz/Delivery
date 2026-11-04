@@ -99,6 +99,7 @@ const PRIVATE_PREFIXES = [
   "/v1/me",
   "/v1/orders",
   "/v1/manage",
+  "/v1/admin",
   "/v1/courier",
   "/v1/live",
   "/v1/consents",

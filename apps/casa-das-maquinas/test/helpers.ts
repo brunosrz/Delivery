@@ -26,7 +26,12 @@ export function sessionCookie(response: Response): string {
 }
 
 export async function signUp(email: string) {
-  const response = await postJson("/api/auth/sign-up/email", { email, password: PASSWORD, name: "Pessoa Teste" })
+  const ip = `198.51.100.${(sequence % 254) + 1}`
+  const response = await postJson(
+    "/api/auth/sign-up/email",
+    { email, password: PASSWORD, name: "Pessoa Teste" },
+    { "cf-connecting-ip": ip },
+  )
   expect(response.status).toBe(200)
   const { user } = (await response.json()) as { user: { id: string } }
   return { userId: user.id, cookie: sessionCookie(response) }

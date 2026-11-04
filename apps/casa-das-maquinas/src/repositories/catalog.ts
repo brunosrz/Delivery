@@ -1,5 +1,5 @@
 import type { AddonGroup, Menu, Product, Restaurant } from "@delivery/contracts"
-import { asc, desc, eq } from "drizzle-orm"
+import { and, asc, desc, eq, isNull } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/d1"
 import * as schema from "../db/schema.js"
 
@@ -123,7 +123,11 @@ export function createCatalogRepository(d1: D1Database) {
   return {
     async listRestaurants(): Promise<Restaurant[]> {
       const [rows, hours] = await Promise.all([
-        db.select().from(schema.restaurants).orderBy(desc(schema.restaurants.priority), asc(schema.restaurants.name)),
+        db
+          .select()
+          .from(schema.restaurants)
+          .where(isNull(schema.restaurants.deletedAt))
+          .orderBy(desc(schema.restaurants.priority), asc(schema.restaurants.name)),
         db.select().from(schema.openingHours).orderBy(asc(schema.openingHours.weekday)),
       ])
       const hoursByRestaurant = groupBy(hours, (row) => row.restaurantId)
@@ -131,7 +135,11 @@ export function createCatalogRepository(d1: D1Database) {
     },
 
     async getRestaurantById(id: string): Promise<Restaurant | null> {
-      const [row] = await db.select().from(schema.restaurants).where(eq(schema.restaurants.id, id)).limit(1)
+      const [row] = await db
+        .select()
+        .from(schema.restaurants)
+        .where(and(eq(schema.restaurants.id, id), isNull(schema.restaurants.deletedAt)))
+        .limit(1)
       if (!row) return null
       const hours = await db.select().from(schema.openingHours).where(eq(schema.openingHours.restaurantId, id))
       return toRestaurant(row, hours)
@@ -142,12 +150,20 @@ export function createCatalogRepository(d1: D1Database) {
      * restaurant_id resolvido a partir do slug, nunca por ids vindos do cliente.
      */
     async getMenuBySlug(slug: string): Promise<Menu | null> {
-      const [restaurant] = await db.select().from(schema.restaurants).where(eq(schema.restaurants.slug, slug)).limit(1)
+      const [restaurant] = await db
+        .select()
+        .from(schema.restaurants)
+        .where(and(eq(schema.restaurants.slug, slug), isNull(schema.restaurants.deletedAt)))
+        .limit(1)
       return restaurant ? loadMenu(restaurant) : null
     },
 
     async getMenuByRestaurantId(id: string): Promise<Menu | null> {
-      const [restaurant] = await db.select().from(schema.restaurants).where(eq(schema.restaurants.id, id)).limit(1)
+      const [restaurant] = await db
+        .select()
+        .from(schema.restaurants)
+        .where(and(eq(schema.restaurants.id, id), isNull(schema.restaurants.deletedAt)))
+        .limit(1)
       return restaurant ? loadMenu(restaurant) : null
     },
   }

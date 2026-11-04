@@ -22618,6 +22618,1210 @@
         }
       }
     },
+    "/v1/admin/restaurants/{restaurantId}/suspend": {
+      "post": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "restaurantId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Restaurante excluído (recuperável por 30 dias)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "restaurantId": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 64
+                            },
+                            "deletedAt": {
+                              "type": "string"
+                            },
+                            "purgeAfter": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "restaurantId",
+                            "deletedAt",
+                            "purgeAfter"
+                          ]
+                        },
+                        "error": {
+                          "type": "null"
+                        },
+                        "meta": {
+                          "type": "object",
+                          "properties": {
+                            "requestId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "apiVersion": {
+                              "type": "string",
+                              "enum": [
+                                "v1"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "requestId",
+                            "apiVersion"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "data",
+                        "error",
+                        "meta"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "null"
+                        },
+                        "error": {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "type": "string",
+                              "enum": [
+                                "bad_request",
+                                "unauthenticated",
+                                "forbidden",
+                                "not_found",
+                                "conflict",
+                                "idempotency_mismatch",
+                                "invalid_transition",
+                                "unavailable",
+                                "rate_limited",
+                                "internal"
+                              ]
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "fields": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ]
+                        },
+                        "meta": {
+                          "type": "object",
+                          "properties": {
+                            "requestId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "apiVersion": {
+                              "type": "string",
+                              "enum": [
+                                "v1"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "requestId",
+                            "apiVersion"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "data",
+                        "error",
+                        "meta"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Erro",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "null"
+                        },
+                        "error": {
+                          "type": "null"
+                        },
+                        "meta": {
+                          "type": "object",
+                          "properties": {
+                            "requestId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "apiVersion": {
+                              "type": "string",
+                              "enum": [
+                                "v1"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "requestId",
+                            "apiVersion"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "data",
+                        "error",
+                        "meta"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "null"
+                        },
+                        "error": {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "type": "string",
+                              "enum": [
+                                "bad_request",
+                                "unauthenticated",
+                                "forbidden",
+                                "not_found",
+                                "conflict",
+                                "idempotency_mismatch",
+                                "invalid_transition",
+                                "unavailable",
+                                "rate_limited",
+                                "internal"
+                              ]
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "fields": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ]
+                        },
+                        "meta": {
+                          "type": "object",
+                          "properties": {
+                            "requestId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "apiVersion": {
+                              "type": "string",
+                              "enum": [
+                                "v1"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "requestId",
+                            "apiVersion"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "data",
+                        "error",
+                        "meta"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Erro",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "null"
+                        },
+                        "error": {
+                          "type": "null"
+                        },
+                        "meta": {
+                          "type": "object",
+                          "properties": {
+                            "requestId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "apiVersion": {
+                              "type": "string",
+                              "enum": [
+                                "v1"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "requestId",
+                            "apiVersion"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "data",
+                        "error",
+                        "meta"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "null"
+                        },
+                        "error": {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "type": "string",
+                              "enum": [
+                                "bad_request",
+                                "unauthenticated",
+                                "forbidden",
+                                "not_found",
+                                "conflict",
+                                "idempotency_mismatch",
+                                "invalid_transition",
+                                "unavailable",
+                                "rate_limited",
+                                "internal"
+                              ]
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "fields": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ]
+                        },
+                        "meta": {
+                          "type": "object",
+                          "properties": {
+                            "requestId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "apiVersion": {
+                              "type": "string",
+                              "enum": [
+                                "v1"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "requestId",
+                            "apiVersion"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "data",
+                        "error",
+                        "meta"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Erro",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "null"
+                        },
+                        "error": {
+                          "type": "null"
+                        },
+                        "meta": {
+                          "type": "object",
+                          "properties": {
+                            "requestId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "apiVersion": {
+                              "type": "string",
+                              "enum": [
+                                "v1"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "requestId",
+                            "apiVersion"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "data",
+                        "error",
+                        "meta"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "null"
+                        },
+                        "error": {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "type": "string",
+                              "enum": [
+                                "bad_request",
+                                "unauthenticated",
+                                "forbidden",
+                                "not_found",
+                                "conflict",
+                                "idempotency_mismatch",
+                                "invalid_transition",
+                                "unavailable",
+                                "rate_limited",
+                                "internal"
+                              ]
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "fields": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ]
+                        },
+                        "meta": {
+                          "type": "object",
+                          "properties": {
+                            "requestId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "apiVersion": {
+                              "type": "string",
+                              "enum": [
+                                "v1"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "requestId",
+                            "apiVersion"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "data",
+                        "error",
+                        "meta"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Erro",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "null"
+                        },
+                        "error": {
+                          "type": "null"
+                        },
+                        "meta": {
+                          "type": "object",
+                          "properties": {
+                            "requestId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "apiVersion": {
+                              "type": "string",
+                              "enum": [
+                                "v1"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "requestId",
+                            "apiVersion"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "data",
+                        "error",
+                        "meta"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "null"
+                        },
+                        "error": {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "type": "string",
+                              "enum": [
+                                "bad_request",
+                                "unauthenticated",
+                                "forbidden",
+                                "not_found",
+                                "conflict",
+                                "idempotency_mismatch",
+                                "invalid_transition",
+                                "unavailable",
+                                "rate_limited",
+                                "internal"
+                              ]
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "fields": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ]
+                        },
+                        "meta": {
+                          "type": "object",
+                          "properties": {
+                            "requestId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "apiVersion": {
+                              "type": "string",
+                              "enum": [
+                                "v1"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "requestId",
+                            "apiVersion"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "data",
+                        "error",
+                        "meta"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/restaurants/{restaurantId}/restore": {
+      "post": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "restaurantId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Restaurante restaurado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "restaurantId": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 64
+                            }
+                          },
+                          "required": [
+                            "restaurantId"
+                          ]
+                        },
+                        "error": {
+                          "type": "null"
+                        },
+                        "meta": {
+                          "type": "object",
+                          "properties": {
+                            "requestId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "apiVersion": {
+                              "type": "string",
+                              "enum": [
+                                "v1"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "requestId",
+                            "apiVersion"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "data",
+                        "error",
+                        "meta"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "null"
+                        },
+                        "error": {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "type": "string",
+                              "enum": [
+                                "bad_request",
+                                "unauthenticated",
+                                "forbidden",
+                                "not_found",
+                                "conflict",
+                                "idempotency_mismatch",
+                                "invalid_transition",
+                                "unavailable",
+                                "rate_limited",
+                                "internal"
+                              ]
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "fields": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ]
+                        },
+                        "meta": {
+                          "type": "object",
+                          "properties": {
+                            "requestId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "apiVersion": {
+                              "type": "string",
+                              "enum": [
+                                "v1"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "requestId",
+                            "apiVersion"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "data",
+                        "error",
+                        "meta"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Erro",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "null"
+                        },
+                        "error": {
+                          "type": "null"
+                        },
+                        "meta": {
+                          "type": "object",
+                          "properties": {
+                            "requestId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "apiVersion": {
+                              "type": "string",
+                              "enum": [
+                                "v1"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "requestId",
+                            "apiVersion"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "data",
+                        "error",
+                        "meta"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "null"
+                        },
+                        "error": {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "type": "string",
+                              "enum": [
+                                "bad_request",
+                                "unauthenticated",
+                                "forbidden",
+                                "not_found",
+                                "conflict",
+                                "idempotency_mismatch",
+                                "invalid_transition",
+                                "unavailable",
+                                "rate_limited",
+                                "internal"
+                              ]
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "fields": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ]
+                        },
+                        "meta": {
+                          "type": "object",
+                          "properties": {
+                            "requestId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "apiVersion": {
+                              "type": "string",
+                              "enum": [
+                                "v1"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "requestId",
+                            "apiVersion"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "data",
+                        "error",
+                        "meta"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Erro",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "null"
+                        },
+                        "error": {
+                          "type": "null"
+                        },
+                        "meta": {
+                          "type": "object",
+                          "properties": {
+                            "requestId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "apiVersion": {
+                              "type": "string",
+                              "enum": [
+                                "v1"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "requestId",
+                            "apiVersion"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "data",
+                        "error",
+                        "meta"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "null"
+                        },
+                        "error": {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "type": "string",
+                              "enum": [
+                                "bad_request",
+                                "unauthenticated",
+                                "forbidden",
+                                "not_found",
+                                "conflict",
+                                "idempotency_mismatch",
+                                "invalid_transition",
+                                "unavailable",
+                                "rate_limited",
+                                "internal"
+                              ]
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "fields": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ]
+                        },
+                        "meta": {
+                          "type": "object",
+                          "properties": {
+                            "requestId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "apiVersion": {
+                              "type": "string",
+                              "enum": [
+                                "v1"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "requestId",
+                            "apiVersion"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "data",
+                        "error",
+                        "meta"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Erro",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "null"
+                        },
+                        "error": {
+                          "type": "null"
+                        },
+                        "meta": {
+                          "type": "object",
+                          "properties": {
+                            "requestId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "apiVersion": {
+                              "type": "string",
+                              "enum": [
+                                "v1"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "requestId",
+                            "apiVersion"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "data",
+                        "error",
+                        "meta"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "null"
+                        },
+                        "error": {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "type": "string",
+                              "enum": [
+                                "bad_request",
+                                "unauthenticated",
+                                "forbidden",
+                                "not_found",
+                                "conflict",
+                                "idempotency_mismatch",
+                                "invalid_transition",
+                                "unavailable",
+                                "rate_limited",
+                                "internal"
+                              ]
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "fields": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ]
+                        },
+                        "meta": {
+                          "type": "object",
+                          "properties": {
+                            "requestId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "apiVersion": {
+                              "type": "string",
+                              "enum": [
+                                "v1"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "requestId",
+                            "apiVersion"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "data",
+                        "error",
+                        "meta"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Erro",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "null"
+                        },
+                        "error": {
+                          "type": "null"
+                        },
+                        "meta": {
+                          "type": "object",
+                          "properties": {
+                            "requestId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "apiVersion": {
+                              "type": "string",
+                              "enum": [
+                                "v1"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "requestId",
+                            "apiVersion"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "data",
+                        "error",
+                        "meta"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "null"
+                        },
+                        "error": {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "type": "string",
+                              "enum": [
+                                "bad_request",
+                                "unauthenticated",
+                                "forbidden",
+                                "not_found",
+                                "conflict",
+                                "idempotency_mismatch",
+                                "invalid_transition",
+                                "unavailable",
+                                "rate_limited",
+                                "internal"
+                              ]
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "fields": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ]
+                        },
+                        "meta": {
+                          "type": "object",
+                          "properties": {
+                            "requestId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "apiVersion": {
+                              "type": "string",
+                              "enum": [
+                                "v1"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "requestId",
+                            "apiVersion"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "data",
+                        "error",
+                        "meta"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/live/tickets": {
       "post": {
         "requestBody": {

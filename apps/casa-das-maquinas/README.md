@@ -58,7 +58,7 @@ O seed de demonstração não roda automaticamente em produção; aplique-o manu
 
 **Asaas:** o cadastro do cliente no Asaas (nome, CPF/CNPJ e contato informados no pagamento) **não é removido** pela API: fica retido como registro de cobrança, com prazo definido pelas obrigações fiscais e financeiras. Só o vínculo local é apagado. Se a política exigir a remoção remota, é preciso uma operação própria com o cliente Asaas, tratada antes da anonimização local.
 
-Ainda não há tela no app web nem exclusão de tenant (restaurante): ficam como roadmap da #39.
+Ainda não há tela no app web para administrar a suspensão e restauração de restaurantes. A API permite que a administração suspenda um restaurante e o restaure em até 30 dias; veja [Exclusão recuperável de restaurante](#exclusão-recuperável-de-restaurante).
 
 ## Limite de requisições
 
@@ -72,6 +72,8 @@ Janela fixa de 1 minuto, contada no D1 (`rate_limit_buckets`) com um único `INS
 | `/v1/orders/:id/payment`         | 10       | usuário  |
 | `/v1/orders/:id/transitions`     | 120      | usuário  |
 | `/v1/live/tickets`               | 30       | usuário  |
+| `/v1/admin/restaurants/:id/suspend` | 10       | usuário  |
+| `/v1/admin/restaurants/:id/restore` | 10       | usuário  |
 
 O formulário de contato mantém o limite próprio por hora (`src/contact.ts`).
 
@@ -82,3 +84,7 @@ Rotas sob `/v1/manage/restaurants/:id/mkit` (equipe do restaurante ou admin): `c
 ## MKit: métricas
 
 `GET /v1/manage/restaurants/:id/mkit/metrics` (equipe do restaurante ou admin) devolve o total de materiais, publicados e rascunhos, a divisão por tipo, o total de exportações e os cinco materiais mais exportados. Cada exportação (`.txt`, imagem ou PDF) soma 1 em `exportCount` pelo endpoint de exportação; imagem e PDF são gerados no navegador (`apps/web/lib/mkit-render.ts`), sem dependência nova.
+
+## Exclusão recuperável de restaurante
+
+Só a administração (`POST /v1/admin/restaurants/:id/suspend` e `/restore`). Suspender esconde o restaurante do catálogo, recusa cotação e pedido novo, tira a equipe da gestão, dos pedidos e do tempo real (403) e cancela os jobs pendentes da caixa de saída; a administração continua enxergando para poder resolver o que ficou aberto ou restaurar. Em até 30 dias `restore` desfaz tudo (menos os jobs já cancelados). Depois disso o cron (`purgeSuspendedTenants`) remove cardápio, horários, MKit e vínculos da equipe, limpa o histórico do objeto durável e grava `purged_at`; os **pedidos ficam** (obrigação fiscal e financeira) e restaurar passa a dar 409. Cada etapa pode ser repetida: se o objeto durável falhar, o próximo ciclo tenta de novo.

@@ -42,6 +42,7 @@ import { type LiveScope, signTicket, verifyTicket } from "./live-ticket.js"
 import { createAccountService } from "./account.js"
 import { createPrivacyService } from "./privacy.js"
 import { purgeExpired } from "./retention.js"
+import { createTenantService, isTenantSuspended, purgeSuspendedTenants, tenantActive } from "./tenant.js"
 import { receiveContact } from "./contact.js"
 import { markPublished, runOutbox } from "./jobs.js"
 import { pruneRateLimits, rateLimit } from "./rate-limit.js"
@@ -103,9 +104,6 @@ app.use(
   cors({ origin: "*", allowHeaders: ["Content-Type", "X-Request-Id"], exposeHeaders: ["X-Request-Id"] }),
 )
 
-// Login, cadastro e sessão do Better Auth. O app web repassa /api/auth/* para cá (mesmo site, cookie first-party).
-app.on(["GET", "POST"], "/api/auth/*", (c) => createAuth(c.env).handler(c.req.raw))
-
 const withSession = createMiddleware<AppEnv>(async (c, next) => {
   c.set("user", await getSessionUser(c.env, c.req.raw.headers))
   await next()
@@ -116,23 +114,35 @@ app.use("/v1/me/*", withSession)
 app.use("/v1/consents", withSession)
 app.use("/v1/legal/*", withSession)
 app.use("/v1/manage/*", withSession)
+app.use("/v1/admin/*", withSession)
+// Restaurante excluído: só a administração acessa a gestão dele (equipe recebe 403).
+app.use("/v1/manage/restaurants/:restaurantId", tenantActive)
+app.use("/v1/manage/restaurants/:restaurantId/*", tenantActive)
 app.use("/v1/courier/*", withSession)
 app.use("/v1/orders", withSession)
 app.use("/v1/orders/*", withSession)
 app.use("/v1/live/tickets", withSession)
 
 // Limites por janela de 1 minuto. Auth e cotação são públicas (por IP); o resto vale por usuário da sessão.
-app.on("POST", "/api/auth/*", rateLimit({ scope: "auth", limit: 20, windowSeconds: 60 }))
-app.on("POST", "/v1/quotes", rateLimit({ scope: "quotes", limit: 60, windowSeconds: 60 }))
+app.use("/api/auth/*", rateLimit({ scope: "auth", limit: 20, windowSeconds: 60 }))
+app.use("/v1/quotes", rateLimit({ scope: "quotes", limit: 60, windowSeconds: 60 }))
 app.on("POST", "/v1/orders", rateLimit({ scope: "orders", limit: 15, windowSeconds: 60 }))
-app.on("POST", "/v1/orders/:orderId/payment", rateLimit({ scope: "payment", limit: 10, windowSeconds: 60 }))
-app.on("POST", "/v1/orders/:orderId/transitions", rateLimit({ scope: "transitions", limit: 120, windowSeconds: 60 }))
-app.on("POST", "/v1/live/tickets", rateLimit({ scope: "tickets", limit: 30, windowSeconds: 60 }))
+app.use("/v1/orders/:orderId/payment", rateLimit({ scope: "payment", limit: 10, windowSeconds: 60 }))
+app.use("/v1/orders/:orderId/transitions", rateLimit({ scope: "transitions", limit: 120, windowSeconds: 60 }))
+app.use("/v1/live/tickets", rateLimit({ scope: "tickets", limit: 30, windowSeconds: 60 }))
 // Privacidade: baixa cota nas operações do titular (exportar e excluir), mais folgada no registro de consentimento.
 app.on("GET", "/v1/me/export", rateLimit({ scope: "export", limit: 10, windowSeconds: 60 }))
 app.on("DELETE", "/v1/me", rateLimit({ scope: "erase", limit: 5, windowSeconds: 60 }))
-app.on("POST", "/v1/consents", rateLimit({ scope: "consents", limit: 30, windowSeconds: 60 }))
-app.on("POST", "/v1/legal/acceptances", rateLimit({ scope: "acceptances", limit: 10, windowSeconds: 60 }))
+app.use(
+  "/v1/admin/restaurants/:restaurantId/suspend",
+  rateLimit({ scope: "tenant-admin", limit: 10, windowSeconds: 60 }),
+)
+app.use(
+  "/v1/admin/restaurants/:restaurantId/restore",
+  rateLimit({ scope: "tenant-admin", limit: 10, windowSeconds: 60 }),
+)
+app.use("/v1/consents", rateLimit({ scope: "consents", limit: 30, windowSeconds: 60 }))
+app.use("/v1/legal/acceptances", rateLimit({ scope: "acceptances", limit: 10, windowSeconds: 60 }))
 
 app.onError((error, c) => {
   logError(c, "unhandled_error", error)
@@ -140,6 +150,9 @@ app.onError((error, c) => {
 })
 
 app.notFound((c) => fail(c, "not_found", "rota não encontrada"))
+
+// Better Auth recebe GET e POST depois do middleware de limite; rotas inexistentes continuam no notFound padrão.
+app.on(["GET", "POST"], "/api/auth/*", (c) => createAuth(c.env).handler(c.req.raw))
 
 const errorResponse = { content: { "application/json": { schema: envelope(z.null()) } }, description: "Erro" }
 
@@ -906,6 +919,61 @@ app.openapi(
   },
 )
 
+const TenantParams = z.object({ restaurantId: Id })
+const TenantStatusSchema = z.object({ restaurantId: Id, deletedAt: z.string(), purgeAfter: z.string() })
+
+app.openapi(
+  createRoute({
+    method: "post",
+    path: "/v1/admin/restaurants/{restaurantId}/suspend",
+    request: { params: TenantParams },
+    responses: {
+      200: {
+        content: { "application/json": { schema: envelope(TenantStatusSchema) } },
+        description: "Restaurante excluído (recuperável por 30 dias)",
+      },
+      401: errorResponse,
+      403: errorResponse,
+      404: errorResponse,
+      409: errorResponse,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const result = await createTenantService(c.env).suspend(user, c.req.valid("param").restaurantId)
+    return result.ok
+      ? ok(c, result.value)
+      : fail(c, result.code as "forbidden" | "not_found" | "conflict", result.message)
+  },
+)
+
+app.openapi(
+  createRoute({
+    method: "post",
+    path: "/v1/admin/restaurants/{restaurantId}/restore",
+    request: { params: TenantParams },
+    responses: {
+      200: {
+        content: { "application/json": { schema: envelope(z.object({ restaurantId: Id })) } },
+        description: "Restaurante restaurado",
+      },
+      401: errorResponse,
+      403: errorResponse,
+      404: errorResponse,
+      409: errorResponse,
+    },
+  }),
+  async (c) => {
+    const user = c.get("user")
+    if (!user) return fail(c, "unauthenticated", "sessão ausente ou expirada")
+    const result = await createTenantService(c.env).restore(user, c.req.valid("param").restaurantId)
+    return result.ok
+      ? ok(c, result.value)
+      : fail(c, result.code as "forbidden" | "not_found" | "conflict", result.message)
+  },
+)
+
 const LiveTicketRequest = z.discriminatedUnion("scope", [
   z.object({ scope: z.literal("restaurant"), restaurantId: Id }).strict(),
   z.object({ scope: z.literal("order"), orderId: Id }).strict(),
@@ -934,6 +1002,9 @@ app.openapi(
     let scope: LiveScope
     if (body.scope === "restaurant") {
       if (!canManageRestaurant(user, body.restaurantId)) return fail(c, "forbidden", "sem acesso a este restaurante")
+      if (user.role !== "admin" && (await isTenantSuspended(c.env, body.restaurantId))) {
+        return fail(c, "forbidden", "restaurante indisponível")
+      }
       scope = { scope: "restaurant", restaurantId: body.restaurantId }
     } else {
       const order = await createOrdersService(c.env).get(user, body.orderId)
@@ -973,6 +1044,6 @@ export default {
   fetch: app.fetch,
   /** Cron: reenvia eventos de tempo real da caixa de saída (jobs.ts) apaga janelas antigas do limite de requisições e dados que passaram do prazo de retenção (retention.ts). */
   async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext) {
-    ctx.waitUntil(Promise.all([runOutbox(env), pruneRateLimits(env), purgeExpired(env)]))
+    ctx.waitUntil(Promise.all([runOutbox(env), pruneRateLimits(env), purgeExpired(env), purgeSuspendedTenants(env)]))
   },
 } satisfies ExportedHandler<Env>

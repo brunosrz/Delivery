@@ -30,6 +30,10 @@ export const restaurants = sqliteTable(
     deliveryFeeCents: integer("delivery_fee_cents").notNull().default(0),
     minimumOrderCents: integer("minimum_order_cents").notNull().default(0),
     priority: integer("priority").notNull().default(0),
+    /** Exclusão recuperável: preenchido enquanto o restaurante está suspenso (restaurável por 30 dias). */
+    deletedAt: text("deleted_at"),
+    /** Preenchido quando os dados do restaurante foram removidos de vez, depois do prazo. Não há volta. */
+    purgedAt: text("purged_at"),
     ...timestamps,
   },
   (table) => [

@@ -227,4 +227,39 @@ describe("eventos em tempo real", () => {
     expect(closeCode).toBe(4403)
     expect(feed.messages).toEqual([])
   })
+
+  it("suspensão encerra o feed da equipe sem encerrar o feed individual do cliente", async () => {
+    const admin = await newUser("admin")
+    const customer = await newUser()
+    const staff = await newUser({ staffOf: "rest_burger" })
+    const order = await createOrder(customer.cookie)
+    const staffFeed = await connect(
+      (await ticketFor(staff.cookie, { scope: "restaurant", restaurantId: "rest_burger" })).ticket,
+    )
+    const customerTicket = await ticketFor(customer.cookie, { scope: "order", orderId: order })
+    expect(customerTicket.response.status).toBe(200)
+    const customerFeed = await connect(customerTicket.ticket)
+    let closeCode = 0
+    staffFeed.socket.addEventListener("close", (event) => {
+      closeCode = event.code
+    })
+
+    const suspended = await call("/v1/admin/restaurants/rest_burger/suspend", {
+      method: "POST",
+      headers: { cookie: admin.cookie },
+    })
+    expect(suspended.status).toBe(200)
+    await waitFor(() => closeCode !== 0)
+    expect(closeCode).toBe(4403)
+    await env.RESTAURANT_ROOM.getByName("rest_burger").publish({
+      type: "order.updated",
+      orderId: order,
+      status: "cancelled",
+      at: new Date().toISOString(),
+    })
+    expect(staffFeed.messages).toEqual([])
+    expect(customerFeed.socket.readyState).toBe(WebSocket.OPEN)
+    staffFeed.socket.close()
+    customerFeed.socket.close()
+  })
 })

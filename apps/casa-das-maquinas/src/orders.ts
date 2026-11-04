@@ -18,6 +18,7 @@ import { canManageRestaurant } from "./auth.js"
 import * as ordersSchema from "./db/orders-schema.js"
 import { createPaymentsService, toCharge } from "./payments.js"
 import { createCatalogRepository } from "./repositories/catalog.js"
+import { isTenantSuspended } from "./tenant.js"
 
 type OrderRow = typeof ordersSchema.orders.$inferSelect
 type EventRow = typeof ordersSchema.orderEvents.$inferSelect
@@ -251,6 +252,9 @@ export function createOrdersService(env: Env) {
     async get(user: SessionUser, orderId: string): Promise<ServiceResult<Order>> {
       const [row] = await db.select().from(ordersSchema.orders).where(eq(ordersSchema.orders.id, orderId)).limit(1)
       if (!row || !(await canAccess(user, row))) return failure("not_found", "pedido não encontrado")
+      if (user.role === "restaurant_staff" && (await isTenantSuspended(env, row.restaurantId))) {
+        return failure("not_found", "pedido não encontrado")
+      }
       return { ok: true, value: await present(row) }
     },
 
@@ -349,6 +353,10 @@ export function createOrdersService(env: Env) {
 
       const actor = actorFor(user, row)
       if (!actor) return failure("forbidden", "sem permissão para alterar este pedido")
+      // Restaurante excluído: a equipe não mexe mais nos pedidos; a administração ainda resolve os que ficaram.
+      if (actor === "restaurant_staff" && (await isTenantSuspended(env, row.restaurantId))) {
+        return failure("forbidden", "restaurante indisponível")
+      }
 
       const check = checkTransition(row.status, request.to, actor, row.fulfillment)
       if (!check.ok) {

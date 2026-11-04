@@ -5,6 +5,7 @@ interface __BaseEnv_Env {
   DB: D1Database
   API_VERSION: string
   BETTER_AUTH_URL: string
+  AUTH_RATE_LIMIT?: string
   TRUSTED_ORIGINS: string
   BETTER_AUTH_SECRET: string
   GOOGLE_CLIENT_ID: string

@@ -70,10 +70,29 @@ describe("scripts compensatórios das migrações D1", () => {
     const last = migrations.at(-1) ?? ""
     const script = read(`migrations-rollback/${last}`)
     const dropped = [...script.matchAll(/DROP TABLE IF EXISTS `([a-z_0-9]+)`/g)].map((match) => match[1])
-    assert.ok(dropped.length > 0)
+    const columns = [...script.matchAll(/ALTER TABLE `([a-z_0-9]+)` DROP COLUMN `([a-z_0-9]+)`/g)].map((match) => ({
+      table: match[1],
+      column: match[2],
+    }))
+    // A última migração pode criar tabelas, acrescentar colunas ou as duas coisas, mas sempre mexe em alguma.
+    assert.ok(dropped.length + columns.length > 0)
+    for (const { table, column } of columns) {
+      const before = db
+        .prepare(`PRAGMA table_info(\`${table}\`)`)
+        .all()
+        .map((row) => row.name)
+      assert.ok(before.includes(column), `${table}.${column} deveria existir antes do rollback`)
+    }
     db.exec(script)
     const left = userObjects(db)
     for (const table of dropped) assert.ok(!left.includes(table), `${table} deveria ter sido removida`)
+    for (const { table, column } of columns) {
+      const after = db
+        .prepare(`PRAGMA table_info(\`${table}\`)`)
+        .all()
+        .map((row) => row.name)
+      assert.ok(!after.includes(column), `${table}.${column} deveria ter sido removida`)
+    }
     assert.ok(left.includes("orders") && left.includes("payment_charges"))
     db.close()
   })
