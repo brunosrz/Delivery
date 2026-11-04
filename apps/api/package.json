@@ -13,7 +13,9 @@
     "lint": "eslint . --max-warnings 0",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
-    "test:coverage": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "db:check": "drizzle-kit check && node scripts/check-schema-drift.mjs",
+    "deploy:dry-run": "wrangler deploy --dry-run --outdir .wrangler/dry-run",
     "e2e:serve": "node scripts/e2e-serve.mjs"
   },
   "dependencies": {

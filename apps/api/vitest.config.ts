@@ -43,6 +43,16 @@ export default defineConfig(async () => {
     ],
     test: {
       setupFiles: ["./test/apply-migrations.ts"],
+      // O workerd sobe um banco real por arquivo; a suíte inteira passa de 5 s em máquinas lentas.
+      testTimeout: 20_000,
+      coverage: {
+        provider: "istanbul" as const,
+        include: ["src/**/*.ts"],
+        exclude: ["src/**/*.d.ts", "src/worker-configuration.d.ts"],
+        reporter: ["text-summary", "json-summary", "lcov"],
+        // Piso de regressão: sobe quando a cobertura sobe, nunca desce.
+        thresholds: { statements: 88, branches: 82, functions: 85, lines: 90 },
+      },
     },
   }
 })
