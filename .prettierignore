@@ -18,3 +18,7 @@ packages/contracts/openapi/
 
 # Código gerado pelo compilador do Paraglide (bun run i18n).
 apps/web/lib/paraglide/
+
+# Saída do build do vinext (vite build) em apps/web.
+apps/web/dist/
+apps/web/.vinext/

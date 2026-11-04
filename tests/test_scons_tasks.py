@@ -154,6 +154,53 @@ class TaskTests(unittest.TestCase):
                 self.task.deploy("preview")
         self.assertFalse(any(call.args[:3] == ("bunx", "wrangler", "deploy") for call in run.call_args_list))
 
+    def _web_setup(self, **env):
+        folder = self.root / "apps/web"
+        folder.mkdir(parents=True)
+        (folder / "wrangler.jsonc").touch()
+        values = {"CLOUDFLARE_API_TOKEN": "token", "CLOUDFLARE_ACCOUNT_ID": "conta"}
+        values.update(env)
+        self.task.env.clear()
+        self.task.env.update({key: value for key, value in values.items() if value is not None})
+
+    def test_deploy_web_requires_the_wrangler_config(self):
+        with patch.object(self.task, "resolve"), patch.object(self.task, "run") as run:
+            with self.assertRaises(RuntimeError):
+                self.task.deploy_web("preview")
+        run.assert_not_called()
+
+    def test_deploy_web_requires_cloudflare_credentials(self):
+        self._web_setup(CLOUDFLARE_ACCOUNT_ID=None)
+        with patch.object(self.task, "resolve"), patch.object(self.task, "run") as run:
+            with self.assertRaises(RuntimeError):
+                self.task.deploy_web("preview")
+        run.assert_not_called()
+
+    def test_deploy_web_builds_and_publishes_the_chosen_environment(self):
+        self._web_setup()
+        with patch.object(self.task, "resolve"), patch.object(self.task, "run") as run:
+            self.task.deploy_web("production")
+        commands = [call.args for call in run.call_args_list]
+        self.assertEqual(commands[0], ("bun", "run", "i18n"))
+        self.assertEqual(commands[1], ("bunx", "vinext-cloudflare", "deploy", "--env", "production"))
+        self.assertEqual(run.call_args_list[1].kwargs["cwd"], self.root / "apps/web")
+
+    def test_deploy_preview_publishes_api_before_web(self):
+        self.task.name = "deploy-preview"
+        calls = []
+        with patch.object(self.task, "deploy", side_effect=lambda t: calls.append(("api", t))), patch.object(
+            self.task, "deploy_web", side_effect=lambda t: calls.append(("web", t))
+        ):
+            self.assertEqual(self.task.execute(), 0)
+        self.assertEqual(calls, [("api", "preview"), ("web", "preview")])
+
+    def test_deploy_web_prod_does_not_touch_the_api(self):
+        self.task.name = "deploy-web-prod"
+        with patch.object(self.task, "deploy") as api, patch.object(self.task, "deploy_web") as web:
+            self.assertEqual(self.task.execute(), 0)
+        api.assert_not_called()
+        web.assert_called_once_with("production")
+
 
 if __name__ == "__main__":
     unittest.main()

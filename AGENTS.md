@@ -16,9 +16,10 @@ em subpastas podem acrescentar regras específicas.
 - D1, KV, R2 e demais recursos do Delivery devem ser independentes dos recursos
   ERP/PDV. Podem compartilhar as credenciais da conta Cloudflare quando
   autorizado, mas não os recursos nem segredos de runtime da aplicação.
-- Não publique `apps/web` enquanto essa etapa estiver desativada. Preserve
-  apenas a configuração de domínios planejados até a migração e autorização do
-  deploy dos frontends.
+- `apps/web` (Next.js) é publicado em Workers com vinext, sempre depois da API
+  do mesmo ambiente: `delivery-web-preview` e `delivery-web`, no `workers.dev`.
+  Preserve apenas a configuração de domínios planejados até a migração dos
+  frontends e a autorização de DNS e rotas.
 
 ## Branches e pull requests
 

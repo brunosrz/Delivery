@@ -1,0 +1,30 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // O build do vinext lê CLOUDFLARE_ENV (preview ou production) e grava dist/server/wrangler.json já resolvido.
+  "name": "delivery-web-preview",
+  "compatibility_date": "2026-11-04",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "vinext/server/fetch-handler",
+  "observability": { "enabled": true, "head_sampling_rate": 1 },
+  "assets": {
+    "directory": "dist/client",
+    "html_handling": "none",
+    "not_found_handling": "none",
+    "binding": "ASSETS",
+    "run_worker_first": ["/*", "!/_next/static/*", "!/*/_next/static/*"],
+  },
+  // O web só fala com a API por API_URL (proxy /api/v1 e /api/auth no próprio Worker).
+  "vars": { "API_URL": "https://delivery-api-preview.bruno-soarxz.workers.dev" },
+  "env": {
+    "preview": {
+      "name": "delivery-web-preview",
+      "workers_dev": true,
+      "vars": { "API_URL": "https://delivery-api-preview.bruno-soarxz.workers.dev" },
+    },
+    "production": {
+      "name": "delivery-web",
+      "workers_dev": true,
+      "vars": { "API_URL": "https://delivery-api.bruno-soarxz.workers.dev" },
+    },
+  },
+}

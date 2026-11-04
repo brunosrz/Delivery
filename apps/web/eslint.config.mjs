@@ -9,7 +9,10 @@ const compat = new FlatCompat({
   baseDirectory: __dirname,
 })
 
-// lib/paraglide é código gerado pelo compilador do Paraglide (bun run i18n): não é revisado nem formatado.
-const eslintConfig = [{ ignores: ["lib/paraglide/**"] }, ...compat.extends("next/core-web-vitals", "next/typescript")]
+// lib/paraglide (bun run i18n) e dist, .vinext, .wrangler (vite build, wrangler) são código gerado: não são revisados nem formatados.
+const eslintConfig = [
+  { ignores: ["lib/paraglide/**", "dist/**", ".vinext/**", ".wrangler/**"] },
+  ...compat.extends("next/core-web-vitals", "next/typescript"),
+]
 
 export default eslintConfig

@@ -2,7 +2,7 @@
 
 ## Isolamento por projeto e ambiente
 
-Esta branch prepara somente a API Delivery. Ela usa a mesma conta/token
+Esta infraestrutura cobre a API e o web do Delivery. Ela usa a mesma conta/token
 Cloudflare do ERP/PDV, mas todos os recursos abaixo são próprios do Delivery:
 
 | Ambiente | Worker | D1 | R2 | KV |
@@ -10,14 +10,20 @@ Cloudflare do ERP/PDV, mas todos os recursos abaixo são próprios do Delivery:
 | Preview | `delivery-api-preview` | `delivery-preview` | `delivery-preview-private` | `delivery-preview-cache` |
 | Production | `delivery-api` | `delivery-production` | `delivery-production-private` | `delivery-production-cache` |
 
+O web (`apps/web`) é um Worker por ambiente, sem D1, R2 ou KV próprios:
+`delivery-web-preview` e `delivery-web`. Ele chama a API pela variável
+`API_URL` do `wrangler.jsonc`, e a origem do web precisa constar em
+`TRUSTED_ORIGINS` da API do mesmo ambiente.
+
 `RestaurantRoom` é o Durable Object da API Delivery. As migrações D1 são
 aplicadas antes da publicação do Worker. Não apontar bindings para recursos do
 ERP/PDV. O bucket R2 e o namespace KV estão provisionados para uso futuro e
 não substituem armazenamento/cache implementados pela aplicação.
 
-## Deploy da API
+## Deploy da API e do web
 
-`.github/workflows/deploy.yml` publica exclusivamente `apps/api`:
+`.github/workflows/deploy.yml` publica `apps/api` e, depois dela, `apps/web`
+(jobs `web-preview` e `web-production`, que dependem do job da API):
 
 - PR para `main`: deploy isolado em Preview após testes e migrations;
 - push em `main`: deploy em Production;
@@ -28,6 +34,13 @@ Configure nos GitHub Environments `Preview` e `Production` os secrets
 account ID podem ser iguais aos usados pelo ERP/PDV; cada `D1_DATABASE_ID` deve
 ser o ID Delivery correspondente à tabela acima. O workflow valida os IDs antes
 de executar qualquer comando remoto.
+
+O web é o app Next.js rodando em Workers com
+[vinext](https://github.com/cloudflare/vinext): `vinext-cloudflare deploy --env
+<preview|production>` faz o build com Vite, grava `dist/server/wrangler.json`
+com o ambiente escolhido e publica. `next/image` é servido sem otimização
+(`--image-optimization none`); o `next dev` e o `next build` continuam
+funcionando lado a lado.
 
 Os secrets de runtime do Worker (`BETTER_AUTH_SECRET`, Google, Asaas e
 Turnstile) são independentes por aplicação e ambiente. Cadastre-os no Worker
@@ -43,8 +56,9 @@ Os nomes reservados para os apps do ecossistema são:
 - `institucional.brunosrz.com`
 - `pedidos.brunosrz.com`
 
-Esta branch não cria registros DNS, Workers Routes nem publica `apps/web`.
-Esses nomes devem ser ligados às aplicações na etapa de migração dos frontends.
+O deploy não cria registros DNS nem Workers Routes: o web responde no
+`workers.dev` próprio. Esses nomes devem ser ligados às aplicações na etapa de
+migração dos frontends.
 O endpoint da API fica no domínio `workers.dev` próprio do Worker enquanto não
 houver decisão e configuração de um subdomínio específico para API.
 
@@ -62,11 +76,14 @@ Copie `.env.example` para `.env` e configure as credenciais compartilhadas da
 conta Cloudflare. IDs D1 e nomes de recursos são específicos do Delivery.
 
 ```powershell
-scons preview       # migrations + deploy de apps/api no Preview
-scons prod          # migrations + deploy de apps/api em Production
+scons preview            # migrations + deploy de apps/api e depois de apps/web no Preview
+scons prod               # migrations + deploy de apps/api e depois de apps/web em Production
+scons web-preview        # só apps/web no Preview
+scons web-prod           # só apps/web em Production
 ```
 
-Os comandos não publicam o app web. Configure runtime secrets com Wrangler e
+No Windows o `vinext-cloudflare deploy` pode falhar; nesse caso use o GitHub
+Actions ou o WSL. Configure runtime secrets com Wrangler e
 `apps/api/.dev.vars` apenas para desenvolvimento local; ambos são ignorados
 pelo Git.
 
