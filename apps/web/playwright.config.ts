@@ -48,7 +48,7 @@ export default defineConfig({
     {
       command: `bunx next start -p ${port}`,
       url: `http://127.0.0.1:${port}`,
-      env: { CASA_DAS_MAQUINAS_URL: apiUrl },
+      env: { API_URL: apiUrl },
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
     },

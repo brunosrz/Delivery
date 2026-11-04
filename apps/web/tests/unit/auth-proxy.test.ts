@@ -8,7 +8,7 @@ describe("proxy /api/auth", () => {
   const fetchMock = vi.fn()
 
   beforeEach(() => {
-    process.env.CASA_DAS_MAQUINAS_URL = "http://api.test"
+    process.env.API_URL = "http://api.test"
     vi.stubGlobal("fetch", fetchMock)
     fetchMock.mockReset()
   })
@@ -75,10 +75,10 @@ describe("proxy /api/auth", () => {
   )
 
   it("responde 503 sem backend configurado ou fora do ar", async () => {
-    delete process.env.CASA_DAS_MAQUINAS_URL
+    delete process.env.API_URL
     expect((await GET(new Request("http://web.test/api/auth/get-session"), params("get-session"))).status).toBe(503)
 
-    process.env.CASA_DAS_MAQUINAS_URL = "http://api.test"
+    process.env.API_URL = "http://api.test"
     fetchMock.mockRejectedValueOnce(new TypeError("network down"))
     expect((await GET(new Request("http://web.test/api/auth/get-session"), params("get-session"))).status).toBe(503)
   })

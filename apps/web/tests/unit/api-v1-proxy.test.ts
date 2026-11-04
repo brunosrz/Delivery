@@ -75,7 +75,7 @@ describe("proxy /api/v1", () => {
   const fetchMock = vi.fn()
 
   beforeEach(() => {
-    process.env.CASA_DAS_MAQUINAS_URL = "http://api.test"
+    process.env.API_URL = "http://api.test"
     fetchMock.mockReset()
     vi.stubGlobal("fetch", fetchMock)
   })
@@ -175,7 +175,7 @@ describe("proxy /api/v1", () => {
   it("responde 503 sem backend configurado ou fora do ar", async () => {
     fetchMock.mockRejectedValueOnce(new TypeError("down"))
     expect((await GET(new Request("http://web.test/api/v1/orders"), params("orders"))).status).toBe(503)
-    delete process.env.CASA_DAS_MAQUINAS_URL
+    delete process.env.API_URL
     expect((await GET(new Request("http://web.test/api/v1/orders"), params("orders"))).status).toBe(503)
   })
 })

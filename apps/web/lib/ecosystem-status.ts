@@ -78,10 +78,10 @@ export const ECOSYSTEM_PRODUCTS: readonly EcosystemProduct[] = [
     issues: [12],
   },
   {
-    id: "casa-das-maquinas",
+    id: "api",
     name: "Casa das Máquinas",
     audience: "Backend",
-    route: "/casa-das-maquinas",
+    route: "/api",
     state: "parcial",
     summary: "Backend centralizado em Cloudflare Workers com D1: API v1 de catálogo e OpenAPI.",
     limitations: [

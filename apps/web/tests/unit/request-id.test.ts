@@ -13,7 +13,7 @@ describe("propagação do x-request-id", () => {
   const fetchMock = vi.fn()
 
   beforeEach(() => {
-    process.env.CASA_DAS_MAQUINAS_URL = "http://api.test"
+    process.env.API_URL = "http://api.test"
     fetchMock.mockReset()
     vi.stubGlobal("fetch", fetchMock)
   })
@@ -65,7 +65,7 @@ describe("timeouts do backend", () => {
   const fetchMock = vi.fn()
 
   beforeEach(() => {
-    process.env.CASA_DAS_MAQUINAS_URL = "http://api.test"
+    process.env.API_URL = "http://api.test"
     fetchMock.mockReset()
     vi.stubGlobal("fetch", fetchMock)
     // O limite real é de segundos; o teste só precisa do sinal de timeout já disparado.

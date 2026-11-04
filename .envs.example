@@ -17,7 +17,7 @@
 # URL da Casa das Máquinas (API v1). Local: `bun run --filter @delivery/api dev`
 # sobe em http://127.0.0.1:8787. Na Vercel, use a URL pública do Worker.
 # Sem ela o catálogo aparece como "indisponível" e o login/checkout respondem 503.
-CASA_DAS_MAQUINAS_URL=http://127.0.0.1:8787
+API_URL=http://127.0.0.1:8787
 
 # ----------------------------------------------------------------------------
 # Bloco 2: Worker, desenvolvimento local (apps/api/.dev.vars)

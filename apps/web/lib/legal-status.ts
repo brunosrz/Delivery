@@ -16,7 +16,7 @@ export function parseLegalStatus(body: unknown): LegalStatus | null {
  * backend não responder, devolve `true`: uma falha de rede não pode travar o site com um aviso que não dá para resolver.
  */
 export async function isLegalAcceptanceCurrent(): Promise<boolean> {
-  const baseUrl = process.env.CASA_DAS_MAQUINAS_URL
+  const baseUrl = process.env.API_URL
   if (!baseUrl) return true
   const store = await cookies()
   if (!hasSessionCookie(store.getAll().map((cookie) => cookie.name))) return true

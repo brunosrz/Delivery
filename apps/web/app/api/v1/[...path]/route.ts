@@ -8,7 +8,7 @@ const FORWARDED_REQUEST_HEADERS = ["accept", "content-type", "cookie", "idempote
 const REQUEST_ID_PATTERN = /^[A-Za-z0-9_-]{8,128}$/
 
 async function proxy(request: Request, { params }: { params: Promise<{ path: string[] }> }) {
-  const baseUrl = process.env.CASA_DAS_MAQUINAS_URL
+  const baseUrl = process.env.API_URL
   if (!baseUrl) return Response.json({ message: "serviço indisponível" }, { status: 503 })
 
   if (!isSameOriginRequest(request)) return Response.json({ message: "origem não permitida" }, { status: 403 })
