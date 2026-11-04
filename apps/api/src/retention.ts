@@ -1,6 +1,6 @@
 /**
  * Prazos de retenção (princípio da limitação do armazenamento: LGPD art. 6º, III e art. 15-16; GDPR art. 5(1)(e)).
- * Mudou um prazo aqui: atualize a Política de Privacidade (apps/web/lib/legal) e docs/privacidade-e-seguranca.md.
+ * Mudou um prazo aqui: atualize a Política de Privacidade (apps/web/lib/legal).
  */
 export const RETENTION_DAYS = {
   /** Mensagens do formulário de contato: tempo de atender e responder. */
