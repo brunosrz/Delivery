@@ -1,6 +1,6 @@
-# Casa das Máquinas
+# API Delivery
 
-Backend centralizado do ecossistema Delivery Express: API v1 em Cloudflare Workers com [Hono](https://hono.dev), banco [D1](https://developers.cloudflare.com/d1/) e contratos de [`@delivery/contracts`](../../packages/contracts).
+Backend centralizado do ecossistema Delivery Express: API v1 em Cloudflare Workers com [Hono](https://hono.dev), banco [D1](https://developers.cloudflare.com/d1/) e contratos de [`@delivery/contracts`](../../packages/contracts). A API usa recursos Cloudflare próprios do Delivery e não compartilha banco, Worker, R2 ou KV com o ERP/PDV.
 
 ## Rotas
 
@@ -17,7 +17,7 @@ Toda resposta usa o envelope `{ data, error, meta: { requestId, apiVersion } }`.
 
 - O papel nunca vem do cliente: todo cadastro nasce `customer`. Equipe de restaurante é o papel `restaurant_staff` mais um vínculo em `restaurant_members`.
 - `canManageRestaurant` é a única regra de acesso a dados de gestão. A autorização acontece antes da consulta, para quem não gere o restaurante não descobrir se ele existe.
-- O app web expõe `/api/auth/*` como proxy para cá, então o cookie de sessão é do próprio site. `BETTER_AUTH_URL` deve ser a origem pública do app web, e `TRUSTED_ORIGINS` lista as origens aceitas.
+- O app web expõe `/api/auth/*` como proxy para cá, então o cookie de sessão é do próprio site. `BETTER_AUTH_URL` deve ser a origem pública do app web, e `TRUSTED_ORIGINS` lista as origens aceitas. Os hosts planejados são `delivery.brunosrz.com`, `entregador.brunosrz.com`, `institucional.brunosrz.com` e `pedidos.brunosrz.com`; DNS e publicação dos apps não fazem parte desta configuração de infra.
 - Segredos: `BETTER_AUTH_SECRET` (obrigatório) e `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` (opcionais), via `wrangler secret put` em produção e `.dev.vars` localmente (veja `.dev.vars.example`).
 - Pagamento online (Asaas): `ASAAS_API_KEY` e `ASAAS_WEBHOOK_TOKEN` (segredos) e `ASAAS_ENV` (`sandbox` por padrão). Sem a chave, só os pagamentos na entrega funcionam. Configuração, fluxo e webhook em [`docs/pagamentos-asaas.md`](../../docs/pagamentos-asaas.md); o script `scripts/asaas-register-webhook.mjs` cadastra o webhook no Asaas.
 
@@ -45,9 +45,11 @@ bun run --filter @delivery/api dev
 - `bun run cf-typegen` regenera os tipos do `Env` depois de mudar o `wrangler.jsonc`.
 - `bun run test` roda os testes no runtime `workerd`. Cada arquivo de teste recebe um D1 isolado, com as migrações e o seed sintético aplicados.
 
-## Deploy
+## Infraestrutura e deploy
 
-O workflow `Deploy Casa das Máquinas` publica na `main` quando os secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` e `D1_DATABASE_ID` existem. A ordem é: testes, migrações remotas e deploy. Sem os secrets, o job registra que o deploy foi pulado.
+O Worker é nomeado `delivery-api` e tem o ambiente `delivery-api-preview`. Cada ambiente usa D1, R2 e KV exclusivos do Delivery, além do Durable Object `RestaurantRoom`. Veja [Deploy e ambientes Cloudflare](../../.github/DEPLOYMENT.md) para IDs, domínios planejados e instruções.
+
+O workflow `.github/workflows/deploy.yml` executa testes, aplica migrations no D1 do ambiente e publica somente este Worker. PRs publicam Preview; push em `main` publica Production. `apps/web` não é publicado por esse workflow.
 
 O seed de demonstração não roda automaticamente em produção; aplique-o manualmente com `wrangler d1 execute DB --remote --file seed/demo.sql`.
 

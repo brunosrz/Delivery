@@ -1,149 +1,111 @@
-name: Deploy
+name: Deploy API Cloudflare
 
-# Publica em produção a cada push em main (linha estável) e sob demanda. Os
-# passos são pulados, sem falhar, quando o secret correspondente não está
-# configurado (ver .github/DEPLOYMENT.md). Secrets de produção vivem só no
-# Environment "Production".
-# Ordem: Worker da Casa das Máquinas (migrations D1 antes do código novo) e
-# depois o web na Vercel, que consome a API publicada.
-
+# Este workflow publica somente apps/api. Os web apps permanecem fora do deploy
+# enquanto a migração da plataforma não estiver concluída.
 on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/api/**"
+      - "packages/**"
+      - "bun.lock"
+      - ".github/workflows/deploy.yml"
   push:
     branches: [main]
     paths:
-      - "apps/**"
+      - "apps/api/**"
       - "packages/**"
       - "bun.lock"
       - ".github/workflows/deploy.yml"
   workflow_dispatch:
+    inputs:
+      target:
+        description: Ambiente a publicar
+        required: true
+        type: choice
+        options: [preview, production]
 
 permissions:
   contents: read
 
 concurrency:
-  group: deploy-production
+  group: delivery-api-${{ github.event_name == 'pull_request' && 'preview' || (github.event_name == 'workflow_dispatch' && inputs.target || (github.ref == 'refs/heads/main' && 'production' || 'preview')) }}
   cancel-in-progress: false
 
 env:
-  NODE_VERSION: "22"
   BUN_VERSION: "1.4.4"
-  VERCEL_CLI_VERSION: "65.9.0"
 
 jobs:
-  # Só o branch main publica; workflow_dispatch permite escolher outro branch
-  # na interface e, sem esta checagem, publicaria em produção por engano.
-  api:
-    name: Casa das Máquinas (D1 + Worker)
-    if: github.ref == 'refs/heads/main'
+  preview:
+    name: "API (Preview: D1 + Worker)"
+    if: >-
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'workflow_dispatch' && inputs.target == 'preview')
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    environment: Production
+    timeout-minutes: 20
+    environment: Preview
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      D1_DATABASE_ID: ${{ secrets.D1_DATABASE_ID }}
+    defaults:
+      run:
+        working-directory: apps/api
     steps:
-      - name: Detect deployment credentials
-        id: credentials
+      - name: Validar credenciais
+        env:
+          D1_DATABASE_ID: ${{ secrets.D1_DATABASE_ID }}
         run: |
-          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ] || [ -z "$D1_DATABASE_ID" ]; then
-            echo "::notice::Deploy da API pulado: configure CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID e D1_DATABASE_ID."
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-          fi
-      - if: steps.credentials.outputs.ready == 'true'
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo "::error::Configure CLOUDFLARE_API_TOKEN no ambiente Preview."; exit 1; }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "::error::Configure CLOUDFLARE_ACCOUNT_ID no ambiente Preview."; exit 1; }
+          test "$D1_DATABASE_ID" = "7e64fb05-d729-4aae-9ff0-425831b69a31" || { echo "::error::D1_DATABASE_ID não corresponde ao banco Delivery Preview provisionado."; exit 1; }
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - if: steps.credentials.outputs.ready == 'true'
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          bun-version: ${{ env.BUN_VERSION }} env.PNPM_VERSION }}
-      - if: steps.credentials.outputs.ready == 'true'
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-      - if: steps.credentials.outputs.ready == 'true'
-        run: bun install --frozen-lockfile
-      - if: steps.credentials.outputs.ready == 'true'
-        name: Test before deploy
-        run: bun run --filter @delivery/api test
-      - if: steps.credentials.outputs.ready == 'true'
-        name: Point to the production D1 database
-        working-directory: apps/api
-        run: sed -i "s/00000000-0000-0000-0000-000000000000/${D1_DATABASE_ID}/" wrangler.jsonc
-      # Migrations antes do Worker: o código novo pode assumir o schema novo.
-      - if: steps.credentials.outputs.ready == 'true'
-        name: Apply D1 migrations
-        working-directory: apps/api
-        run: |
-          for attempt in 1 2 3; do
-            if bunx wrangler d1 migrations apply DB --remote; then
-              exit 0
-            fi
-            if [ "$attempt" -lt 3 ]; then
-              echo "D1 migrations failed (attempt $attempt/3); retrying..."
-              sleep $((attempt * 10))
-            fi
-          done
-          exit 1
-      - if: steps.credentials.outputs.ready == 'true'
-        name: Deploy Worker
-        working-directory: apps/api
-        run: bunx wrangler deploy
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: bun install --frozen-lockfile
+        working-directory: .
+      - name: Testar API
+        run: bun run test
+      - name: Aplicar migrações no D1 de Preview
+        run: bunx wrangler d1 migrations apply DB --remote --env preview
+      - name: Publicar Worker de Preview
+        run: bunx wrangler deploy --env preview
 
-  web:
-    name: Web (Vercel)
-    # !cancelled(): a falha da API não deve impedir a tentativa de publicar o
-    # web, mas um cancelamento explícito do workflow deve.
-    if: "!cancelled() && github.ref == 'refs/heads/main'"
-    needs: [api]
+  production:
+    name: "API (Production: D1 + Worker)"
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && inputs.target == 'production' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     environment: Production
     env:
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    defaults:
+      run:
+        working-directory: apps/api
     steps:
-      - name: Detect deployment credentials
-        id: credentials
+      - name: Validar credenciais
+        env:
+          D1_DATABASE_ID: ${{ secrets.D1_DATABASE_ID }}
         run: |
-          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
-            echo "::notice::Deploy do web pulado: configure VERCEL_TOKEN, VERCEL_ORG_ID e VERCEL_PROJECT_ID."
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-          fi
-      - if: steps.credentials.outputs.ready == 'true'
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo "::error::Configure CLOUDFLARE_API_TOKEN no ambiente Production."; exit 1; }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "::error::Configure CLOUDFLARE_ACCOUNT_ID no ambiente Production."; exit 1; }
+          test "$D1_DATABASE_ID" = "c24822ba-9107-4a97-bab3-0e5ba01bff32" || { echo "::error::D1_DATABASE_ID não corresponde ao banco Delivery Production provisionado."; exit 1; }
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - if: steps.credentials.outputs.ready == 'true'
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          bun-version: ${{ env.BUN_VERSION }} env.PNPM_VERSION }}
-      - if: steps.credentials.outputs.ready == 'true'
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-      - if: steps.credentials.outputs.ready == 'true'
-        run: bun install --frozen-lockfile
-      - if: steps.credentials.outputs.ready == 'true'
-        name: Pull Vercel production settings
-        run: bunx vercel@${VERCEL_CLI_VERSION} pull --yes --environment=production --token="$VERCEL_TOKEN"
-      - if: steps.credentials.outputs.ready == 'true'
-        name: Build
-        run: bunx vercel@${VERCEL_CLI_VERSION} build --prod --token="$VERCEL_TOKEN"
-      - if: steps.credentials.outputs.ready == 'true'
-        name: Deploy
-        run: bunx vercel@${VERCEL_CLI_VERSION} deploy --prebuilt --prod --token="$VERCEL_TOKEN"
-      - name: Resumo
-        if: always()
-        run: |
-          echo "## Deploy de produção" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Casa das Máquinas (Cloudflare Worker + D1)" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Web (Vercel)" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Passos sem secret configurado foram pulados (ver .github/DEPLOYMENT.md)." >> "$GITHUB_STEP_SUMMARY"
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: bun install --frozen-lockfile
+        working-directory: .
+      - name: Testar API
+        run: bun run test
+      - name: Aplicar migrações no D1 de Production
+        run: bunx wrangler d1 migrations apply DB --remote --env production
+      - name: Publicar Worker de Production
+        run: bunx wrangler deploy --env production

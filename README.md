@@ -46,7 +46,9 @@ Pré-requisitos: Node 22, Bun 1.4, Python 3.9+ e SCons no PATH (`python -m pip i
 - `scons check`: `lint` seguido de `tests`.
 - `scons update`: atualiza a raiz e os workspaces. `scons update --latest` (ou só `scons --latest`) ignora os ranges e pode trazer versões major: revise o diff e as breaking changes e rode `scons check` antes de commitar.
 - `scons clean`: remove só saídas geradas (build, cobertura, relatórios).
-- `scons deploy` (ou `prod`): valida ferramentas, vínculo e autenticação antes de publicar o Worker (se existir) e, depois, a Vercel; qualquer falha interrompe a sequência. Exige `vercel` no PATH, `VERCEL_PROJECT_ID`, `VERCEL_ORG_ID` e `.vercel/project.json` com os mesmos IDs.
+- `scons preview`: aplica migrations no D1 de Preview e publica somente `apps/api` na Cloudflare.
+- `scons prod` (ou `scons deploy`): aplica migrations no D1 de Production e publica somente `apps/api` na Cloudflare.
+- `bun run --filter @delivery/api dev`: inicia o simulador local com bindings locais; use `scons preview` para publicar no Preview.
 
 `lint` e `tests` nunca instalam dependências. Logs UTF-8 por alvo ficam em `.scons-logs/`.
 Testes da automação, sem serviços externos: `python -m unittest discover -s tests -t . -p 'test_scons*.py'`.

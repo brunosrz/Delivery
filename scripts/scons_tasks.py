@@ -10,9 +10,10 @@ import time
 from pathlib import Path
 
 HELP = """Delivery - Node 22+, Bun 1.4, Python 3 e SCons no PATH.
-scons [help|install|build|tests|coverage|lint|check|deploy|prod|update|clean]
+scons [help|install|build|tests|coverage|lint|check|deploy-preview|deploy-prod|update|clean]
+preview e prod sao aliases. Deploy publica somente apps/api na Cloudflare;
+apps/web nao e publicado por estes alvos. Configure Cloudflare em .env.
 update --latest pode alterar versoes major. Logs: .scons-logs/<alvo>.log.
-Deploy exige vercel no PATH, VERCEL_PROJECT_ID e VERCEL_ORG_ID.
 """
 ANSI = re.compile(r"\x1b(?:\[[0-9;?]*[ -/]*[@-~]|\][^\x07]*(?:\x07|\x1b\\))")
 SECRET_ENV = ("TOKEN", "SECRET", "PASSWORD", "API_KEY")
@@ -41,9 +42,33 @@ class Tasks:
         self.name = name
         self.latest = latest
         self.env = dict(os.environ, CI="true", NO_COLOR="1", FORCE_COLOR="0")
+        self.load_env_file(self.root / ".env")
+
+    def load_env_file(self, path):
+        """Load ignored local settings without overriding the caller's environment."""
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except FileNotFoundError:
+            return
+        for line in lines:
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            if stripped.startswith("export "):
+                stripped = stripped[7:].lstrip()
+            key, separator, value = stripped.partition("=")
+            if not separator or not key.strip():
+                continue
+            key = key.strip()
+            value = value.strip()
+            if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+                value = value[1:-1]
+            self.env.setdefault(key, value)
 
     def resolve(self, name):
-        candidates = [name + ".cmd", name + ".exe", name] if sys.platform == "win32" else [name]
+        candidates = (
+            [name + ".cmd", name + ".exe", name] if sys.platform == "win32" else [name]
+        )
         for candidate in candidates:
             found = shutil.which(candidate)
             if found:
@@ -64,7 +89,11 @@ class Tasks:
 
             def emit(message):
                 message = self.redact(ANSI.sub("", message))
-                print(message, end="", flush=True)
+                encoding = getattr(sys.stdout, "encoding", None) or "utf-8"
+                console_message = message.encode(encoding, errors="replace").decode(
+                    encoding, errors="replace"
+                )
+                print(console_message, end="", flush=True)
                 log.write(message)
                 log.flush()
 
@@ -100,7 +129,9 @@ class Tasks:
                     raise
                 finally:
                     stream.close()
-                emit(f"[{self.name}] exit={code} duration={time.perf_counter() - started:.1f}s\n")
+                emit(
+                    f"[{self.name}] exit={code} duration={time.perf_counter() - started:.1f}s\n"
+                )
                 if code:
                     raise RuntimeError(f"Comando falhou ({code}): {args[0]}")
             except OSError as error:
@@ -122,35 +153,50 @@ class Tasks:
         if failed:
             raise RuntimeError("Lint: uma ou mais etapas falharam")
 
-    def deploy(self):
+    def deploy(self, target):
         worker = self.root / "apps" / "api"
-        has_worker = worker.is_dir()
-        self.resolve("vercel")
-        project = self.env.get("VERCEL_PROJECT_ID")
-        org = self.env.get("VERCEL_ORG_ID")
-        if not project or not org:
-            raise RuntimeError("Configure VERCEL_PROJECT_ID e VERCEL_ORG_ID")
-        link = self.root / ".vercel" / "project.json"
-        try:
-            data = json.loads(link.read_text(encoding="utf-8"))
-        except (OSError, ValueError) as error:
-            raise RuntimeError(f"Vinculo Vercel ilegivel: {link}") from error
-        if data.get("projectId") != project or data.get("orgId") != org:
-            raise RuntimeError("Vinculo Vercel diverge dos identificadores configurados")
-        if has_worker:
-            self.resolve("bunx")
-            if not any((worker / name).is_file() for name in WORKER_CONFIGS):
-                raise RuntimeError("Worker sem configuracao Wrangler")
-        else:
-            print("Worker ausente: etapa omitida.")
-        # whoami nao prova permissao de deploy; qualquer falha interrompe a publicacao.
-        self.run("vercel", "whoami")
-        self.run("vercel", "project", "inspect", project, "--scope", org)
-        if has_worker:
-            self.run("bunx", "wrangler", "whoami", cwd=worker)
-            self.run("bunx", "wrangler", "deploy", "--dry-run", cwd=worker)
-            self.run("bunx", "wrangler", "deploy", cwd=worker)
-        self.run("vercel", "deploy", "--prod", "--yes", "--scope", org)
+        if not worker.is_dir() or not any(
+            (worker / name).is_file() for name in WORKER_CONFIGS
+        ):
+            raise RuntimeError("apps/api sem configuracao Wrangler")
+        if not self.env.get("CLOUDFLARE_API_TOKEN") or not self.env.get(
+            "CLOUDFLARE_ACCOUNT_ID"
+        ):
+            raise RuntimeError(
+                "Configure CLOUDFLARE_API_TOKEN e CLOUDFLARE_ACCOUNT_ID no ambiente ou .env"
+            )
+        expected = {
+            "preview": ("delivery-preview", "7e64fb05-d729-4aae-9ff0-425831b69a31"),
+            "production": (
+                "delivery-production",
+                "c24822ba-9107-4a97-bab3-0e5ba01bff32",
+            ),
+        }
+        database = expected[target]
+        configured_id = self.env.get(
+            "PREVIEW_D1_DATABASE_ID"
+            if target == "preview"
+            else "PRODUCTION_D1_DATABASE_ID"
+        )
+        if configured_id != database[1]:
+            raise RuntimeError(
+                f"O ID D1 configurado para {target} não corresponde ao recurso isolado provisionado"
+            )
+        self.resolve("bunx")
+        self.run("bunx", "wrangler", "whoami", cwd=worker)
+        self.run(
+            "bunx",
+            "wrangler",
+            "d1",
+            "migrations",
+            "apply",
+            "DB",
+            "--remote",
+            "--env",
+            target,
+            cwd=worker,
+        )
+        self.run("bunx", "wrangler", "deploy", "--env", target, cwd=worker)
 
     def clean(self):
         paths = [self.root / name for name in CLEAN_PATHS]
@@ -181,6 +227,10 @@ class Tasks:
             elif self.name == "check":
                 self.lint()
                 self.tests()
+            elif self.name == "deploy-preview":
+                self.deploy("preview")
+            elif self.name in {"deploy-prod", "deploy"}:
+                self.deploy("production")
             else:
                 getattr(self, self.name)()
             return 0
