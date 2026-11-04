@@ -3,7 +3,7 @@
 ## Worker (código)
 
 ```bash
-cd apps/casa-das-maquinas
+cd apps/api
 bunx wrangler rollback        # volta o Worker para a versão anterior publicada
 ```
 
@@ -11,7 +11,7 @@ Ou republique o commit anterior com `workflow_dispatch` em `.github/workflows/de
 
 ## Schema D1 (migrações)
 
-O D1 não tem "down" nativo. Cada migração tem um script compensatório em `apps/casa-das-maquinas/migrations-rollback/`, gerado por `node scripts/generate-rollbacks.mjs`: remove os objetos criados (filhos antes dos pais) e apaga a linha da migração em `d1_migrations`, para que ela possa ser reaplicada.
+O D1 não tem "down" nativo. Cada migração tem um script compensatório em `apps/api/migrations-rollback/`, gerado por `node scripts/generate-rollbacks.mjs`: remove os objetos criados (filhos antes dos pais) e apaga a linha da migração em `d1_migrations`, para que ela possa ser reaplicada.
 
 Para desfazer a última migração (exemplo, `0003_asaas.sql`):
 

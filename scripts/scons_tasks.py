@@ -25,7 +25,7 @@ CLEAN_PATHS = (
     "apps/web/playwright-report",
     "apps/web/tsconfig.tsbuildinfo",
     "apps/web/next-env.d.ts",
-    "apps/casa-das-maquinas/coverage",
+    "apps/api/coverage",
     "packages/contracts/coverage",
     "packages/domain/coverage",
     "coverage",
@@ -123,7 +123,7 @@ class Tasks:
             raise RuntimeError("Lint: uma ou mais etapas falharam")
 
     def deploy(self):
-        worker = self.root / "apps" / "casa-das-maquinas"
+        worker = self.root / "apps" / "api"
         has_worker = worker.is_dir()
         self.resolve("vercel")
         project = self.env.get("VERCEL_PROJECT_ID")

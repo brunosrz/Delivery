@@ -39,7 +39,7 @@ export default defineConfig({
   webServer: [
     {
       // Casa das Máquinas real (workerd + D1 local com seed sintético).
-      command: "bun run --filter @delivery/casa-das-maquinas e2e:serve",
+      command: "bun run --filter @delivery/api e2e:serve",
       url: `${apiUrl}/v1/health`,
       env: { E2E_API_PORT: String(apiPort) },
       reuseExistingServer: !process.env.CI,

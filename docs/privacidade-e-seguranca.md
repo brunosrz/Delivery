@@ -46,7 +46,7 @@ O cron (`scheduled`) roda `purgeExpired`, `pruneRateLimits` e o reenvio da caixa
 - **API (Worker):** cabeçalhos (`nosniff`, `X-Frame-Options`, `Referrer-Policy: no-referrer`, HSTS, COOP, CSP `default-src 'none'`), `Cache-Control: no-store` em tudo que tem sessão ou dado pessoal, cookie de sessão `HttpOnly` + `SameSite=Lax` (+ `Secure` em HTTPS), limites de requisição por rota (exportar 10/min, excluir 5/min, consentir 30/min), validação com zod em toda entrada (`.strict()`), isolamento por restaurante, exclusão com **sessão recente (15 min)** e frase de confirmação.
 - **Web (Next):** CSP restritiva (só a própria origem, sem frames, sem plugins), HSTS, `X-Frame-Options`, `Permissions-Policy`, `Cache-Control: private, no-store` nas áreas logadas, `poweredByHeader` desligado, proxy com **checagem de origem** contra CSRF (`lib/origin.ts`) e lista fechada de rotas.
 - **Banco:** nenhuma tabela de privacidade guarda IP em claro (hash com sal secreto), `data_requests` não tem chave estrangeira nem dado pessoal, `legal_acceptances` some com a conta, migrações com rollback testado.
-- **Testes:** `apps/casa-das-maquinas/test/privacy.test.ts` (consentimento, GPC, aceite, exportação, exclusão, sessão recente, retenção, cabeçalhos, cookie), `apps/web/tests/unit/{consent,locale,legal,security}.test.ts` e `apps/web/tests/e2e/privacy.spec.ts`.
+- **Testes:** `apps/api/test/privacy.test.ts` (consentimento, GPC, aceite, exportação, exclusão, sessão recente, retenção, cabeçalhos, cookie), `apps/web/tests/unit/{consent,locale,legal,security}.test.ts` e `apps/web/tests/e2e/privacy.spec.ts`.
 
 ## Idiomas (Paraglide)
 

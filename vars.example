@@ -1,5 +1,5 @@
-# Valores não secretos para apps/casa-das-maquinas/wrangler.jsonc [vars].
-# Configure em Workers & Pages > casa-das-maquinas > Settings > Variables.
+# Valores não secretos para apps/api/wrangler.jsonc [vars].
+# Configure em Workers & Pages > delivery-api > Settings > Variables.
 # Secrets (Better Auth, Google OAuth, Asaas e Turnstile) não devem ficar aqui.
 
 API_VERSION=v1

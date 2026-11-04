@@ -8,8 +8,8 @@
         "prettier": "3.9.10",
       },
     },
-    "apps/casa-das-maquinas": {
-      "name": "@delivery/casa-das-maquinas",
+    "apps/api": {
+      "name": "@delivery/api",
       "version": "0.1.0",
       "dependencies": {
         "@delivery/contracts": "workspace:*",
@@ -190,7 +190,7 @@
 
     "@cspotcode/source-map-support": ["@cspotcode/source-map-support@0.8.1", "", { "dependencies": { "@jridgewell/trace-mapping": "0.3.9" } }, "sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw=="],
 
-    "@delivery/casa-das-maquinas": ["@delivery/casa-das-maquinas@workspace:apps/casa-das-maquinas"],
+    "@delivery/api": ["@delivery/api@workspace:apps/api"],
 
     "@delivery/contracts": ["@delivery/contracts@workspace:packages/contracts"],
 

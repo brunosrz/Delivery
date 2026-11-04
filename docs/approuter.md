@@ -47,7 +47,7 @@ Estamos organizando o código de forma que a migração para um monorepo seja o 
 
 # Observabilidade: Grafana, métricas e logs ficam fora do App Router
 
-/casa-das-maquinas/ # Será migrado para /apps/casa-das-maquinas
+/casa-das-maquinas/ # Será migrado para /apps/api
 /components
 /ui/ # Será migrado para /packages/ui
 /[projeto]/ # Componentes específicos de cada projeto

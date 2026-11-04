@@ -16,12 +16,12 @@ Legenda: **implementado** (funciona de ponta a ponta), **parcial** (funciona com
 | `/ta-na-entrega`                                            | em construção | Sessão via Casa das Máquinas                            | Exige login e papel de entregador ou administração; lista funcionalidades planejadas                  |
 | `/site-institucional`                                       | em construção | —                                                       | Sem contato nem conteúdo comercial                                                                    |
 | `/mkit`                                                     | demonstração  | —                                                       | Conceito estático (#12)                                                                               |
-| `/casa-das-maquinas`                                        | parcial       | —                                                       | Página da arquitetura; a API de catálogo vive em `apps/casa-das-maquinas`                             |
+| `/casa-das-maquinas`                                        | parcial       | —                                                       | Página da arquitetura; a API de catálogo vive em `apps/api`                             |
 | `/auth/login`, `/auth/register`                             | implementado  | Better Auth na Casa das Máquinas, via proxy `/api/auth` | E-mail e senha; recuperação de senha depende de envio de e-mail (planejado)                           |
 
 ## Rotas de API
 
-O catálogo é servido pela Casa das Máquinas (`apps/casa-das-maquinas`, rotas `/v1`). No app web resta apenas o proxy `GET/POST /api/auth/*`, que repassa login, cadastro e sessão ao Better Auth da Casa das Máquinas para manter o cookie no domínio do site.
+O catálogo é servido pela Casa das Máquinas (`apps/api`, rotas `/v1`). No app web resta apenas o proxy `GET/POST /api/auth/*`, que repassa login, cadastro e sessão ao Better Auth da Casa das Máquinas para manter o cookie no domínio do site.
 
 ## Removido na Fase 0
 

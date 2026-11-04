@@ -24,7 +24,7 @@ labels:
     title: "^(chore|test|build|style|refactor)(\\(.+\\))?!?:.*"
   - label: backend
     files:
-      - "^apps/casa-das-maquinas/.*"
+      - "^apps/api/.*"
   - label: frontend
     files:
       - "^apps/web/.*"

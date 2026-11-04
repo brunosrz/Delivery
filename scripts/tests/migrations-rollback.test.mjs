@@ -3,9 +3,9 @@ import { readdirSync, readFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 import { describe, it } from "node:test"
 import { URL, fileURLToPath } from "node:url"
-import { rollbackSql } from "../../apps/casa-das-maquinas/scripts/generate-rollbacks.mjs"
+import { rollbackSql } from "../../apps/api/scripts/generate-rollbacks.mjs"
 
-const app = fileURLToPath(new URL("../../apps/casa-das-maquinas/", import.meta.url))
+const app = fileURLToPath(new URL("../../apps/api/", import.meta.url))
 const migrations = readdirSync(`${app}migrations`)
   .filter((name) => name.endsWith(".sql"))
   .sort()
@@ -38,7 +38,7 @@ describe("scripts compensatórios das migrações D1", () => {
       assert.equal(
         read(`migrations-rollback/${name}`),
         rollbackSql(name, read(`migrations/${name}`)),
-        `${name}: rode node scripts/generate-rollbacks.mjs em apps/casa-das-maquinas`,
+        `${name}: rode node scripts/generate-rollbacks.mjs em apps/api`,
       )
     }
   })

@@ -1,6 +1,6 @@
 # Planejamento do Monorepo Futuro
 
-> **Documento de proposta.** O que existe hoje é um workspace Bun com `apps/web`, `apps/casa-das-maquinas`, `packages/domain` e `packages/contracts` (ver [`estrutura-atual.md`](./estrutura-atual.md)). Turborepo, `packages/ui` e `packages/config` **não** estão implementados; ficam adiados até haver dois consumidores e medição de ganho (issue #39). Menções a tRPC, Prisma e NextAuth são históricas: o backend é a Casa das Máquinas (Hono, Drizzle, Better Auth).
+> **Documento de proposta.** O que existe hoje é um workspace Bun com `apps/web`, `apps/api`, `packages/domain` e `packages/contracts` (ver [`estrutura-atual.md`](./estrutura-atual.md)). Turborepo, `packages/ui` e `packages/config` **não** estão implementados; ficam adiados até haver dois consumidores e medição de ganho (issue #39). Menções a tRPC, Prisma e NextAuth são históricas: o backend é a Casa das Máquinas (Hono, Drizzle, Better Auth).
 
 Este documento detalha o planejamento e a estrutura do futuro monorepo para o projeto Ecossistema Delivery Express, utilizando Turborepo como ferramenta de gerenciamento.
 
@@ -18,7 +18,7 @@ O monorepo será estruturado para permitir o desenvolvimento e deploy independen
 │ ├── pedidos-na-mao/ # Sistema para restaurantes
 │ ├── ta-na-entrega/ # Aplicativo para entregadores
 │ ├── observabilidade/ # Integrações com Grafana, métricas e logs
-│ └── casa-das-maquinas/ # Backend centralizado com APIs
+│ └── api/ # Backend centralizado com APIs
 │
 ├── packages/ # Pacotes compartilhados
 │ ├── ui/ # Biblioteca de componentes UI
@@ -93,7 +93,7 @@ O monorepo será estruturado para permitir o desenvolvimento e deploy independen
 - **Funcionalidades**: APIs, autenticação, integração com serviços externos
 - **Estrutura**:
   ```
-  /apps/casa-das-maquinas/
+  /apps/api/
   ├── app/ # App Router do Next.js
   │ └── api/ # Rotas de API
   ├── server/ # Lógica de servidor

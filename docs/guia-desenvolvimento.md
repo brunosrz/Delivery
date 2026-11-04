@@ -212,7 +212,7 @@ O mesmo fluxo existe via SCons: `scons check`, `scons tests`, `scons lint`. Os t
 ### Subindo a API localmente
 
 ```bash
-cd apps/casa-das-maquinas
+cd apps/api
 cp .dev.vars.example .dev.vars        # preencha BETTER_AUTH_SECRET
 bun run db:migrate:local                 # migrações no D1 local
 bun run dev                              # wrangler dev

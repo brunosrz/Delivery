@@ -7,7 +7,7 @@ const BASE_URL = {
 } as const
 
 /** O Asaas exige User-Agent em contas raiz criadas a partir de 13/06/2024. */
-const USER_AGENT = "delivery-casa-das-maquinas"
+const USER_AGENT = "delivery-api"
 const TIMEOUT_MS = 8000
 
 export type AsaasBillingType = "PIX" | "CREDIT_CARD"

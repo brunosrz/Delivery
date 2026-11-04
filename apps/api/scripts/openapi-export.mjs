@@ -1,5 +1,5 @@
 // Gera o snapshot do OpenAPI em packages/contracts/openapi/v1.json, sem subir o workerd.
-// Uso: bun run --filter @delivery/casa-das-maquinas openapi:export   (Node 22.18+ ou 24+)
+// Uso: bun run --filter @delivery/api openapi:export   (Node 22.18+ ou 24+)
 import { mkdirSync, writeFileSync } from "node:fs"
 import { register } from "node:module"
 import { dirname } from "node:path"

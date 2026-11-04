@@ -19,7 +19,7 @@ Este documento descreve o plano para migrar a estrutura atual do projeto (basead
 │ ├── pedidos-na-mao/ # Pedidos na Mão - Painel para restaurantes
 │ ├── ta-na-entrega/ # Tá na Entrega - App para entregadores
 │ ├── observabilidade/ # Integrações com Grafana, métricas e logs
-│ └── casa-das-maquinas/ # Backend centralizado com APIs
+│ └── api/ # Backend centralizado com APIs
 │
 ├── packages/ # Pacotes compartilhados
 │ ├── ui/ # Biblioteca de componentes UI
@@ -63,7 +63,7 @@ Este documento descreve o plano para migrar a estrutura atual do projeto (basead
 ### Fase 3: Migração dos Módulos
 
 1. **Casa das Máquinas (Backend)**
-   - Migrar para `apps/casa-das-maquinas`
+   - Migrar para `apps/api`
    - Configurar deploy independente
    - Implementar testes automatizados
 

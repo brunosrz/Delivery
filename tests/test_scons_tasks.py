@@ -101,7 +101,7 @@ class TaskTests(unittest.TestCase):
         (self.root / ".vercel/project.json").write_text(json.dumps({"projectId": "p", "orgId": "o"}))
         self.task.env.update(VERCEL_PROJECT_ID="p", VERCEL_ORG_ID="o")
         if worker:
-            folder = self.root / "apps/casa-das-maquinas"
+            folder = self.root / "apps/api"
             folder.mkdir(parents=True)
             (folder / "wrangler.jsonc").touch()
 

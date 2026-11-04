@@ -1,5 +1,5 @@
 {
-  "name": "@delivery/casa-das-maquinas",
+  "name": "@delivery/api",
   "version": "0.1.0",
   "private": true,
   "type": "module",

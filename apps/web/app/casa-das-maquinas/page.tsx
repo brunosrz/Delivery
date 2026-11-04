@@ -47,7 +47,7 @@ export default function CasaDasMaquinasPage() {
         </div>
         <p className="text-xl text-gray-600">
           Backend centralizado do ecossistema: uma única API para o Delivery Express, o Pedidos na Mão e o Tá na
-          Entrega. A API v1 de catálogo já existe em `apps/casa-das-maquinas` com testes no runtime do Workers; pedidos,
+          Entrega. A API v1 de catálogo já existe em `apps/api` com testes no runtime do Workers; pedidos,
           autenticação e tempo real estão nas próximas etapas.
         </p>
       </header>

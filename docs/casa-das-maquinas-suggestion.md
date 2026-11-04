@@ -8,7 +8,7 @@ Legenda de estado: **feito** (com evidência no repositório), **próximo** (já
 
 | Sugestão original                             | Estado | Evidência                                                                                                                         |
 | --------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------- |
-| Ambiente de desenvolvimento local             | feito  | `wrangler dev` com D1 local, migrações e seed sintético; nenhum serviço externo é necessário (`apps/casa-das-maquinas/README.md`) |
+| Ambiente de desenvolvimento local             | feito  | `wrangler dev` com D1 local, migrações e seed sintético; nenhum serviço externo é necessário (`apps/api/README.md`) |
 | Documentação viva                             | feito  | OpenAPI 3.1 gerada dos schemas em `GET /v1/openapi.json`; os contratos em `packages/contracts` são a fonte de verdade             |
 | Análise de segurança contínua                 | feito  | CodeQL em todo PR, actions fixadas por SHA, review automatizado com perfil assertivo                                              |
 | Autenticação e auditoria de acesso por tenant | feito  | Better Auth, papéis e `restaurant_members`, com testes negativos de acesso cruzado                                                |

@@ -38,7 +38,7 @@ const response = await globalThis.fetch(`${BASE_URL[environment]}/webhooks`, {
   headers: {
     "content-type": "application/json",
     access_token: apiKey,
-    "user-agent": "delivery-casa-das-maquinas",
+    "user-agent": "delivery-api",
   },
   body: JSON.stringify({
     name: "Delivery - pagamentos",

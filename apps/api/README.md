@@ -35,10 +35,10 @@ Uma falha ao publicar no tempo real é registrada no log e não desfaz o pedido 
 ## Desenvolvimento
 
 ```bash
-cp apps/casa-das-maquinas/.dev.vars.example apps/casa-das-maquinas/.dev.vars
-bun run --filter @delivery/casa-das-maquinas db:migrate:local
-(cd apps/casa-das-maquinas && bunx wrangler d1 execute DB --local --file seed/demo.sql)
-bun run --filter @delivery/casa-das-maquinas dev
+cp apps/api/.dev.vars.example apps/api/.dev.vars
+bun run --filter @delivery/api db:migrate:local
+(cd apps/api && bunx wrangler d1 execute DB --local --file seed/demo.sql)
+bun run --filter @delivery/api dev
 ```
 
 - `bun run db:generate` gera uma nova migração a partir de `src/db/schema.ts`; nunca edite migrações já aplicadas.

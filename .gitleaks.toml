@@ -6,6 +6,6 @@ useDefault = true
 [allowlist]
 description = "Fixtures de teste com valores fictícios"
 paths = [
-  '''apps/casa-das-maquinas/test/.*\.ts''',
+  '''apps/api/test/.*\.ts''',
   '''apps/web/tests/.*\.ts''',
 ]
