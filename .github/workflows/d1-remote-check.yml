@@ -25,7 +25,7 @@ jobs:
       DB_NAME: delivery-check-${{ github.run_id }}
     defaults:
       run:
-        working-directory: apps/casa-das-maquinas
+        working-directory: apps/api
     steps:
       - name: Check credentials
         id: credentials

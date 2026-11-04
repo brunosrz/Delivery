@@ -6,7 +6,7 @@ const notFound = vi.fn(() => {
 })
 
 vi.mock("next/navigation", () => ({ notFound: () => notFound() }))
-vi.mock("@/lib/api", () => ({ getApiClient: () => (process.env.CASA_DAS_MAQUINAS_URL ? { getMenu } : null) }))
+vi.mock("@/lib/api", () => ({ getApiClient: () => (process.env.API_URL ? { getMenu } : null) }))
 
 import { loadMenu } from "@/app/delivery-express/menu"
 
@@ -14,11 +14,11 @@ describe("loadMenu", () => {
   beforeEach(() => {
     getMenu.mockReset()
     notFound.mockClear()
-    process.env.CASA_DAS_MAQUINAS_URL = "http://api.test"
+    process.env.API_URL = "http://api.test"
   })
 
   it("trata a API não configurada como indisponível", async () => {
-    delete process.env.CASA_DAS_MAQUINAS_URL
+    delete process.env.API_URL
     await expect(loadMenu("pizzaria")).resolves.toEqual({ status: "unavailable" })
   })
 

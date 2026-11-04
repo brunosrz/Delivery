@@ -14,7 +14,7 @@ const FORWARDED_REQUEST_HEADERS = [
 const REQUEST_ID_PATTERN = /^[A-Za-z0-9_-]{8,128}$/
 
 async function proxy(request: Request, { params }: { params: Promise<{ all: string[] }> }) {
-  const baseUrl = process.env.CASA_DAS_MAQUINAS_URL
+  const baseUrl = process.env.API_URL
   if (!baseUrl) {
     return Response.json({ message: "autenticação indisponível" }, { status: 503 })
   }

@@ -1,7 +1,7 @@
 import type { Locale } from "@/lib/locale"
 import type { LegalContent } from "./types"
 
-// Política de Privacidade. Os prazos de retenção acompanham apps/casa-das-maquinas/src/retention.ts e os dados
+// Política de Privacidade. Os prazos de retenção acompanham apps/api/src/retention.ts e os dados
 // listados acompanham o que o código realmente grava (ver docs/privacidade-e-seguranca.md). Mudou um, mude o outro e
 // suba LEGAL_VERSIONS.privacy em @delivery/contracts para pedir novo aceite.
 

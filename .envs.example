@@ -5,7 +5,7 @@
 # por ninguém: copie cada bloco para o arquivo indicado.
 #
 #   Bloco 1 -> apps/web/.env.local                 (app web, Next.js)
-#   Bloco 2 -> apps/casa-das-maquinas/.dev.vars    (Worker, local; nunca versionado)
+#   Bloco 2 -> apps/api/.dev.vars    (Worker, local; nunca versionado)
 #   Bloco 3 -> `wrangler secret put` / wrangler.jsonc (Worker, produção)
 #
 # Nunca versione credenciais reais. Em CI e nos testes os valores são dummy.
@@ -14,13 +14,13 @@
 # ----------------------------------------------------------------------------
 # Bloco 1: app web (apps/web/.env.local)
 # ----------------------------------------------------------------------------
-# URL da Casa das Máquinas (API v1). Local: `bun run --filter @delivery/casa-das-maquinas dev`
+# URL da Casa das Máquinas (API v1). Local: `bun run --filter @delivery/api dev`
 # sobe em http://127.0.0.1:8787. Na Vercel, use a URL pública do Worker.
 # Sem ela o catálogo aparece como "indisponível" e o login/checkout respondem 503.
-CASA_DAS_MAQUINAS_URL=http://127.0.0.1:8787
+API_URL=http://127.0.0.1:8787
 
 # ----------------------------------------------------------------------------
-# Bloco 2: Worker, desenvolvimento local (apps/casa-das-maquinas/.dev.vars)
+# Bloco 2: Worker, desenvolvimento local (apps/api/.dev.vars)
 # ----------------------------------------------------------------------------
 # Segredo do Better Auth (sessões e tickets de tempo real). Gere com: openssl rand -base64 32
 BETTER_AUTH_SECRET=troque-por-um-segredo-local-com-32-caracteres
@@ -44,13 +44,13 @@ TURNSTILE_SECRET=
 # ----------------------------------------------------------------------------
 # Bloco 3: Worker, produção
 # ----------------------------------------------------------------------------
-# Segredos (cadastre com `bunx wrangler secret put NOME`, em apps/casa-das-maquinas):
+# Segredos (cadastre com `bunx wrangler secret put NOME`, em apps/api):
 #   BETTER_AUTH_SECRET   obrigatório
 #   GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET   opcionais
 #   ASAAS_API_KEY / ASAAS_WEBHOOK_TOKEN       obrigatórios para pagamento online
 #   TURNSTILE_SECRET                          opcional
 #
-# Variáveis (não secretas; ficam em apps/casa-das-maquinas/wrangler.jsonc, "vars"):
+# Variáveis (não secretas; ficam em apps/api/wrangler.jsonc, "vars"):
 #   API_VERSION=v1
 #   ASAAS_ENV=sandbox            # troque para "production" só com a chave de produção
 #   BETTER_AUTH_URL=https://SEU-SITE.vercel.app      # origem pública do app web
@@ -58,7 +58,7 @@ TURNSTILE_SECRET=
 #
 # Registro do webhook do Asaas (uma vez por ambiente):
 #   ASAAS_API_KEY=... ASAAS_WEBHOOK_TOKEN=... ASAAS_ENV=sandbox \
-#   node apps/casa-das-maquinas/scripts/asaas-register-webhook.mjs \
+#   node apps/api/scripts/asaas-register-webhook.mjs \
 #     https://SEU-WORKER.workers.dev/v1/webhooks/asaas contato@exemplo.com
 
 # Controlador dos dados, exibido nas páginas /legal/* (Termos, Privacidade e Cookies). Sem nome e e-mail válidos, as

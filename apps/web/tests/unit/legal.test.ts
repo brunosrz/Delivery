@@ -56,7 +56,7 @@ describe("documentos legais", () => {
   })
 
   it("os prazos de retenção do texto são os do código do Worker", () => {
-    const workerSource = readFileSync("../casa-das-maquinas/src/retention.ts", "utf8")
+    const workerSource = readFileSync("../api/src/retention.ts", "utf8")
     expect(workerSource).toContain("contactMessages: 365")
     expect(workerSource).toContain("consentRecords: 5 * 365")
     expect(workerSource).toContain("dataRequests: 5 * 365")

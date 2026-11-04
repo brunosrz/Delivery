@@ -12,7 +12,7 @@ describe("getSessionUser", () => {
   const fetchMock = vi.fn()
 
   beforeEach(() => {
-    process.env.CASA_DAS_MAQUINAS_URL = "http://api.test"
+    process.env.API_URL = "http://api.test"
     cookieHeader.value = "better-auth.session_token=abc"
     fetchMock.mockReset()
     vi.stubGlobal("fetch", fetchMock)
@@ -32,7 +32,7 @@ describe("getSessionUser", () => {
     cookieHeader.value = ""
     await expect(getSessionUser()).resolves.toBeNull()
     cookieHeader.value = "x=1"
-    delete process.env.CASA_DAS_MAQUINAS_URL
+    delete process.env.API_URL
     await expect(getSessionUser()).resolves.toBeNull()
     expect(fetchMock).not.toHaveBeenCalled()
   })

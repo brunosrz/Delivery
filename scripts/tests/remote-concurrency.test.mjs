@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import { createServer } from "node:http"
 import { describe, it } from "node:test"
-import { runConcurrency } from "../../apps/casa-das-maquinas/scripts/remote-concurrency.mjs"
+import { runConcurrency } from "../../apps/api/scripts/remote-concurrency.mjs"
 
 // API falsa com a semântica correta (idempotência e transição condicional) e uma com defeito deliberado,
 // para provar que o script de concorrência detecta duplicação.

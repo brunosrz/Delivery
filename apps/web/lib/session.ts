@@ -6,7 +6,7 @@ import { cookies } from "next/headers"
  * O cookie só é repassado ao backend; nada da sessão é decidido no front.
  */
 export async function getSessionUser(): Promise<SessionUser | null> {
-  const baseUrl = process.env.CASA_DAS_MAQUINAS_URL
+  const baseUrl = process.env.API_URL
   if (!baseUrl) return null
   const cookie = (await cookies()).toString()
   if (!cookie) return null

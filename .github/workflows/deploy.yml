@@ -68,15 +68,15 @@ jobs:
         run: bun install --frozen-lockfile
       - if: steps.credentials.outputs.ready == 'true'
         name: Test before deploy
-        run: bun run --filter @delivery/casa-das-maquinas test
+        run: bun run --filter @delivery/api test
       - if: steps.credentials.outputs.ready == 'true'
         name: Point to the production D1 database
-        working-directory: apps/casa-das-maquinas
+        working-directory: apps/api
         run: sed -i "s/00000000-0000-0000-0000-000000000000/${D1_DATABASE_ID}/" wrangler.jsonc
       # Migrations antes do Worker: o código novo pode assumir o schema novo.
       - if: steps.credentials.outputs.ready == 'true'
         name: Apply D1 migrations
-        working-directory: apps/casa-das-maquinas
+        working-directory: apps/api
         run: |
           for attempt in 1 2 3; do
             if bunx wrangler d1 migrations apply DB --remote; then
@@ -90,7 +90,7 @@ jobs:
           exit 1
       - if: steps.credentials.outputs.ready == 'true'
         name: Deploy Worker
-        working-directory: apps/casa-das-maquinas
+        working-directory: apps/api
         run: bunx wrangler deploy
 
   web:

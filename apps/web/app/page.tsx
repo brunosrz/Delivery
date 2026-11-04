@@ -11,7 +11,7 @@ const PRODUCT_IMAGES: Record<string, string> = {
   "ta-na-entrega": "/food-delivery-driver-app.png",
   "site-institucional": "/restaurant-showcase.png",
   mkit: "/admin-dashboard-interface.png",
-  "casa-das-maquinas": "/api-backend-architecture.png",
+  api: "/api-backend-architecture.png",
 }
 
 const STATE_STYLES: Record<CapabilityState, string> = {
