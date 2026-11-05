@@ -26,6 +26,8 @@ for name in (
     "deploy",
     "deploy-preview",
     "deploy-prod",
+    "deploy-web-preview",
+    "deploy-web-prod",
     "update",
     "clean",
 ):
@@ -43,6 +45,10 @@ for name in (
         env.Alias("prod", node)
     if name == "deploy-preview":
         env.Alias("preview", node)
+    if name == "deploy-web-preview":
+        env.Alias("web-preview", node)
+    if name == "deploy-web-prod":
+        env.Alias("web-prod", node)
     if name == "deploy":
         env.Alias("deploy-api", node)
 Help(HELP)

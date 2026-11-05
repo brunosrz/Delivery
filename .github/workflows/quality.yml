@@ -37,6 +37,12 @@ jobs:
       - run: bun run test:coverage
       - name: Build without external services
         run: bun run build
+      - name: Web bundles for Workers (vinext build and deploy dry run)
+        working-directory: apps/web
+        run: |
+          bun run i18n
+          CLOUDFLARE_ENV=preview bunx vite build
+          bunx wrangler deploy --dry-run --config dist/server/wrangler.json --outdir .wrangler/dry-run
       - name: Install Playwright browser
         working-directory: apps/web
         run: bunx playwright install --with-deps chromium

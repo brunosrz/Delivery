@@ -70,7 +70,7 @@
         "API_VERSION": "v1",
         "ASAAS_ENV": "sandbox",
         "BETTER_AUTH_URL": "https://delivery-api-preview.bruno-soarxz.workers.dev",
-        "TRUSTED_ORIGINS": "http://localhost:3000,http://127.0.0.1:3000,http://127.0.0.1:3100",
+        "TRUSTED_ORIGINS": "http://localhost:3000,http://127.0.0.1:3000,http://127.0.0.1:3100,https://delivery-web-preview.bruno-soarxz.workers.dev",
       },
     },
     "production": {
@@ -93,7 +93,7 @@
         "API_VERSION": "v1",
         "ASAAS_ENV": "sandbox",
         "BETTER_AUTH_URL": "https://delivery-api.bruno-soarxz.workers.dev",
-        "TRUSTED_ORIGINS": "https://delivery.brunosrz.com,https://entregador.brunosrz.com,https://institucional.brunosrz.com,https://pedidos.brunosrz.com",
+        "TRUSTED_ORIGINS": "https://delivery.brunosrz.com,https://entregador.brunosrz.com,https://institucional.brunosrz.com,https://pedidos.brunosrz.com,https://delivery-web.bruno-soarxz.workers.dev",
       },
     },
   },

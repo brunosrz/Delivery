@@ -10,9 +10,9 @@ import time
 from pathlib import Path
 
 HELP = """Delivery - Node 22+, Bun 1.4, Python 3 e SCons no PATH.
-scons [help|install|build|tests|coverage|lint|check|deploy-preview|deploy-prod|update|clean]
-preview e prod sao aliases. Deploy publica somente apps/api na Cloudflare;
-apps/web nao e publicado por estes alvos. Configure Cloudflare em .env.
+scons [help|install|build|tests|coverage|lint|check|deploy-preview|deploy-prod|deploy-web-preview|deploy-web-prod|update|clean]
+preview e prod sao aliases. deploy-preview e deploy-prod publicam apps/api (migrations e Worker) e depois
+apps/web (vinext) na Cloudflare; deploy-web-preview e deploy-web-prod publicam so o web. Configure Cloudflare em .env.
 update --latest pode alterar versoes major. Logs: .scons-logs/<alvo>.log.
 """
 ANSI = re.compile(r"\x1b(?:\[[0-9;?]*[ -/]*[@-~]|\][^\x07]*(?:\x07|\x1b\\))")
@@ -20,6 +20,9 @@ SECRET_ENV = ("TOKEN", "SECRET", "PASSWORD", "API_KEY")
 SECRET_ARG = re.compile(r"(--(?:token|password|secret)(?:=|\s+))\S+")
 CLEAN_PATHS = (
     "apps/web/.next",
+    "apps/web/dist",
+    "apps/web/.vinext",
+    "apps/web/.wrangler",
     "apps/web/out",
     "apps/web/coverage",
     "apps/web/test-results",
@@ -198,6 +201,24 @@ class Tasks:
         )
         self.run("bunx", "wrangler", "deploy", "--env", target, cwd=worker)
 
+    def deploy_web(self, target):
+        """Publica apps/web (Next rodando em Workers com vinext) no ambiente escolhido."""
+        web = self.root / "apps" / "web"
+        if not web.is_dir() or not any(
+            (web / name).is_file() for name in WORKER_CONFIGS
+        ):
+            raise RuntimeError("apps/web sem configuracao Wrangler")
+        if not self.env.get("CLOUDFLARE_API_TOKEN") or not self.env.get(
+            "CLOUDFLARE_ACCOUNT_ID"
+        ):
+            raise RuntimeError(
+                "Configure CLOUDFLARE_API_TOKEN e CLOUDFLARE_ACCOUNT_ID no ambiente ou .env"
+            )
+        self.resolve("bunx")
+        self.run("bun", "run", "i18n", cwd=web)
+        # O build do vinext escolhe o ambiente do Wrangler por --env e grava dist/server/wrangler.json.
+        self.run("bunx", "vinext-cloudflare", "deploy", "--env", target, cwd=web)
+
     def clean(self):
         paths = [self.root / name for name in CLEAN_PATHS]
         for path in paths:
@@ -229,8 +250,14 @@ class Tasks:
                 self.tests()
             elif self.name == "deploy-preview":
                 self.deploy("preview")
+                self.deploy_web("preview")
             elif self.name in {"deploy-prod", "deploy"}:
                 self.deploy("production")
+                self.deploy_web("production")
+            elif self.name == "deploy-web-preview":
+                self.deploy_web("preview")
+            elif self.name == "deploy-web-prod":
+                self.deploy_web("production")
             else:
                 getattr(self, self.name)()
             return 0
