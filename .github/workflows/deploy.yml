@@ -56,10 +56,12 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           D1_DATABASE_ID: ${{ secrets.D1_DATABASE_ID }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
         run: |
           test -n "$CLOUDFLARE_API_TOKEN" || { echo "::error::Configure CLOUDFLARE_API_TOKEN no ambiente Preview."; exit 1; }
           test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "::error::Configure CLOUDFLARE_ACCOUNT_ID no ambiente Preview."; exit 1; }
           test "$D1_DATABASE_ID" = "7e64fb05-d729-4aae-9ff0-425831b69a31" || { echo "::error::D1_DATABASE_ID não corresponde ao banco Delivery Preview provisionado."; exit 1; }
+          test "${#BETTER_AUTH_SECRET}" -ge 32 || { echo "::error::Configure BETTER_AUTH_SECRET (mínimo 32 caracteres) no ambiente Preview."; exit 1; }
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -80,6 +82,10 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: bunx wrangler deploy --env preview
+      - name: Configurar segredo Better Auth do Worker de Preview
+        env:
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+        run: printf '%s' "$BETTER_AUTH_SECRET" | bunx wrangler secret put BETTER_AUTH_SECRET --env preview
 
   web-preview:
     name: "Web (Preview: vinext + Worker)"
@@ -131,10 +137,12 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           D1_DATABASE_ID: ${{ secrets.D1_DATABASE_ID }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
         run: |
           test -n "$CLOUDFLARE_API_TOKEN" || { echo "::error::Configure CLOUDFLARE_API_TOKEN no ambiente Production."; exit 1; }
           test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "::error::Configure CLOUDFLARE_ACCOUNT_ID no ambiente Production."; exit 1; }
           test "$D1_DATABASE_ID" = "c24822ba-9107-4a97-bab3-0e5ba01bff32" || { echo "::error::D1_DATABASE_ID não corresponde ao banco Delivery Production provisionado."; exit 1; }
+          test "${#BETTER_AUTH_SECRET}" -ge 32 || { echo "::error::Configure BETTER_AUTH_SECRET (mínimo 32 caracteres) no ambiente Production."; exit 1; }
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -155,6 +163,10 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: bunx wrangler deploy --env production
+      - name: Configurar segredo Better Auth do Worker de Production
+        env:
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+        run: printf '%s' "$BETTER_AUTH_SECRET" | bunx wrangler secret put BETTER_AUTH_SECRET --env production
 
   web-production:
     name: "Web (Production: vinext + Worker)"
